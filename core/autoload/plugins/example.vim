@@ -5,9 +5,9 @@
 " unload: this code should do the opposite. [optional]
 " info:   some short text about whot the plugin is supposed to do
 
-function #s:Info()
+function plugins#example#Info()
   return {
-  \ 'laod': 'call vl#lib#vimscript#scriptsettings#Load()',
+  \ 'laod': 'call plugins#example#Load()',
   \ 'info': string('basic plugin demo')
   \ }
 endfunction
