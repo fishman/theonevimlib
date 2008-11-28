@@ -1,0 +1,83 @@
+spirit: bring the many useful scripts into one repository to make installation and configuration as easy as possible. Bundle power, ideas and creativity of all vim users. There is much out there. Lower the effort to change things. Don't ask authors to modfiy code. Fix it right now and commit.
+
+installation
+============
+set runtimepath+=directory_containing_this_file/core
+set runtimepath+=directory_containing_this_file/contrib
+
+configuration
+=============
+run the command
+  :Settings
+to enable plugins.
+
+Things you should know about this lib:
+=====================================
+
+important!: using plugin/*.vim and ftplugin/*.vim is discouraged
+---------------------------------------------------------------
+  Why? Because we want a way to enable and disable plugins using the new
+  configuration system. Files in those directories will be loaded automatically.
+  As a workaround you can add this directory layout to contrib/:
+  contrib/yourplugin/runtime/{autoload, ftplugin, plugin}
+  and make the load method add this file to the runtimepath
+  (See core/autoload/plugins/example.vim) on how this works.
+  (:h sfile will help you figuring out where your plugin script is located)
+
+
+contrib/ and core/?
+------------------
+  Everyone should be able to contribute code fast. On the other side we should
+  try to minimize code duplication.
+  So you should add your code to contribue/ first. Maybe we can then discuss how to
+  merge it into the core. This way we strive for high quality code and many features.
+  directory layout is:
+  core/{plugin,autoload}
+  contrib/name/{autoload,..}
+
+contrib in detail:
+-----------------
+  Many foreign projects will have their own repositories. (Eg the vimlib made by Luc).
+  That's why I ask you to use git submodules. git can follow darcs, hg and
+  subversion repositories easily. (this list may be incomplete..)
+
+
+never ever break things again
+-----------------------------
+  Not possible. We can try to miminize breakage by not modifying functions and
+  API's in a non compatible way but cloning the file adding some version information.
+  Eg 
+  foo#bar#Func() will become
+  foo#bar#v2#Func()
+  Then all scripts depending on the old functions will still work. We should
+  update them and remove the foo#bar#Func later. But this softens pressure to
+  update all at once. Unfortunately the same holds for global vars (?)
+
+coding standards
+----------------
+  I recommend to use ! for functions and commands so that you can update without
+  restarting vim.
+  (add your recommendations here as well)
+
+utilities to make contributing easier
+-------------------------------------
+  TODO
+
+how to keep up to date
+----------------------
+  By now the recommended way is cloning the repository.
+  We also have plans to support installtion using vimballs and update files by
+  vim commands (TODO)
+
+TODO:
+-----
+  - rewrite this in vim help style only keeping a reference
+  ....
+
+raodmap: What would be cool features we should have?
+-----------------------------------------------------
+  - Do we need kind of abstraction over mappings so that the mappings work in vim
+    and gvim, windows, linux equally well?
+  - set expandtab depending on what style has been used
+  - create directories automatically on :e a/b/c before writing
+  add your items as well

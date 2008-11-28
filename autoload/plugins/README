@@ -1,5 +1,0 @@
-A basic plugin should look like this
-
-function plugin#README#Info()
-  return { <dict> }
-endfucntion
