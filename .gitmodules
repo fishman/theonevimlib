@@ -1,0 +1,3 @@
+[submodule "contrib/vl_repo"]
+	path = contrib/vl_repo
+	url = git://mawercer.de/vl_repo
