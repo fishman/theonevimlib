@@ -1,0 +1,3 @@
+everything put theonevimlib.vim and this README file will be deleted.
+Why? The user of theonevimlib must be sure that only code of plugins gets executed he trusts.
+Please setup your features using a plugin load function (see autoload/plugins/example.vim)

@@ -40,13 +40,14 @@ contrib in detail:
   Many foreign projects will have their own repositories. (Eg the vimlib made by Luc).
   That's why I ask you to use git submodules. git can follow darcs, hg and
   subversion repositories easily. (this list may be incomplete..)
+  A side effect is that's is much easier to follow changes made to the core code.
 
 
 never ever break things again
 -----------------------------
   Not possible. We can try to miminize breakage by not modifying functions and
   API's in a non compatible way but cloning the file adding some version information.
-  Eg 
+   
   foo#bar#Func() will become
   foo#bar#v2#Func()
   Then all scripts depending on the old functions will still work. We should
@@ -55,8 +56,15 @@ never ever break things again
 
 coding standards
 ----------------
+
   I recommend to use ! for functions and commands so that you can update without
   restarting vim.
+
+  I's a good idea to add some tests. eg config.vim -> config_test.vim.
+  We can then start running automatic tests to ensure everything works fine.
+
+  Don't use function but library#Function for laziness
+
   (add your recommendations here as well)
 
 utilities to make contributing easier
