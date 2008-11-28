@@ -42,6 +42,26 @@ contrib in detail:
   subversion repositories easily. (this list may be incomplete..)
   A side effect is that's is much easier to follow changes made to the core code.
 
+  See how to install and keep up to date below.
+
+  If the contrib submodule is not just a clone of another repository you may
+  just commit your changes to the subrepo.
+  Then you should first upload the local changes of the subrepos, then change to the
+  theonevimlib directory. git status will say that the subrepo has been modified.
+  git-add it and commit, then upload changes to the server.
+  Example:
+  cd contrib/lib
+  # hack
+  git commit -a -m 'changes'
+  git push
+  cd ..
+  git status
+  git add <subrepo>
+  git commit -m 'update of subrepo lib'
+  git push
+  # from now on other people can update their copy by
+  # git pull
+  # git submodule update
 
 never ever break things again
 -----------------------------
@@ -71,11 +91,16 @@ utilities to make contributing easier
 -------------------------------------
   TODO
 
-how to keep up to date
-----------------------
+how to install and keep up to date?
+----------------------------------
   By now the recommended way is cloning the repository.
   We also have plans to support installtion using vimballs and update files by
   vim commands (TODO)
+
+  Thus just run:
+  git clone git://mawercer.de/theonevimlib
+  # to get all the contrib code:
+  git submodule update --init
 
 TODO:
 -----
