@@ -33,7 +33,7 @@ function! config_test#Test()
       call assert#Equal(config#Get('noway','b'), 'b', m."config#Get didn't return default")
 
       " merge feature:
-      call config#SetG('config.merge.A', library#Function('config_test#MergeTest'))
+      call config#SetG('config.A.merge', library#Function('config_test#MergeTest'))
       let t2 = tempname()
       call writefile([string({'A':'C2'})],t2)
       call config#SetG('configFiles', [t,t2])

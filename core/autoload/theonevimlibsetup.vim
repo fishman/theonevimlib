@@ -4,6 +4,7 @@ function! theonevimlibsetup#Setup()
   let F = config#GetG('configFilesFunc', library#Function('config#DefaultConfigFiles'))
   call config#SetG('configFilesFunc', F)
   call config#SetG('configFiles', library#Call(F,[]))
+  call config#SetG('config.types', library#EvalWhenRequested(library#Function('config#DefaultTypes')))
 
   " add runtime paths of contrib
   for dir in split(glob(expand('<sfile>:h').'/contrib/*'),"\n")

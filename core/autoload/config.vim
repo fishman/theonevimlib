@@ -8,8 +8,8 @@
 "
 " if multiple configuration files contains the same value a plugin can specify
 " a merge function
-" eg call SetG('config.merge.configpath', function(my#MergeLists))
-" If you would try to get the option config.merge.configpath.foo.bar
+" eg call SetG('config.configpath.merge', function(my#MergeLists))
+" If you would try to get the option config.configpath.foo.bar.merge
 " ['foo','bar'] would be fed into my#MergeLists which should return a merge
 " function itself
 
@@ -50,7 +50,7 @@ endfunction
 " and its result is returned
 function! config#GetByPath(dict, path, ...)
   if a:0 > 0
-    let default = 'return a:1'
+    let default = 'return library#EvalLazy(a:1)'
   else
     let default = 'throw '.string("no default value given, GetByPath path: ".string(a:dict))
   endif
@@ -65,7 +65,7 @@ function! config#GetByPath(dict, path, ...)
     " handle function
     let PF = d[p]
     if type(PF) == 2
-      return PF(path[idx+1:])
+      return library#EvalLazy(PF(path[idx+1:]))
     else
       let d = PF
     endif
@@ -73,7 +73,7 @@ function! config#GetByPath(dict, path, ...)
     let idx = idx +1
   endwhile
   if has_key(d, path[-1])
-    return d[path[-1]]
+    return library#EvalLazy(d[path[-1]])
   else
     exec default
   endif
@@ -114,7 +114,7 @@ function! config#Get(path, ...)
           " merge
           try
             if (!exists('M'))
-              let M = config#GetG(['config','merge']+path)
+              let M = config#GetG(['config']+path+['path'])
             endif
             let V = library#Call(M, [V, V2]) " merge values, continue
           catch /.*/
@@ -197,4 +197,129 @@ function! config#ClearScanAndCacheFileCache()
   " TODO: tidy up
   call vl#lib#files#filefunctions#RemoveDirectoryRecursively(s:cache_dir)
   unlet g:scanned_files
+endfunction
+
+
+" =========== config user interface ==================================
+" There is one function handling serializing, and parsing of config values
+" for each vim (or custom) type
+" toBuffer returns a string list
+" fromBuffer takes a string list and returns the value
+
+let s:indent = '  ' " two spaces
+
+" list will be modified in place
+function! config#AddIndent(list)
+  call map(a:list, string(s:indent).'.v:val')
+  return a:list
+endfunction
+
+" setup default types which can be edited in the configuration editor
+function! config#DefaultTypes()
+  let d = {}
+  let d['0'] = config#Number()
+  let d['1'] = config#String()
+  let d['2'] = config#Funcref()
+  let d['3'] = config#List()
+  let d['4'] = config#Dictionary()
+  let d['5'] = config#Float()
+  let d['faked_function_reference'] = config#FakedFunctionReference()
+  " d['lazy_evaluation'] will never be written to config
+
+  " aliases for reading:
+  let d['number'] = d['0']
+  let d['string'] = d['1']
+  "let d['funcref'] = d['2'] # is converted, see toBuffer function implementation
+  let d['list'] = d['3']
+  let d['dictionary'] = d['4']
+  let d['float'] = d['5']
+  return d
+endfunction
+
+function! config#ToBuffer(v)
+  let d = config#GetG('config.types')
+  return d[library#Type(a:v)]['toBuffer'](a:v)
+endfunction
+
+function! config#Number()
+  let d = {}
+  function d.toBuffer(n)
+    return ['number ='.a:n ]
+  endfunction
+  return d
+endfunction
+
+function! config#Float()
+  let d = {}
+  function d.toBuffer(f)
+    return ['number ='.string(a:f)]
+  endfunction
+  return d
+endfunction
+
+function! config#String()
+  let d = {}
+  function d.toBuffer(s)
+    let lines = split(a:s,"\n")
+    if len(lines) > 1
+      return ['string ='] + config#AddIndent(lines)
+    else
+      return ['string ='.lines[0]]
+    endif
+  endfunction
+  return d
+endfunction
+
+" you should use a faked_function_reference. see library#Function()
+" that's why I convert real function references to faked ones
+function! config#Funcref()
+  let d = {}
+  let d['toBuffer'] = config#FakedFunctionReference()['toBuffer']
+  function!  d.fromBuffer()
+    call assert#Bool(false, 'this function config#Funcref d.fromBuffer should never be reached')
+  endfunction
+  return d
+endfunction
+
+function! config#List()
+  let d = {}
+  function! d.toBuffer(l)
+    return ['list = '] + map(copy(a:l), 'config#AddIndent(config#ToBuffer(v:val))')
+  endfunction
+  return d
+endfunction
+
+function! config#Dictionary()
+  let d = {}
+  function! d.toBuffer(l)
+    return ['list = '] + map(copy(a:l), 'config#AddIndent(config#KeyToString(v:key).'.string(':').'.config#ToBuffer(v:val))')
+  endfunction
+  return d
+endfunction
+
+function! config#Float()
+  let d = {}
+  function d.toBuffer(f)
+    return ['float ='.string(a:f)]
+  endfunction
+  return d
+endfunction
+
+function! config#FakedFunctionReference()
+  let d = {}
+  function d.toBuffer(f)
+    return ['faked_function_reference ='.f['faked_function_reference']]
+  endfunction
+  return d
+endfunction
+
+
+" opts is a dictionary with these keys:
+" onSave: function reference beeing called to save data
+" update: function reference beeing called to update the view
+"         it will be called when the user only uses :w to update the view
+"         This is useful because plugins can add default settings in the
+"         onSave callback
+function! a#EditConfig(opts)
+  sp 
 endfunction
