@@ -5,13 +5,16 @@ endfunction
 
 " same as type but supports extra types faked by using special key in
 " dictionaries
+" intentionally not using integers for custom types to lessen chance of
+" conflicts when merging
 function! library#Type(a)
   let t = type(a:a)
-  if t == 4 && has_key(a:a, 'faked_function_reference')
-    return 100
-  else
-    return t
-  fi
+  if t == 4 
+   if has_key(a:a, 'faked_function_reference')
+      return "faked-funcction-reference"
+   endif
+  endif
+  return t
 endfunction
 
 " args : same as used for call(f,[list], self), f must be a funcref
