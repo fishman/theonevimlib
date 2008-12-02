@@ -276,7 +276,7 @@ endfunction
 " toBuffer returns a string list
 " fromBuffer takes a string list and returns the value
 
-let s:indent = ' |' " two spaces
+let s:indent = '  ' " two spaces
 function! config#Indent()
   return s:indent " export value
 endfunction
@@ -292,7 +292,7 @@ function! config#DefaultTypes()
   let d['3'] = config#List()
   let d['4'] = config#Dictionary()
   let d['5'] = config#Float()
-  let d[6057] = config#FakedFunctionReference()
+  let d[4434] = config#FakedFunctionReference()
   "let d['lazy_evaluation'] TODO
   return d
 endfunction
@@ -311,14 +311,14 @@ endfunction
 function! config#FromBuffer(lines, idx, currInd, sp, ind)
   let d = config#GetG('config.types')
   let fs =  map(values(d),'v:val["fromBuffer"]')
-  return library#Try(fs, lines, idx, currInd, sp, ind)
+  return library#Try(fs, a:lines, a:idx, a:currInd, a:sp, a:ind)
 endfunction
 
 " helper function
 function! s:PrefixMatch(p,l)
   let le = len(a:p)
-  if a:p == a:l[:le]
-    return a:l[le+1:]
+  if a:p == a:l[: le-1]
+    return a:l[le :]
   else
     throw a:p."expected, but got ".string(a:l)
   endif
@@ -330,7 +330,7 @@ function! config#Number()
     return ['number='.a:n ]
   endfunction
   function d.fromBuffer(lines, idx, currInd, sp, ind)
-    return [a:idx+1, 1*s:PrefixMatch('number=', lines[a:idx][a:currInd:])]
+    return [a:idx+1, 1*s:PrefixMatch('number=', a:lines[a:idx][(a:currInd):])]
   endfunction
   return d
 endfunction
@@ -341,7 +341,7 @@ function! config#Float()
     return ['float='.string(a:f)]
   endfunction
   function d.fromBuffer(lines, idx, currInd, sp, ind)
-    return [a:idx+1, 1*s:PrefixMatch('float=', lines[a:idx][a:currInd:])]
+    return [a:idx+1, 1*s:PrefixMatch('float=', a:lines[a:idx][(a:currInd):])]
   endfunction
   return d
 endfunction
@@ -357,16 +357,73 @@ function! config#String()
     endif
   endfunction
   function d.fromBuffer(lines, idx, currInd, sp, ind)
-    let rest = 1*s:PrefixMatch('string=', lines[a:idx][a:currInd:])
+    let rest = s:PrefixMatch('string=', a:lines[a:idx][(a:currInd):])
     let idx = a:idx +1
-    if lines[idx][:len(a:ind)] == a:ind
+    let next_ind = a:ind.a:sp
+    if idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
       " multiple lines
-      let lines = []
-      while lines[idx][:len(a:ind)] == a:ind
-        call add(lines, lines[idx][len(a:ind)+1:])
+      let lines2 = []
+      while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
+        call add(lines2, a:lines[idx][len(next_ind)+1:])
         let idx = idx+1
       endwhile
-      return [idx, join(lines, "\n")]
+      return [idx, join(lines2, "\n")]
+    else
+      return [idx, rest]
+    endif
+    let rest = s:PrefixMatch('string=', a:lines[a:idx][(a:currInd):])
+    let idx = a:idx +1
+    let next_ind = a:ind.a:sp
+    if idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
+      " multiple lines
+      let lines2 = []
+      while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
+        call add(lines2, a:lines[idx][len(next_ind)+1:])
+        let idx = idx+1
+      endwhile
+      return [idx, join(lines2, "\n")]
+    else
+      return [idx, rest]
+    endif
+    let rest = s:PrefixMatch('string=', a:lines[a:idx][(a:currInd):])
+    let idx = a:idx +1
+    let next_ind = a:ind.a:sp
+    if idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
+      " multiple lines
+      let lines2 = []
+      while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
+        call add(lines2, a:lines[idx][len(next_ind)+1:])
+        let idx = idx+1
+      endwhile
+      return [idx, join(lines2, "\n")]
+    else
+      return [idx, rest]
+    endif
+    let rest = s:PrefixMatch('string=', a:lines[a:idx][(a:currInd):])
+    let idx = a:idx +1
+    let next_ind = a:ind.a:sp
+    if idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
+      " multiple lines
+      let lines2 = []
+      while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
+        call add(lines2, a:lines[idx][len(next_ind)+1:])
+        let idx = idx+1
+      endwhile
+      return [idx, join(lines2, "\n")]
+    else
+      return [idx, rest]
+    endif
+    let rest = s:PrefixMatch('string=', a:lines[a:idx][(a:currInd):])
+    let idx = a:idx +1
+    let next_ind = a:ind.a:sp
+    if idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
+      " multiple lines
+      let lines2 = []
+      while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
+        call add(lines2, a:lines[idx][len(next_ind)+1:])
+        let idx = idx+1
+      endwhile
+      return [idx, join(lines2, "\n")]
     else
       return [idx, rest]
     endif
@@ -380,7 +437,7 @@ function! config#Funcref()
   let d = {}
   let d['toBuffer'] = config#FakedFunctionReference()['toBuffer']
   function!  d.fromBuffer(...)
-    call assert#Bool(false, 'this function config#Funcref d.fromBuffer should never be reached')
+    call assert#Bool(0, 'this function config#Funcref d.fromBuffer should never be reached')
   endfunction
   return d
 endfunction
@@ -398,17 +455,17 @@ function! config#List()
           \ map(copy(a:l), 's:ListHelper('.new_ind.',config#ToBuffer('.string(a:sp).','.new_ind.',v:val))'))
   endfunction
   function d.fromBuffer(lines, idx, currInd, sp, ind)
-    let rest = 1*s:PrefixMatch('list=', lines[a:idx][a:currInd:])
+    let rest = s:PrefixMatch('list=', a:lines[a:idx][(a:currInd):])
     if rest != ''
       throw "no characters expected after list="
     endif
     let idx = a:idx +1
     let next_ind = a:ind.a:sp
-    if lines[idx][:len(a:ind)] == a:ind
+    if idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
       " multiple lines
       let items = []
-      while lines[idx][:len(a:ind)] == a:ind
-        let [idx, item] = config#FromBuffer(a:lines, idx, len(ind), a:sp, next_ind)
+      while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
+        let [idx, item] = config#FromBuffer(a:lines, idx, len(next_ind), a:sp, next_ind)
         call add(items, item)
       endwhile
       return [idx, items]
@@ -431,7 +488,7 @@ endfunction
 function! s:ParseKey(line, ind)
   let i = a:ind
   let key = ''
-  while a:line[i] != ":" and i < len(a:line)
+  while a:line[i] != ":" && i < len(a:line)
     if a:line[i] == '\'
       " escaped char \ or :"
       let i = i+1
@@ -442,7 +499,7 @@ function! s:ParseKey(line, ind)
   if i > len(a:line)
     throw ': after key of dictionary expected. End of line found instead'
   endif
-  return [key, i]
+  return [key, i +1]
 endfunction
 
 function! config#Dictionary()
@@ -453,42 +510,39 @@ function! config#Dictionary()
         \ values(map(copy(a:l), 's:DictionaryHelper('.new_ind.',v:key, config#ToBuffer('.string(a:sp).','.new_ind.',v:val))')))
   endfunction
   function d.fromBuffer(lines, idx, currInd, sp, ind)
-    let rest = 1*s:PrefixMatch('dictionary=', lines[a:idx][a:currInd:])
+    let rest = s:PrefixMatch('dictionary=', a:lines[a:idx][(a:currInd):])
     if rest != ''
       throw "no characters expected after dictionary="
     endif
     let idx = a:idx +1
     let next_ind = a:ind.a:sp
-    if lines[idx][:len(a:ind)] == a:ind
-      " multiple lines
-      let d = {}
-      while lines[idx][:len(a:ind)] == a:ind
-        let [key, curInd] = s:ParseKey(a:lines[idx], len(ind))
-        let [idx, v] = config#FromBuffer(a:lines, idx, curInd, a:sp, next_ind)
-        let d[key] = v
-      endwhile
-      return [idx, d]
-    else
-      return [idx, {}
-    endif
+    let d = {}
+    " multiple keys ?
+    while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
+      let [key, curInd] = s:ParseKey(a:lines[idx], len(next_ind))
+      let [idx, v] = config#FromBuffer(a:lines, idx, curInd, a:sp, next_ind)
+      let d[key] = v
+      unlet v
+    endwhile
+    return [idx, d]
   endfunction
   return d
 endfunction
 
 function! config#FakedFunctionReference()
   let d = {}
-  function d.toBuffer(f)
-    return ['faked_function_reference='.string(f)
+  function d.toBuffer(sp, ind, f)
+    return ['faked_function_reference='.string(a:f)]
   endfunction
   function d.fromBuffer(lines, idx, currInd, sp, ind)
-    return [a:idx+1, eval(s:PrefixMatch('faked_function_reference=', lines[a:idx][a:currInd:]))]
+    return [a:idx+1, eval(s:PrefixMatch('faked_function_reference=', a:lines[a:idx][(a:currInd):]))]
   endfunction
   return d
 endfunction
 
 "helper function. If there are special chars then serialize
 function! config#KeyToString(s)
-  return escape(a:s, ":\")
+  return escape(a:s, ':\')
 endfunction
 
 " opts is a dictionary with these keys:

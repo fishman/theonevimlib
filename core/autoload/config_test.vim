@@ -18,37 +18,44 @@ function! s:Dummy()
        \ 'getData' : library#Function('config_test#TestData')
        \ })
  " now we should be in a new split buffer and should change the configuration
+ %s/b:string=b/b:string=c/g
+ " save, this should reload configuration
+ normal "ZZ"
+ call assert#Equal(g:dummy,[{"a": "a"}, {"b":"c"}], "configuration read and write check")
 endfunction
 
 function! config_test#ToBufferFromBufferEq(v, msg)
   let buffer = config#ToBuffer('  ', '', a:v)
-  echo buffer
-  call assert#Equal(a:v, config#FromBuffer(buffer,0,0, '  ',''), a:msg)
+  call assert#Equal(a:v, config#FromBuffer(buffer,0,0, '  ','')[1], a:msg)
 endfunction
 
 function! config_test#Test()
-  call config#SetG('config.types', library#EvalWhenRequested(library#Function('config#DefaultTypes')))
-
   let tovl = config#TOVL()
   try
     let g:tovl = {}
+    call config#SetG('config.types', library#EvalWhenRequested(library#Function('config#DefaultTypes')))
+
+    call s:Dummy()
+
     let m = expand('<sfile>').' '
 
-          "\ "abc",
-          "\ [1,2,3],
-          "\ ["a","b","c"],
-          "\ {"a":"A", "b":"B"},
-          "\ {"a":[1,2,3], "b":"B"},
-          "\ {"a":{"a":[1,2,3], "b":"B"},"b":"B"},
-          "\ library#Function('doesnt#exist')
-
     " test serialization
-    for i in [
+    let tests = [
           \ 20,
+          \ "abc",
+          \ [1,2,3],
+          \ ["a","b","c"],
+          \ {"a":"A", "b":"B"},
+          \ {"a":[1,2,3], "b":"B"},
+          \ {"a":{"a":[1,2,3], "b":"B"},"b":"B"},
+          \ library#Function('doesnt#exist')
           \ ]
-      call config_test#ToBufferFromBufferEq("abc", m." ".library#Type(i))
+    "for i in range(0,len(tests)-1)
+    for i in range(0,7)
+      let t = tests[i]
+      call config_test#ToBufferFromBufferEq(t, m." ".library#Type(t))
+      unlet t
     endfor
-    return 
 
     call assert#Equal(['a','b'], config#Path('a.b'), m.'config#Path') 
 
@@ -122,6 +129,8 @@ function! config_test#TestData()
   return [{"a": "a"}, {"b":"b"}]
 endfunction
 
-function! config_test#TestWrite(v)
-  let g:dummy = v
+function! config_test#TestWrite()
+  let lines = tofl#buffer#LinesOfScratchBuffer()
+  let g:dummy = config#FromBuffer(lines,0,0, '  ','')[1]
+  setlocal nomodified
 endfunction

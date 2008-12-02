@@ -4,7 +4,8 @@ function! library#Id(a)
 endfunction
 
 " no operation dummy
-function! library#NOP()
+" useful eg for start debugging this way
+function! library#NOP(...)
 endfunction
 
 "|p     returns optional argument or default value
@@ -40,7 +41,7 @@ function! library#Try(funcList,...)
   let errors=[]
   for F in a:funcList
     try
-      return call(function("library#Call"), [F] + a:000)
+      return call(function("library#Call"), [F] + [a:000])
     catch /.*/
       call add(errors, v:exception)
     endtry
@@ -104,6 +105,11 @@ function! library#Call(...)
   let args = copy(a:000)
   if (len(args) < 2)
     call add(args, [])
+  endif
+  " always pass self. this way you can call functions from dictionaries not
+  " refering to self
+  if (len(args) < 3)
+    call add(args, {})
   endif
   if t == 2
     " funcref: function must have been laoded
