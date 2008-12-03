@@ -58,7 +58,7 @@ endfunction
 function! tofl#scratch_buffer#GetContents()
   if has_key(b:settings, 'getContent')
     normal ggdG
-    call tofl#buffer#Put(library#Call(b:settings['getContent']), 0)
+    call append(0, library#Call(b:settings['getContent']))
   else
     echo "don't know how to refresh buffer contents"
   endif
