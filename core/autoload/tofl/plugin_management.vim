@@ -1,6 +1,6 @@
 
 function! tofl#plugin_management#PluginDict(p)
-   exec "return plugins#".a:p."#()"
+   exec "return plugins#".a:p."#Info()"
 endfunction
 
 " loads, unloads plugins based on current configuration
