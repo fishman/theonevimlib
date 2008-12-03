@@ -2,9 +2,12 @@
 "
 " SetByPath, GetByPath define functions to set values within hirarchical dicts
 " SetG GetG use those to get global settings (you know about (deep)copy() ?)
-" configFiles is the list which will be checked for configuration settings
-" configFilesFunc is the function reference returning this list.
-"   You can override it in your .vimrc
+" config.files is the list which will be checked for configuration settings.
+" The head of the list (index 0) is the main global user config.
+" config.filesFunc is the function reference beeing executed once on startup
+" returning this list. You can override it in your .vimrc.
+" All plugins are encouraged to automatically create their settings in the 
+" main config. The its up to you to edit them.
 "
 " if multiple configuration files contains the same value a plugin can specify
 " a merge function
@@ -15,10 +18,26 @@
 
 " To read or write configuration options use
 " config#Get(path, default) 
-" config#Set(path, value)
-" config#Set(path, value, {'write': 0} ) # to not force writing the changed config to disk.
-"   This increases performance if you wnat to set many settings at once
+" config#Set(path, value) # default config
+" config#Set(path, value, file) # write to this config
+"   This increases performance if you want to set many settings at once
 "   After having changed the configs use config#WriteConfigs() to flush contents
+
+" You can register an callback function which will be triggered when
+" configuration changes this way:
+" call config#AddToList('config.onChange', library#Function('myFun'))
+" the event will only be triggered when flushing hasn't been delayed or on
+" flush
+function! config#AddToList(path, v)
+  call add(config#GetG(a:path, {'set' : 1, 'default' : []}),a:v)
+endfunction
+
+function! config#FireEvent(path, ...)
+  for F in config#GetG(a:path, [])
+    call call(function("library#Call"), [F] + [a:000])
+  endfor
+endfunction
+
 function! config#Path(path)
   if type(a:path) == 1
     return split(a:path,'\.')
@@ -43,7 +62,7 @@ endfunction
 function! config#DefaultConfigFiles()
   " adding per directory project configuration files would be cool.
   " But maybe this is bad for security? Ask the user once and store md5sum?
-  return [expand('HOME').'/.theonevimlib_config']
+  return [expand('$HOME').'/.theonevimlib_config']
 endfunction
 
 " if foo.bar is set to a function ref that will be passed the remaining path
@@ -72,6 +91,9 @@ function! config#GetByPath(dict, path, ...)
     let default = 'throw '.string("no default value given, GetByPath path: ".string(a:path))
   endif
   let path = config#Path(a:path)
+  if len(path) ==0
+    return a:dict
+  endif
   let d = a:dict
   let idx = 0
   while idx < len(path)-1
@@ -118,17 +140,26 @@ function! config#EvalFirstLine(a)
   return eval(a:a[0])
 endfunction
 
+" returns cached configuration file (use config#Get to get options)
+function! config#ConfigContents(file)
+  try
+    return config#ScanIfNewer(a:file,
+          \ {'fileCache' : 0, 'asLines' : 1, 'scan_func' : function('config#EvalFirstLine'),
+             \ 'useCached' : config#GetG(['config','dirty',a:file],0)
+          \ })
+  catch /.*/
+    return {}
+  endtry
+endfunction
+
 " configuration is 
 function! config#Get(path, ...)
-  let configs = config#GetG('config.configFiles')
+  let configs = config#GetG('config.files')
   let path = config#Path(a:path)
   for file in reverse(copy(configs))
     if filereadable(file)
       " only reread config when all changes have been flushed
-      let cache = config#ScanIfNewer(file, 
-        \ {'fileCache' : 0, 'asLines' : 1, 'scan_func' : function('config#EvalFirstLine'),
-           \ 'useCached' : config#GetG(['config','dirty',file],0)
-        \ })
+      let cache = config#ConfigContents(file)
       try
         let V2 = call(function('config#GetByPath'), [cache, path] + a:000)
         if exists('V')
@@ -165,14 +196,15 @@ endfunction
 " unless you've called config#StopFlushing
 " This way you can use multiple vim instances without one overriting
 " changes made by another
-function! config#Set(file, path, value)
-  " little bit hacky: modify the scane and cache file cached configuration
+function! config#Set(path, value, ...)
+  " little bit hacky: modify the scan and cache file cached configuration
   " directly:
-  let p = ['scanned_files',string(function('config#EvalFirstLine')),a:file,"scan_result"]
+  exec library#GetOptionalArg('file', "config#GetG('config.files')[0]")
+  let p = ['scanned_files',string(function('config#EvalFirstLine')),file,"scan_result"]
   let d = config#GetG(p, {'default' : {}, 'set' :1})
   call config#SetByPath(d, a:path, a:value)
-  if !config#FlushConfig(a:file, 1)
-    call config#SetG(['config','dirty',a:file],1)
+  if !config#FlushConfig(file, 1)
+    call config#SetG(['config','dirty',file],1)
   endif
 endfunction
 
@@ -188,7 +220,7 @@ function! config#ResumeFlushing(configFile)
 endfunction
 
 function! config#FlushConfigs()
-  for c in config#GetG('config.configFiles') | call config#FlushConfig(c,0) | endfor
+  for c in config#GetG('config.files') | call config#FlushConfig(c,0) | endfor
 endfunction
 
 function! config#FlushConfig(configFile, assumeDirty)
@@ -201,6 +233,7 @@ function! config#FlushConfig(configFile, assumeDirty)
       echoe "flushing configuration file ".a:configFile." failed!"
     else
       call config#SetG(dirtyP, 0)
+      call config#FireEvent('config.onChange')
     endif
     return 1
   else
@@ -288,7 +321,7 @@ function! config#DefaultTypes()
   let d = {}
   let d['0'] = config#Number()
   let d['1'] = config#String()
-  let d['2'] = config#Funcref()
+  let d['2'] = config#Funcref() " will be serialized as FakedFunctionReference
   let d['3'] = config#List()
   let d['4'] = config#Dictionary()
   let d['5'] = config#Float()
@@ -351,7 +384,7 @@ function! config#String()
   function d.toBuffer(sp,ind,s)
     let lines = split(a:s,"\n")
     if len(lines) > 1
-      return ['string='] + map(lines, string(a:ind.a:sp).'.v;val')
+      return ['string='] + map(lines, string(a:ind.a:sp).'.v:val')
     else
       return ['string='.lines[0]]
     endif
@@ -364,7 +397,7 @@ function! config#String()
       " multiple lines
       let lines2 = []
       while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
-        call add(lines2, a:lines[idx][len(next_ind)+1:])
+        call add(lines2, a:lines[idx][len(next_ind):])
         let idx = idx+1
       endwhile
       return [idx, join(lines2, "\n")]
@@ -552,15 +585,91 @@ endfunction
 "         This is useful because plugins can add default settings in the
 "         onSave callback
 " TODO implement completion etc
-function! config#EditConfig(opts)
+function! config#EditConfiguration(opts)
   let name = get(a:opts, 'name', 'config')
-  call tofl#buffer#ScratchBuffer({
+  let help = [ 
+    \ 'edit configuration file '.name,
+    \ 'Start by enabling the example plugin by setting the number to 1',
+    \ 'Then write the buffer. This should load the plugin and add default',
+    \ 'configuration options (commandName and command).',
+    \ 'each time you change the settings and write them the plugin will get notified',
+    \ 'about those changes and will reload itself. Try running the command ExamplePluginHW',
+    \ 'and watch it changing..',
+    \ '',
+    \ 'If you remove the options (commandName and command) the plugin will add them',
+    \ 'for you again. This behaviour is plugin dependand.',
+    \ '',
+    \ 'Maybe you want to have a look at core/autoload/example.vim now?',
+    \ "Also make sure you've read the head comments in core/autoload/config.vim",
+    \ "It tells you how to use multiple (project specific) configuration files.",
+    \ '',
+    \ "If you have any questions, don't know where to start or how to add your code",
+    \ "write an email to marco-oweber@gmx.de (I'm also on irc.freenode.net, nick MarcWeber)"
+    \ ]
+
+  call tofl#scratch_buffer#ScratchBuffer({
         \ 'name' : name,
-        \ 'header': [ 'edit configuration '.name,
-                    \ 'use ZZ or :w to save the configuration, :Refresh to refresh it',
-                    \ 'refresh will take place automatically after writing'],
-        \ 'content' : config#ToBuffer(s:indent, '', library#Call(a:opts['getData'])),
+        \ 'help': "return ".string(help),
+        \ 'getContent' : "return config#ToBuffer(".string(s:indent).", '',library#Call(".string(a:opts['getData'])."))",
         \ 'onWrite' : a:opts['onWrite'] })
+endfunction
+
+" uses config#EditConfiguration to open a scratch buffer in which you can edit
+" the cached configuration files.
+" if you don't pass the file to be edited a list will be shown to let you
+" choose one
+function! config#EditConfig(...)
+  "exec library#GetOptionalArg('file', "vl#ui#userSelection#LetUserSelectIfThereIsAChoice('choose the config file to edit', config#GetG('config.files'))")
+  let file = config#GetG('config.files')[0]
+  if !filereadable(file)
+    call writefile(['{}'],file)
+  endif
+  call config#EditConfiguration({
+    \ 'name' : 'your editing config file '.file,
+    \ 'onWrite' : library#Function('config#EditConfigWrite', {'args' : [file]}),
+    \ 'getData' : library#Function('config#EditConfigGetData', {'args' : [file]})
+    \ })
+endfunction
+
+function! config#EditConfigWrite(file)
+  let p = ['scanned_files',string(function('config#EvalFirstLine')),a:file,"scan_result"]
+  let lines = getline(0,line('$'))
+  call config#StopFlushing(a:file)
+
+  call config#SetG(p, config#FromBuffer(lines,0,0, '  ','')[1])
+  if a:file == config#GetG('config.files')[0]
+    " editing main config, reload plugins
+    call tofl#plugin_management#UpdatePlugins()
+  endif
+  call config#ResumeFlushing(a:file)
+  if !config#FlushConfig(a:file, 1)
+    call config#SetG(['config','dirty',a:file],1)
+  endif
+  GetContents
+  setlocal nomodified
+endfunction
+
+function! config#EditConfigGetData(file)
+  if a:file == config#GetG('config.files')[0]
+    call config#StopFlushing(a:file)
+    " editing main config, ask plugins to add their default options
+    for p in config#GetG('tovl.plugins.loaded',{ 'default' : [], 'set' :1})
+      let d = tofl#plugin_management#PluginDict(p)
+      if (has_key(d, 'AddDefaultConfigOptions'))
+        call library#Call(d['AddDefaultConfigOptions'])
+      endif
+    endfor
+    " add all plugins so that the user can enable them
+    let all = tofl#plugin_management#AllPlugins()
+    let loadable = config#Get('loadablePlugins', {'default' : {}, 'set' : 1})
+    call filter(loadable, 'index(all, v:key) >= 0')
+    for p in all
+      let loadable[p] = get(loadable, p, 0)
+    endfor
+    call config#Set('loadablePlugins', loadable)
+    call config#ResumeFlushing(a:file)
+  endif
+  return config#ConfigContents(a:file)
 endfunction
 
 augroup TOVLWrite

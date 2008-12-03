@@ -13,7 +13,7 @@ function! s:Dummy()
         \  "+string=foo"], "list to buffer")
 
  " test configuration editing in buffer
- call config#EditConfig({
+ call config#EditConfiguration({
        \ 'onWrite' : library#Function('config_test#TestWrite'),
        \ 'getData' : library#Function('config_test#TestData')
        \ })
@@ -35,7 +35,7 @@ function! config_test#Test()
     let g:tovl = {}
     call config#SetG('config.types', library#EvalWhenRequested(library#Function('config#DefaultTypes')))
 
-    call s:Dummy()
+    "call s:Dummy()
 
     let m = expand('<sfile>').' '
 
@@ -43,6 +43,7 @@ function! config_test#Test()
     let tests = [
           \ 20,
           \ "abc",
+          \ "ab\nc",
           \ [1,2,3],
           \ ["a","b","c"],
           \ {"a":"A", "b":"B"},
@@ -75,9 +76,9 @@ function! config_test#Test()
 
     let t = tempname()
     call writefile([string({'A':'B'})],t)
-    let files = config#GetG('config.configFiles',[])
+    let files = config#GetG('config.files',[])
     try
-      call config#SetG('config.configFiles', [t])
+      call config#SetG('config.files', [t])
       call assert#Equal(config#Get('A'), 'B', m."config#Get didn't work")
       " force a different timestamp
       !sleep 1
@@ -89,21 +90,21 @@ function! config_test#Test()
       call config#SetG('config.A.merge', library#Function('config_test#MergeTest'))
       let t2 = tempname()
       call writefile([string({'A':'C2'})],t2)
-      call config#SetG('config.configFiles', [t,t2])
+      call config#SetG('config.files', [t,t2])
       call assert#Equal(config#Get('A'), 'C2C', m."config#Get didn't return merged config")
 
       " config write test
 
-      call config#SetG('config.configFiles', [t])
+      call config#SetG('config.files', [t])
       let clearConfigCache = 'call config#SetG(["scanned_files",string(function("config#EvalFirstLine"))], {})'
 
-      call config#Set(t, ["write","Z"], "Zvalue")
+      call config#Set(["write","Z"], "Zvalue", t)
       exec clearConfigCache
       call assert#Equal("Zvalue", config#Get("write.Z"), m."write.Z")
 
       " config write test without flushing
       call config#StopFlushing(t)
-      call config#Set(t, ["write","Z2"], "Zvalue2")
+      call config#Set(["write","Z2"], "Zvalue2", t)
         " check that option hasn't been written to disk
       call assert#Equal(-1, match(join(readfile(t),""), "Zvalue2"),m."Zvalue22")
       call config#ResumeFlushing(t) " write to disk
@@ -112,7 +113,7 @@ function! config_test#Test()
 
     " TODO: add tests for the function feature
     finally
-      call config#SetG('config.configFiles', files)
+      call config#SetG('config.files', files)
     endtry
   finally
     let g:tovl = tovl

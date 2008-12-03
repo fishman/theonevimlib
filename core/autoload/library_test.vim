@@ -3,6 +3,7 @@ function! library_test#Test()
   call assert#Equal('yes', library#Id('yes'), m.'library#Id')
   call assert#Equal('yes', library#Call(library#Function('library_test#ReferencedFunc'), []), m.'library#Call and Function')
   call assert#Equal('test ok' , library#EvalLazy(library#EvalWhenRequested(library#Function('library_test#EvalLazyValue'))) , m.'EvalWhenRequested+EvalLazyValue')
+  call assert#Equal('test ok' , library#Call('return "test ok"'), m.'string eval lambda function')
 endfunction
 
 function! library_test#ReferencedFunc()

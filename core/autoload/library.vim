@@ -8,6 +8,10 @@ endfunction
 function! library#NOP(...)
 endfunction
 
+function! library#If(c,a,b)
+  if a:
+endfunction
+
 "|p     returns optional argument or default value
 "|p     Example usage:
 "|p     default is of type string so that it is only evaluated when actually
@@ -26,13 +30,13 @@ function! library#GetOptionalArg( name, default, ...)
   if type( a:default) != 1
     throw "wrong type: default parameter of vl#lib#brief#args#GetOptionalArg must be a string, use string(value)"
   endif
-  let script = [ "if a:0 >= ". idx
-	     \ , "  let ".a:name." = a:".idx
-	     \ , "else"
-	     \ , "  let ".a:name." = ".a:default
-	     \ , "endif"
+  let script = [ "if a:0 >= ". idx." "
+	     \ , "  let ".a:name." = a:".idx." "
+	     \ , " else "
+	     \ , "  let ".a:name." = ".a:default." "
+	     \ , " endif "
 	     \ ]
-  return join( script, "\n")
+  return join( script, "|")
 endfunction
 
 " calls a list of function which may throw exceptions to indicate failure.
@@ -56,7 +60,11 @@ endfunction
 " library#Function("Foo", { 'args' : [2, "foo"], 'self' : dict}) will create a closure. args
 " these args + args passed to Call will be the list of args passed to call()
 function! library#Function(name,...)
-  exec library#GetOptionalArg('d', string({'evalLazyClosedArgs': 1}))
+  if a:0 > 0
+    let d = a:1
+  else
+    let d = {'evalLazyClosedArgs': 1}
+  endif
   let d['faked_function_reference'] = a:name
   return d
 endfunction
@@ -111,7 +119,12 @@ function! library#Call(...)
   if (len(args) < 3)
     call add(args, {})
   endif
-  if t == 2
+  if t == 1
+    " function is a String, call exec
+    let ARGS = args[1]
+    let SELF = args[2]
+    exec args[0]
+  elseif t == 2
     " funcref: function must have been laoded
     return call(function('call'), args)
   elseif t == 4434
@@ -128,10 +141,10 @@ function! library#Call(...)
       endfor
     endif
     if has_key(args[0], 'args') " add args from closure
-      if get('args', 'evalLazyClosedArgs', 0)
-        let args[1] = map(a[0]['args'], 'library#EvalLazy(v:val)')+args[1]
+      if get(args[0], 'evalLazyClosedArgs', 0)
+        let args[1] = map(args[0]['args'], 'library#EvalLazy(v:val)')+args[1]
       else
-        let args[1] = a[0]['args']+args[1]
+        let args[1] = args[0]['args']+args[1]
       endif
     endif
     if has_key(args[0], 'self')
