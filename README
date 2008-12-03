@@ -98,7 +98,7 @@ how to install and keep up to date?
   vim commands (TODO)
 
   Thus just run:
-  git clone git://mawercer.de/theonevimlib
+  git clone git://github.com/MarcWeber/theonevimlib.git
   # to get all the contrib code:
   git submodule update --init
 
