@@ -8,8 +8,28 @@ endfunction
 function! library#NOP(...)
 endfunction
 
-function! library#If(c,a,b)
-  if a:
+" FIXME: Is there a better way to execute multi line strings?
+function! library#Exec(cmd)
+  let lines = split(a:cmd,"\n")
+  if (len(lines) > 1)
+    " is there a better way? (TODO! try to not use temp files!)
+    let file = tempname()
+    call writefile(lines, file)
+    exec 'source '.file
+    call delete(file)
+  else
+    exec lines[0]
+  endif
+endfunction
+
+" returns a function reading the given file when called
+function! library#ReadLazy(f,...)
+  let opts = a:0 > 0 ? a:1 : {}
+  if get(opts, 'join',0)
+    return 'return join(readfile('.string(a:f).'),"\n")'
+  else
+    return 'return readfile('.string(a:f).')'
+  endif
 endfunction
 
 "|p     returns optional argument or default value
@@ -133,7 +153,7 @@ function! library#Call(...)
     let Fun = args[0]['faked_function_reference']
     if type(Fun) == 1
       if !exists('*'.Fun)
-        let file = substitute(substitute(Name,'#[^#]*$','',''),'#','/','g')
+        let file = substitute(substitute(Fun,'#[^#]*$','',''),'#','/','g')
         for path in split(&runtimepath,',')
           let realfile = path.'/autoload/'.file.'.vim'
           if filereadable(realfile)

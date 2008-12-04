@@ -6,9 +6,11 @@
 " such as "setupmappings"
 
 function! tofl#plugin_management#PluginDict(p)
-   exec "return ".a:p."()"
+   exec "let d = ".a:p."()"
+   " for convinience at the plugin name
+   let d['pluginName'] = substitute(a:p,'#','.','g')
+   return d
 endfunction
-
 
 " loads, unloads plugins based on current configuration
 function! tofl#plugin_management#UpdatePlugins()
@@ -119,8 +121,6 @@ function! tofl#plugin_management#TidyUp(dict)
 
   " add new plugins marked 0
   for p in all
-    echo p
-    echo markedActive
     if index(markedActive, p) == -1
       call config#SetByPath(a:dict, split(p, "#"), 0)
     endif
@@ -129,18 +129,22 @@ function! tofl#plugin_management#TidyUp(dict)
 endfunction
 
 " simple default plugin implementation
-" if you don't have very special needs this should suffice
-" opts has keys
-"   cmdsDefault: These commands will be executed when the plugin is loaded
-"   tags: see example plugin
-"   ...
-function! tofl#plugin_management#DefaultDict(opts)
-  return {
-  \ 'load': 'call plugins#example#Load()',
-  \ 'unload': 'call plugins#example#Unload()',
-  \ 'info': string('basic plugin demo'),
-  \ 'AddDefaultConfigOptions' : library#Function("plugins#example#AddDefaultConfigOptions")
-  \ }
+" if you don't have very special needs, you only want to expose some
+" commands then use this function. It will be extended to remove mappings
+" automatically later on. Pass the additional key "cmd" which defines default
+" mappings
+function! tofl#plugin_management#DefaultPluginDictCmd(opts)
+  function! a:opts.Load()
+    let self.cmdPath = self['pluginName'].'.cmd'
+    let cmd = config#Get(self.cmdPath,"")
+    let self['cmdExecuted'] = cmd
+    call library#Exec(cmd)
+  endfunction
 
+  function! a:opts.AddDefaultConfigOptions(dict)
+      call config#GetByPath(a:dict, self.cmdPath,
+            \ {'set' :1, 'default' : library#Call(self['cmd']) })
+  endfunction
 
+  return a:opts
 endfunction

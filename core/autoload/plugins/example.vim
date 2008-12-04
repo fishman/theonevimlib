@@ -1,18 +1,33 @@
 " link-doc: ./exmple.txt
 " a basic plugin should define the following keys:
 
-" load:   this code will run by exec to setup plugin stuff.
-" unload: this code should do the opposite. [optional]
-" info:   some short text about whot the plugin is supposed to do
+" Load:   this code will run by exec to setup plugin stuff.
+" Unload: this code should do the opposite. [optional]
+" Info:   some short text about whot the plugin is supposed to do
+" Tags:
 " AddDefaultConfigOptions: Use this to add default configuration options
 "                          be careful to not override user changes!
 "                          Will be called before the main configuration is
 "                          shown for all activated plugins
 
+let s:file = expand('<sfile>')
+
+" This example is the most simple one
+" just define a user interface within an external file
+function! plugins#example#PluginExampleCmd()
+  let d = {
+        \ 'Tags': ['example','demo'],
+        \ 'Info': string('basic plugin demo only exposing some mappings'),
+        \ 'cmd' : library#ReadLazy(fnamemodify(s:file,":p:r").'_userinterface.vim',{'join':1})
+        \ }
+  let d2 =  tofl#plugin_management#DefaultPluginDictCmd(d)
+  return d2
+endfunction
+
 function! plugins#example#PluginExample()
   let d = {
-        \ 'tags': library#Function("plugins#example#AddDefaultConfigOptions"),
-        \ 'info': string('basic plugin demo')
+        \ 'Tags': ['example','demo'],
+        \ 'Info': string('basic plugin demo')
         \ }
 
   function! d.Load()
@@ -20,7 +35,7 @@ function! plugins#example#PluginExample()
 
     echom "loading example plugin stub"
     let g:example_loaded = 1
-    let d = config#Get('example', {'default' : {}})
+    let d = config#Get(self.pluginName, {'default' : {}})
 
     " make a copy of the settings to get to know wether something has changed
     let self['opts'] = deepcopy(d)
@@ -43,17 +58,17 @@ function! plugins#example#PluginExample()
   endfunction
 
   function! d.AddDefaultConfigOptions(dict)
-    let d = config#GetByPath(a:dict,'example', {'default' : {}, 'set' :1})
+    let d = config#GetByPath(a:dict,self.pluginName, {'default' : {}, 'set' :1})
     if !has_key(d, 'commandName')
-      call config#SetByPath(a:dict, 'example.commandName',"ExamplePluginHW")
+      call config#SetByPath(a:dict, self.pluginName.'.commandName',"ExamplePluginHW")
     endif
     if !has_key(d, 'command')
-      call config#SetByPath(a:dict, 'example.command', "echo ".string("hello world to you from example plugin"))
+      call config#SetByPath(a:dict, self.pluginName.'.command', "echo ".string("hello world to you from example plugin"))
     endif
   endfunction
 
   function! d.OnChange()
-    if self['opts'] != config#Get('example', {})
+    if self['opts'] != config#Get(self.pluginName, {})
       " options have changed, reload
       call self.Unload()
       call self.Load()

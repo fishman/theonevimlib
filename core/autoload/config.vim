@@ -103,7 +103,7 @@ function! config#GetByPath(dict, path, ...)
   if has_key(opts, 'default')
     let default = 'return library#EvalLazy(opts["default"])'
     if get(opts, 'set', 0)
-      let default = 'call config#SetG(a:path, opts["default"])|'.default
+      let default = 'call config#SetByPath(a:dict, a:path, opts["default"])|'.default
     endif 
   else
     let default = 'throw '.string("no default value given, GetByPath path: ".string(a:path))
@@ -687,7 +687,7 @@ function! config#EditConfigGetData(file)
       endif
     endfor
     " update plugin list.. don't remove user stuff
-    let d =  tofl#plugin_management#TidyUp(
+    let d = tofl#plugin_management#TidyUp(
           \ config#Get('loadablePlugins', {'default' : {}, 'set' : 1}))
     call config#ResumeFlushing(a:file)
   endif

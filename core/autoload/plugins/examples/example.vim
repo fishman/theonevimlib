@@ -22,7 +22,7 @@ endfunction
 function! plugins#example#Load()
   call config#AddToList('config.onChange', library#Function('plugins#example#OnChange'))
 
-  echo "loading example plugin stub"
+  echom "loading example plugin stub"
   let g:example_loaded = 1
   let d = config#Get('example', {'default' : {}})
 
@@ -38,7 +38,7 @@ function! plugins#example#Load()
 endfunction
 
 function! plugins#example#Unload()
-  echo "unloading example plugin stub"
+  echom "unloading example plugin stub"
   let g:example_loaded = 0
   try
     exec 'delc '.config#GetG('plugins.example.cmdName')
