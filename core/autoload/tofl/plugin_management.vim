@@ -1,3 +1,10 @@
+" TODO implement loading dependency. Some Plugins should be loaded before
+" others
+" I'd suggest something like
+" 'loadBefdore' : [ 'x', 'y' ] 
+" 'loadAfter' : ['z' ] where x, y and z may be plugins or "virtual" targets
+" such as "setupmappings"
+
 function! tofl#plugin_management#PluginDict(p)
    exec "return ".a:p."()"
 endfunction
@@ -5,22 +12,23 @@ endfunction
 
 " loads, unloads plugins based on current configuration
 function! tofl#plugin_management#UpdatePlugins()
-  let loaded = config#GetG('tovl.plugins.loaded',{ 'default' : [], 'set' :1})
+  let loaded = config#GetG('tovl.plugins.loaded',{ 'default' : {}, 'set' :1})
+  let loadedKey = keys(loaded)
   let cfg = config#Get('loadablePlugins', { 'default' : {}})
 
   " config says they should be active
   let markedActive = tofl#plugin_management#PluginsFromDict([],cfg,"v > 0")
 
-  let toload = tofl#list#Difference(markedActive, loaded)
-  let tounload = tofl#list#Difference(loaded, markedActive)
+  let toload = tofl#list#Difference(markedActive, loadedKey)
+  let tounload = tofl#list#Difference(loadedKey, markedActive)
 
   " try to unload plugins
   for p in tounload
-    let d = tofl#plugin_management#PluginDict(p)
-    if has_key(d, 'unload')
+    let d = loaded[p]
+    if has_key(d, 'Unload')
       try
-        exec d['unload']
-        call remove(loaded, index(loaded,p))
+        call library#Call(d['Unload'],[],d)
+        call remove(loaded, p)
         echom "unloaded:".p
       catch /.*/
         echom "unloading of plugin ".p." failed due to exception ".v:exception
@@ -33,16 +41,16 @@ function! tofl#plugin_management#UpdatePlugins()
   " try to load plugins and be silent, this will be done on startup as well
   for p in toload
     let d = tofl#plugin_management#PluginDict(p)
-    if has_key(d, 'load')
+    if has_key(d, 'Load')
       try
-        exec d['load']
-        call add(loaded, p)
+        call library#Call(d['Load'],[],d)
+        let  loaded[p] = d
         echom "loaded: ".p
       catch /.*/
         echom "loading of plugin ".p." failed due to exception ".v:exception
       endtry
     else
-      echom "loading of plugin ".p." failed, key 'load' missing."
+      echom "loading of plugin ".p." failed, key 'Load' missing."
     endif
   endfor
 endfunction
@@ -111,8 +119,28 @@ function! tofl#plugin_management#TidyUp(dict)
 
   " add new plugins marked 0
   for p in all
+    echo p
+    echo markedActive
     if index(markedActive, p) == -1
       call config#SetByPath(a:dict, split(p, "#"), 0)
     endif
   endfor
+  return a:dict
+endfunction
+
+" simple default plugin implementation
+" if you don't have very special needs this should suffice
+" opts has keys
+"   cmdsDefault: These commands will be executed when the plugin is loaded
+"   tags: see example plugin
+"   ...
+function! tofl#plugin_management#DefaultDict(opts)
+  return {
+  \ 'load': 'call plugins#example#Load()',
+  \ 'unload': 'call plugins#example#Unload()',
+  \ 'info': string('basic plugin demo'),
+  \ 'AddDefaultConfigOptions' : library#Function("plugins#example#AddDefaultConfigOptions")
+  \ }
+
+
 endfunction

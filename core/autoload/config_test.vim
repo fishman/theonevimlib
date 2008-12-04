@@ -35,12 +35,12 @@ function! config_test#Test()
   let dict = {"a": {"b": 7}}
 
   let d = deepcopy(dict)
-  call config#DelByPath(d, "a.b")
-  call assert#Equal({}, d, m." DelByPath no keep")
+  call config#RemoveByPath(d, "a.b")
+  call assert#Equal({}, d, m." RemoveByPath no keep")
 
   let d = deepcopy(dict)
-  call config#DelByPath(d, "a.b", 0)
-  call assert#Equal({"a":{}}, d, m." DelByPath keep")
+  call config#RemoveByPath(d, "a.b", 0)
+  call assert#Equal({"a":{}}, d, m." RemoveByPath keep")
 
   let tovl = config#TOVL()
   try

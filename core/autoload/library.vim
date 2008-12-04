@@ -130,16 +130,21 @@ function! library#Call(...)
     return call(function('call'), args)
   elseif t == 4434
     " pseudo function, let's load it..
-    let name = args[0]['faked_function_reference']
-    if !exists('*'.name)
-      let file = substitute(substitute(name,'#[^#]*$','',''),'#','/','g')
-      for path in split(&runtimepath,',')
-        let realfile = path.'/autoload/'.file.'.vim'
-        if filereadable(realfile)
-          exec 'source '.realfile
-          break
-        endif
-      endfor
+    let Fun = args[0]['faked_function_reference']
+    if type(Fun) == 1
+      if !exists('*'.Fun)
+        let file = substitute(substitute(Name,'#[^#]*$','',''),'#','/','g')
+        for path in split(&runtimepath,',')
+          let realfile = path.'/autoload/'.file.'.vim'
+          if filereadable(realfile)
+            exec 'source '.realfile
+            break
+          endif
+        endfor
+      endif
+      let Fun2 = function(Fun)
+    else
+      let Fun2 = Fun
     endif
     if has_key(args[0], 'args') " add args from closure
       if get(args[0], 'evalLazyClosedArgs', 0)
@@ -149,9 +154,9 @@ function! library#Call(...)
       endif
     endif
     if has_key(args[0], 'self')
-      let args[2] = a[0]['self']
+      let args[2] = args[0]['self']
     endif
-    let args[0] = function(name)
+    let args[0] = Fun
     return call(function('call'), args)
   endif
 endfunction

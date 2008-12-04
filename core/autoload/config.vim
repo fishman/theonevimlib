@@ -59,7 +59,7 @@ function! config#SetByPath(dict, path, value)
   return a:value
 endfunction
 
-function! config#DelByPath(dict, path, ...)
+function! config#RemoveByPath(dict, path, ...)
   let removeEmptyDicts =  a:0 > 0 ? a:1 : 1
   let path = config#Path(a:path)
   let idx = 0
@@ -69,7 +69,7 @@ function! config#DelByPath(dict, path, ...)
       call remove(a:dict, head)
     else
       let v = a:dict[head]
-      call config#DelByPath(v, path[1:], removeEmptyDicts)
+      call config#RemoveByPath(v, path[1:], removeEmptyDicts)
       if removeEmptyDicts && empty(v)
         call remove(a:dict, head)
       endif 
@@ -678,18 +678,17 @@ endfunction
 function! config#EditConfigGetData(file)
   if a:file == config#GetG('config.files')[0]
     call config#StopFlushing(a:file)
+    let cfgDict = config#ConfigContents(a:file)
     " editing main config, ask plugins to add their default options
-    for p in config#GetG('tovl.plugins.loaded',{ 'default' : [], 'set' :1})
-      let d = tofl#plugin_management#PluginDict(p)
-      if (has_key(d, 'AddDefaultConfigOptions'))
-        call library#Call(d['AddDefaultConfigOptions'])
+    let loaded = config#GetG('tovl.plugins.loaded',{ 'default' : {}, 'set' :1})
+    for p in values(loaded)
+      if (has_key(p, 'AddDefaultConfigOptions'))
+        call library#Call(p['AddDefaultConfigOptions'],[cfgDict],p)
       endif
     endfor
     " update plugin list.. don't remove user stuff
-    call tofl#plugin_management#TidyUp(
+    let d =  tofl#plugin_management#TidyUp(
           \ config#Get('loadablePlugins', {'default' : {}, 'set' : 1}))
-    " should mark as dirty here to be sure. However the changes made by TidyUp
-    " are not important and will be done again
     call config#ResumeFlushing(a:file)
   endif
   return config#ConfigContents(a:file)
