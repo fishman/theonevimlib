@@ -2,17 +2,17 @@
 "
 " SetByPath, GetByPath define functions to set values within hirarchical dicts
 " SetG GetG use those to get global settings (you know about (deep)copy() ?)
-" config.files is the list which will be checked for configuration settings.
+" config#files is the list which will be checked for configuration settings.
 " The head of the list (index 0) is the main global user config.
-" config.filesFunc is the function reference beeing executed once on startup
+" config#filesFunc is the function reference beeing executed once on startup
 " returning this list. You can override it in your .vimrc.
 " All plugins are encouraged to automatically create their settings in the 
 " main config. The its up to you to edit them.
 "
 " if multiple configuration files contains the same value a plugin can specify
 " a merge function
-" eg call SetG('config.configpath.merge', function(my#MergeLists))
-" If you would try to get the option config.configpath.foo.bar.merge
+" eg call SetG('config#configpath#merge', function(my#MergeLists))
+" If you would try to get the option config#configpath#foo#bar#merge
 " ['foo','bar'] would be fed into my#MergeLists which should return a merge
 " function itself
 
@@ -25,9 +25,13 @@
 
 " You can register an callback function which will be triggered when
 " configuration changes this way:
-" call config#AddToList('config.onChange', library#Function('myFun'))
+" call config#AddToList('config#onChange', library#Function('myFun'))
 " the event will only be triggered when flushing hasn't been delayed or on
 " flush
+"
+" Note: using # as separator to allow keys such as www.company.foo which
+" could be a plugin directory.
+
 function! config#AddToList(path, v)
   call add(config#GetG(a:path, {'set' : 1, 'default' : []}),a:v)
 endfunction
@@ -40,7 +44,7 @@ endfunction
 
 function! config#Path(path)
   if type(a:path) == 1
-    return split(a:path,'\.')
+    return split(a:path,'#')
   else 
     return a:path
   endif
@@ -83,11 +87,11 @@ function! config#DefaultConfigFiles()
   return [expand('$HOME').'/.theonevimlib_config']
 endfunction
 
-" if foo.bar is set to a function ref that will be passed the remaining path
+" if foo#bar is set to a function ref that will be passed the remaining path
 " and its result is returned
-" usage example: GetByPath('foo.bar', {'set' : 1, 'default' : {}})
+" usage example: GetByPath('foo#bar', {'set' : 1, 'default' : {}})
 " GetByPath('foo', 2) shortcut for GetByPath('foo',{'default' : 2})
-" will return setting foo.bar and set it to the default value {} if it hasn't been set yet
+" will return setting foo#bar and set it to the default value {} if it hasn't been set yet
 function! config#GetByPath(dict, path, ...)
   if a:0 > 0
     let opts = a:1
@@ -143,7 +147,7 @@ function! config#TOVL()
   return g:tovl
 endfunction
 
-" a#SetG('foo.bar', 7) is equal to a#SetG(['foo','bar'], 7)
+" a#SetG('foo#bar', 7) is equal to a#SetG(['foo','bar'], 7)
 function! config#SetG(path, value)
   return config#SetByPath(config#TOVL(), a:path, a:value)
 endfunction
@@ -172,7 +176,7 @@ endfunction
 
 " configuration is 
 function! config#Get(path, ...)
-  let configs = config#GetG('config.files')
+  let configs = config#GetG('config#files')
   let path = config#Path(a:path)
   for file in reverse(copy(configs))
     if filereadable(file)
@@ -238,7 +242,7 @@ function! config#ResumeFlushing(configFile)
 endfunction
 
 function! config#FlushConfigs()
-  for c in config#GetG('config.files') | call config#FlushConfig(c,0) | endfor
+  for c in config#GetG('config#files') | call config#FlushConfig(c,0) | endfor
 endfunction
 
 function! config#FlushConfig(configFile, assumeDirty)
@@ -349,7 +353,7 @@ function! config#DefaultTypes()
 endfunction
 
 function! config#ToBuffer(sp,ind,v)
-  let d = config#GetG('config.types')
+  let d = config#GetG('config#types')
   return d[library#Type(a:v)]['toBuffer'](a:sp,a:ind,a:v)
 endfunction
 
@@ -360,7 +364,7 @@ endfunction
 " ind: indent of all following lines to be ignored
 " FromBuffer is expected to return [idx, configuration value] or to throw an error
 function! config#FromBuffer(lines, idx, currInd, sp, ind)
-  let d = config#GetG('config.types')
+  let d = config#GetG('config#types')
   let fs =  map(values(d),'v:val["fromBuffer"]')
   return library#Try(fs, a:lines, a:idx, a:currInd, a:sp, a:ind)
 endfunction
@@ -644,8 +648,8 @@ endfunction
 " if you don't pass the file to be edited a list will be shown to let you
 " choose one
 function! config#EditConfig(...)
-  "exec library#GetOptionalArg('file', "vl#ui#userSelection#LetUserSelectIfThereIsAChoice('choose the config file to edit', config#GetG('config.files'))")
-  let file = config#GetG('config.files')[0]
+  "exec library#GetOptionalArg('file', "vl#ui#userSelection#LetUserSelectIfThereIsAChoice('choose the config file to edit', config#GetG('config#files'))")
+  let file = config#GetG('config#files')[0]
   if !filereadable(file)
     call writefile(['{}'],file)
   endif
@@ -663,7 +667,7 @@ function! config#EditConfigWrite(file)
   call config#StopFlushing(a:file)
 
   call config#SetG(p, config#FromBuffer(lines,0,0, '  ','')[1])
-  if a:file == config#GetG('config.files')[0]
+  if a:file == config#GetG('config#files')[0]
     " editing main config, reload plugins
     call tofl#plugin_management#UpdatePlugins()
   endif
@@ -676,11 +680,11 @@ function! config#EditConfigWrite(file)
 endfunction
 
 function! config#EditConfigGetData(file)
-  if a:file == config#GetG('config.files')[0]
+  if a:file == config#GetG('config#files')[0]
     call config#StopFlushing(a:file)
     let cfgDict = config#ConfigContents(a:file)
     " editing main config, ask plugins to add their default options
-    let loaded = config#GetG('tovl.plugins.loaded',{ 'default' : {}, 'set' :1})
+    let loaded = config#GetG('tovl#plugins#loaded',{ 'default' : {}, 'set' :1})
     for p in values(loaded)
       if (has_key(p, 'AddDefaultConfigOptions'))
         call library#Call(p['AddDefaultConfigOptions'],[cfgDict],p)

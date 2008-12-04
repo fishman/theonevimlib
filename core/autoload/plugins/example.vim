@@ -8,7 +8,10 @@
 " AddDefaultConfigOptions: Use this to add default configuration options
 "                          be careful to not override user changes!
 "                          Will be called before the main configuration is
-"                          shown for all activated plugins
+"                          shown for all activated plugins. Also see defaults
+"                          below
+" defaults:   you can set this to a dict { "opt#subkey": 0 } instead
+"             AddDefaultConfigOptions will be set to a default implementation.
 
 let s:file = expand('<sfile>')
 
@@ -20,8 +23,7 @@ function! plugins#example#PluginExampleCmd()
         \ 'Info': string('basic plugin demo only exposing some mappings'),
         \ 'cmd' : library#ReadLazy(fnamemodify(s:file,":p:r").'_userinterface.vim',{'join':1})
         \ }
-  let d2 =  tofl#plugin_management#DefaultPluginDictCmd(d)
-  return d2
+  return tofl#plugin_management#DefaultPluginDictCmd(d)
 endfunction
 
 function! plugins#example#PluginExample()
@@ -31,9 +33,8 @@ function! plugins#example#PluginExample()
         \ }
 
   function! d.Load()
-    call config#AddToList('config.onChange', library#Function(self['OnChange'],{'self' : self}))
+    call config#AddToList('config#onChange', library#Function(self['OnChange'],{'self' : self}))
 
-    echom "loading example plugin stub"
     let g:example_loaded = 1
     let d = config#Get(self.pluginName, {'default' : {}})
 
@@ -60,10 +61,10 @@ function! plugins#example#PluginExample()
   function! d.AddDefaultConfigOptions(dict)
     let d = config#GetByPath(a:dict,self.pluginName, {'default' : {}, 'set' :1})
     if !has_key(d, 'commandName')
-      call config#SetByPath(a:dict, self.pluginName.'.commandName',"ExamplePluginHW")
+      call config#SetByPath(a:dict, self.pluginName.'#commandName',"ExamplePluginHW")
     endif
     if !has_key(d, 'command')
-      call config#SetByPath(a:dict, self.pluginName.'.command', "echo ".string("hello world to you from example plugin"))
+      call config#SetByPath(a:dict, self.pluginName.'#command', "echo ".string("hello world to you from example plugin"))
     endif
   endfunction
 

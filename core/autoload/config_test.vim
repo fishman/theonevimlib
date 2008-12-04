@@ -71,24 +71,24 @@ function! config_test#Test()
     call assert#Equal(['a','b'], config#Path('a.b'), m.'config#Path') 
 
     call assert#Equal('b', config#GetByPath({'a':'b'}, 'a'), m.'GetByPath')
-    call assert#Equal('a', config#GetG('a.b.doesntexist', 'a'), m.'default')
+    call assert#Equal('a', config#GetG('a#b#doesntexist', 'a'), m.'default')
 
     try
-      call config#GetG('a.b.doesntexist')
+      call config#GetG('a#b#doesntexist')
       call assert#Bool(0, m." no default didn't throw exception")
     catch /.*/
     endtry
 
-    for p in ['a', 'b.c']
+    for p in ['a', 'b#c']
       call config#SetG(p,p)
       call assert#Equal(config#GetG(p), p, m.string(p))
     endfor
 
     let t = tempname()
     call writefile([string({'A':'B'})],t)
-    let files = config#GetG('config.files',[])
+    let files = config#GetG('config#files',[])
     try
-      call config#SetG('config.files', [t])
+      call config#SetG('config#files', [t])
       call assert#Equal(config#Get('A'), 'B', m."config#Get didn't work")
       " force a different timestamp
       !sleep 1
@@ -97,20 +97,20 @@ function! config_test#Test()
       call assert#Equal(config#Get('noway','b'), 'b', m."config#Get didn't return default")
 
       " merge feature:
-      call config#SetG('config.A.merge', library#Function('config_test#MergeTest'))
+      call config#SetG('config#A#merge', library#Function('config_test#MergeTest'))
       let t2 = tempname()
       call writefile([string({'A':'C2'})],t2)
-      call config#SetG('config.files', [t,t2])
+      call config#SetG('config#files', [t,t2])
       call assert#Equal(config#Get('A'), 'C2C', m."config#Get didn't return merged config")
 
       " config write test
 
-      call config#SetG('config.files', [t])
+      call config#SetG('config#files', [t])
       let clearConfigCache = 'call config#SetG(["scanned_files",string(function("config#EvalFirstLine"))], {})'
 
       call config#Set(["write","Z"], "Zvalue", t)
       exec clearConfigCache
-      call assert#Equal("Zvalue", config#Get("write.Z"), m."write.Z")
+      call assert#Equal("Zvalue", config#Get("write#Z"), m."write#Z")
 
       " config write test without flushing
       call config#StopFlushing(t)
@@ -119,11 +119,11 @@ function! config_test#Test()
       call assert#Equal(-1, match(join(readfile(t),""), "Zvalue2"),m."Zvalue22")
       call config#ResumeFlushing(t) " write to disk
       exec clearConfigCache
-      call assert#Equal("Zvalue2", config#Get("write.Z2"), m."ZValue2")
+      call assert#Equal("Zvalue2", config#Get("write#Z2"), m."ZValue2")
 
     " TODO: add tests for the function feature
     finally
-      call config#SetG('config.files', files)
+      call config#SetG('config#files', files)
     endtry
   finally
     let g:tovl = tovl

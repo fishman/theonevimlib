@@ -20,19 +20,19 @@ function! plugins#example#PluginSimpleCommandExample()
 endfunction
 
 function! plugins#example#Load()
-  call config#AddToList('config.onChange', library#Function('plugins#example#OnChange'))
+  call config#AddToList('config#onChange', library#Function('plugins#example#OnChange'))
 
   echom "loading example plugin stub"
   let g:example_loaded = 1
   let d = config#Get('example', {'default' : {}})
 
   " make a copy of the settings to get to know wether something has changed
-  call config#SetG('plugins.example.opts', deepcopy(d))
+  call config#SetG('plugins#example#opts', deepcopy(d))
 
   let cmdName = get(d,'commandName','ExamplePluginHW')
 
   " remember command name so that we can remove it again..
-  call config#SetG('plugins.example.cmdName',cmdName)
+  call config#SetG('plugins#example#cmdName',cmdName)
 
   exec 'command! '.cmdName.' '.get(d,'command','echo "unset"')
 endfunction
@@ -41,7 +41,7 @@ function! plugins#example#Unload()
   echom "unloading example plugin stub"
   let g:example_loaded = 0
   try
-    exec 'delc '.config#GetG('plugins.example.cmdName')
+    exec 'delc '.config#GetG('plugins#example#cmdName')
   catch /.*/
   endtry
 endfunction
@@ -50,15 +50,15 @@ function! plugins#example#AddDefaultConfigOptions()
   let g:g = "ward"
   let d = config#Get('example', {'default' : {}, 'set' :1})
   if !has_key(d, 'commandName')
-    call config#Set('example.commandName',"ExamplePluginHW")
+    call config#Set('example#commandName',"ExamplePluginHW")
   endif
   if !has_key(d, 'command')
-    call config#Set('example.command', "echo ".string("hello world to you from example plugin"))
+    call config#Set('example#command', "echo ".string("hello world to you from example plugin"))
   endif
 endfunction
 
 function! plugins#example#OnChange()
-  if config#GetG('plugins.example.opts') != config#Get('example', {})
+  if config#GetG('plugins#example#opts') != config#Get('example', {})
     " options have changed, reload
     call plugins#example#Unload()
     call plugins#example#Load()

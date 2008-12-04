@@ -8,13 +8,27 @@
 function! tofl#plugin_management#PluginDict(p)
    exec "let d = ".a:p."()"
    " for convinience at the plugin name
-   let d['pluginName'] = substitute(a:p,'#','.','g')
+   let d['pluginName'] = a:p
+
+   " default implementation, set default values if they haven't been set
+   if has_key(d,'defaults') && !has_key(d, 'AddDefaultConfigOptions')
+     function! d.AddDefaultConfigOptions(d)
+       for k in keys(self.defaults)
+         call config#GetByPath(a:d, self.pluginName.'#'.k, {'default': self.defaults[k], 'set' : 1})
+       endfor
+     endfunction
+   endif
    return d
+endfunction
+
+" return dict of loaded plugin
+function! tofl#plugin_management#Plugin(name)
+  return config#GetG('tovl#plugins#loaded#')[a:name]
 endfunction
 
 " loads, unloads plugins based on current configuration
 function! tofl#plugin_management#UpdatePlugins()
-  let loaded = config#GetG('tovl.plugins.loaded',{ 'default' : {}, 'set' :1})
+  let loaded = config#GetG('tovl#plugins#loaded',{ 'default' : {}, 'set' :1})
   let loadedKey = keys(loaded)
   let cfg = config#Get('loadablePlugins', { 'default' : {}})
 
@@ -60,7 +74,7 @@ endfunction
 function! tofl#plugin_management#AllPluginFiles()
   let list = []
   for path in split(&runtimepath,",")
-    call extend(list, split(glob(path."/autoload/plugins/**.vim"),"\n"))
+    call extend(list, split(glob(path."/autoload/plugins/**/*.vim"),"\n"))
   endfor
   return list
 endfunction
@@ -135,7 +149,7 @@ endfunction
 " mappings
 function! tofl#plugin_management#DefaultPluginDictCmd(opts)
   function! a:opts.Load()
-    let self.cmdPath = self['pluginName'].'.cmd'
+    let self.cmdPath = self['pluginName'].'#cmd'
     let cmd = config#Get(self.cmdPath,"")
     let self['cmdExecuted'] = cmd
     call library#Exec(cmd)
