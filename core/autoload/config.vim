@@ -50,6 +50,8 @@ function! config#Path(path)
   endif
 endfunction
 
+" SetByPath(dict, "a#b", 3) is equal to
+" SetByPath(dict, ["a","b"], 3) is equal to
 function! config#SetByPath(dict, path, value)
   let path = config#Path(a:path)
   let d = a:dict
@@ -140,22 +142,26 @@ function! config#GetByPath(dict, path, ...)
   endif
 endfunction
 
-function! config#TOVL()
-  if !exists('g:tovl')
-    let g:tovl = {}
+fun! config#GetOrSet(name, default) 
+  if !exists(a:name)
+    let {a:name} = a:default
   endif
-  return g:tovl
-endfunction
+  return {a:name}
+endf
 
-" a#SetG('foo#bar', 7) is equal to a#SetG(['foo','bar'], 7)
+" getting / setting global / buffer options
+" see GetByPath and SetByPath above
 function! config#SetG(path, value)
-  return config#SetByPath(config#TOVL(), a:path, a:value)
+  return config#SetByPath(config#GetOrSet('g:tovl',{}), a:path, a:value)
 endfunction
-
-" args: GetG(path) " throws exception if path doesn't exist
-"    or GetG(path, default)
 function! config#GetG(...)
-  return call(function('config#GetByPath'), [config#TOVL()] + a:000)
+  return call(function('config#GetByPath'), [config#GetOrSet('g:tovl',{})] + a:000)
+endfunction
+function! config#SetB(path, value)
+  return config#SetByPath(config#GetOrSet('b:tovl',{}), a:path, a:value)
+endfunction
+function! config#GetB(...)
+  return call(function('config#GetByPath'), [config#GetOrSet('b:tovl',{})] + a:000)
 endfunction
 
 function! config#EvalFirstLine(a)
@@ -506,7 +512,7 @@ function! config#List()
   let d = {}
   function! d.toBuffer(sp, ind, l)
     let new_ind = string(a:ind.a:sp)
-    return ['list='] + tofl#list#Concat(
+    return ['list='] + tovl#list#Concat(
           \ map(copy(a:l), 's:ListHelper('.new_ind.',config#ToBuffer('.string(a:sp).','.new_ind.',v:val))'))
   endfunction
   function d.fromBuffer(lines, idx, currInd, sp, ind)
@@ -561,7 +567,7 @@ function! config#Dictionary()
   let d = {}
   function! d.toBuffer(sp, ind, l)
     let new_ind = string(a:ind.a:sp)
-    return ['dictionary='] + tofl#list#Concat(
+    return ['dictionary='] + tovl#list#Concat(
         \ values(map(copy(a:l), 's:DictionaryHelper('.new_ind.',v:key, config#ToBuffer('.string(a:sp).','.new_ind.',v:val))')))
   endfunction
   function d.fromBuffer(lines, idx, currInd, sp, ind)
@@ -632,14 +638,18 @@ function! config#EditConfiguration(opts)
     \ ]
 
   " TODO improve syntax highlighting!
-  call tofl#scratch_buffer#ScratchBuffer({
+  call tovl#scratch_buffer#ScratchBuffer({
         \ 'name' : name,
         \ 'help': "return ".string(help),
-        \ 'getContent' : "return config#ToBuffer(".string(s:indent).", '',library#Call(".string(a:opts['getData'])."))",
+        \ 'getContent' : library#Function(
+              \ "return config#ToBuffer(".string(s:indent).", '',library#Call(".string(a:opts['getData'])."))"),
         \ 'onWrite' : a:opts['onWrite'],
         \ 'cmds' : [
             \ "for i in ['number', 'string', 'dictionary', 'list'] | exec 'syn match  Keyword '.string(i.'=') | endfor",
-            \ 'syn match  Identifier "^\s*\S\+:"' ]
+            \ 'syn match  Identifier "^\s*\S\+:"',
+            \ 'runtime! syntax/vim.vim',
+            \ 'setlocal autoindent'
+            \ ]
         \ })
 endfunction
 
@@ -648,7 +658,7 @@ endfunction
 " if you don't pass the file to be edited a list will be shown to let you
 " choose one
 function! config#EditConfig(...)
-  "exec library#GetOptionalArg('file', "vl#ui#userSelection#LetUserSelectIfThereIsAChoice('choose the config file to edit', config#GetG('config#files'))")
+  exec library#GetOptionalArg('file', "tovl#ui#choice#LetUserSelectIfThereIsAChoice('choose the config file to edit', config#GetG('config#files'))")
   let file = config#GetG('config#files')[0]
   if !filereadable(file)
     call writefile(['{}'],file)
@@ -669,7 +679,7 @@ function! config#EditConfigWrite(file)
   call config#SetG(p, config#FromBuffer(lines,0,0, '  ','')[1])
   if a:file == config#GetG('config#files')[0]
     " editing main config, reload plugins
-    call tofl#plugin_management#UpdatePlugins()
+    call tovl#plugin_management#UpdatePlugins()
   endif
   call config#ResumeFlushing(a:file)
   if !config#FlushConfig(a:file, 1)
@@ -691,7 +701,7 @@ function! config#EditConfigGetData(file)
       endif
     endfor
     " update plugin list.. don't remove user stuff
-    let d = tofl#plugin_management#TidyUp(
+    let d = tovl#plugin_management#TidyUp(
           \ config#Get('loadablePlugins', {'default' : {}, 'set' : 1}))
     call config#ResumeFlushing(a:file)
   endif

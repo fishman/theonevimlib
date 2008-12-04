@@ -23,7 +23,9 @@ function! plugins#example#PluginExampleCmd()
         \ 'Info': string('basic plugin demo only exposing some mappings'),
         \ 'cmd' : library#ReadLazy(fnamemodify(s:file,":p:r").'_userinterface.vim',{'join':1})
         \ }
-  return tofl#plugin_management#DefaultPluginDictCmd(d)
+  " key filetype:"vim" will make the command only be executed if filetype vim is set
+
+  return tovl#plugin_management#DefaultPluginDictCmd(d)
 endfunction
 
 function! plugins#example#PluginExample()

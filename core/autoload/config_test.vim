@@ -1,53 +1,30 @@
-function! s:Dummy()
-  " to buffer of dict
-  call assert#Equal(
-        \ config#Dictionary()['toBuffer']('+','', {'a': 'foo'}),
-        \ ["dictionary=", 
-        \  "+a:string=foo"], "dictionary to buffer")
-
-  " to buffer of list
-  call assert#Equal(
-        \ config#List()['toBuffer']('+','', ['a', 'foo']),
-        \ ["list=", 
-        \  "+string=a", 
-        \  "+string=foo"], "list to buffer")
-
- " test configuration editing in buffer
- call config#EditConfiguration({
-       \ 'onWrite' : library#Function('config_test#TestWrite'),
-       \ 'getData' : library#Function('config_test#TestData')
-       \ })
- " now we should be in a new split buffer and should change the configuration
- %s/b:string=b/b:string=c/g
- " save, this should reload configuration
- normal "ZZ"
- call assert#Equal(g:dummy,[{"a": "a"}, {"b":"c"}], "configuration read and write check")
-endfunction
-
-function! config_test#ToBufferFromBufferEq(v, msg)
-  let buffer = config#ToBuffer('  ', '', a:v)
-  call assert#Equal(a:v, config#FromBuffer(buffer,0,0, '  ','')[1], a:msg)
-endfunction
-
 function! config_test#Test()
   let m = expand('<sfile>').' '
 
-  let dict = {"a": {"b": 7}}
+  " GetOrSet
+  if (exists('g:test_value'))
+    unlet g:test_value
+  endif
+  call assert#Equal(config#GetOrSet('g:test_value',7), 7,m .'GetOrSet I')
+  let g:test_value = 8
+  call assert#Equal(config#GetOrSet('g:test_value', 7), 8, m.'GetOrSet II')
 
+  " RemoveByPath
+  let dict = {"a": {"b": 7}}
   let d = deepcopy(dict)
-  call config#RemoveByPath(d, "a.b")
+  call config#RemoveByPath(d, "a#b")
   call assert#Equal({}, d, m." RemoveByPath no keep")
 
   let d = deepcopy(dict)
-  call config#RemoveByPath(d, "a.b", 0)
+  call config#RemoveByPath(d, "a#b", 0)
   call assert#Equal({"a":{}}, d, m." RemoveByPath keep")
 
-  let tovl = config#TOVL()
+  let tovl = config#GetOrSet('g:tovl',{})
   try
     let g:tovl = {}
-    call config#SetG('config.types', library#EvalWhenRequested(library#Function('config#DefaultTypes')))
+    call config#SetG('config#types', library#EvalWhenRequested(library#Function('config#DefaultTypes')))
 
-    "call s:Dummy()
+    " call config_test#Serialization()
 
     " test serialization
     let tests = [
@@ -68,7 +45,7 @@ function! config_test#Test()
       unlet t
     endfor
 
-    call assert#Equal(['a','b'], config#Path('a.b'), m.'config#Path') 
+    call assert#Equal(['a','b'], config#Path('a#b'), m.'config#Path') 
 
     call assert#Equal('b', config#GetByPath({'a':'b'}, 'a'), m.'GetByPath')
     call assert#Equal('a', config#GetG('a#b#doesntexist', 'a'), m.'default')
@@ -128,6 +105,37 @@ function! config_test#Test()
   finally
     let g:tovl = tovl
   endtry
+endfunction
+
+function! config_test#Serialization()
+  " to buffer of dict
+  call assert#Equal(
+        \ config#Dictionary()['toBuffer']('+','', {'a': 'foo'}),
+        \ ["dictionary=", 
+        \  "+a:string=foo"], "dictionary to buffer")
+
+  " to buffer of list
+  call assert#Equal(
+        \ config#List()['toBuffer']('+','', ['a', 'foo']),
+        \ ["list=", 
+        \  "+string=a", 
+        \  "+string=foo"], "list to buffer")
+
+ " test configuration editing in buffer
+ call config#EditConfiguration({
+       \ 'onWrite' : library#Function('config_test#TestWrite'),
+       \ 'getData' : library#Function('config_test#TestData')
+       \ })
+ " now we should be in a new split buffer and should change the configuration
+ %s/b:string=b/b:string=c/g
+ " save, this should reload configuration
+ normal "ZZ"
+ call assert#Equal(g:dummy,[{"a": "a"}, {"b":"c"}], "configuration read and write check")
+endfunction
+
+function! config_test#ToBufferFromBufferEq(v, msg)
+  let buffer = config#ToBuffer('  ', '', a:v)
+  call assert#Equal(a:v, config#FromBuffer(buffer,0,0, '  ','')[1], a:msg)
 endfunction
 
 function! config_test#MergeTest(a,b)

@@ -2,7 +2,7 @@
 " a scratch buffer is a temporary buffer where the user can enter some text
 " It can be used to get commit messages, edit configuration options and so on
 
-function! tofl#scratch_buffer#KeepIntactLineNr()
+function! tovl#scratch_buffer#KeepIntactLineNr()
   let i = 0
   while getline(i)!= b:keepIntact && i < line('$')
     let i = i+1
@@ -24,16 +24,16 @@ endfunction
 "  getContent : callback returning lines
 "  cmds    : extra commands to be run (optional)
 "  buftype : ...
-function! tofl#scratch_buffer#ScratchBuffer(opts)
+function! tovl#scratch_buffer#ScratchBuffer(opts)
   let a:opts['name'] = get(a:opts,'name', 'strach_buffer_without_name')
   exec 'sp '.escape(a:opts['name'],' ')
   let b:settings = a:opts
   setlocal buftype=acwrite
-  command! -buffer -nargs=0 GetContents call tofl#scratch_buffer#GetContents()
-  command! -buffer -nargs=0 Help call tofl#scratch_buffer#Help()
+  command! -buffer -nargs=0 GetContents call tovl#scratch_buffer#GetContents()
+  command! -buffer -nargs=0 Help call tovl#scratch_buffer#Help()
 
   " setup write notification
-  au TOVLWrite BufWriteCmd <buffer> call tofl#scratch_buffer#Write()
+  au TOVLWrite BufWriteCmd <buffer> call tovl#scratch_buffer#Write()
 
   exec 'setlocal buftype='.get(a:opts, 'buftype', '')
 
@@ -51,7 +51,7 @@ endfunction
 
 " =========== utility functions ======================================
 
-function! tofl#scratch_buffer#Write()
+function! tovl#scratch_buffer#Write()
   if has_key(b:settings, 'onWrite')
     call library#Call(b:settings['onWrite'])
   else
@@ -59,7 +59,7 @@ function! tofl#scratch_buffer#Write()
   endif
 endfunction
 
-function! tofl#scratch_buffer#GetContents()
+function! tovl#scratch_buffer#GetContents()
   if has_key(b:settings, 'getContent')
     normal ggdG
     call append(0, library#Call(b:settings['getContent']))
@@ -68,14 +68,14 @@ function! tofl#scratch_buffer#GetContents()
   endif
 endfunction
 
-function! tofl#scratch_buffer#Help()
+function! tovl#scratch_buffer#Help()
   let help = ["use :GetContents to reload contents, ZZ or :w(q) to write and quit"
           \ ,""
           \ ,"Help for this scratch buffer:"
           \ ,"=======================================================","",""]
-    \ + library#Call(get(b:settings, 'help', "return []"))
-  call tofl#scratch_buffer#ScratchBuffer({
+    \ + library#Call(get(b:settings, 'help', []))
+  call tovl#scratch_buffer#ScratchBuffer({
         \ 'name' : "return Help of ".b:settings['name'],
-        \ 'getContent' : "return ".string(help)
+        \ 'getContent' : help
         \ })
 endfunction

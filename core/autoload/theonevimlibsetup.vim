@@ -13,12 +13,12 @@ function! theonevimlibsetup#Setup()
   " add runtime paths of contrib
   for dir in split(glob(expand('<sfile>:h').'/contrib/*'),"\n")
     if isdirectory(dir)
-      set runtimepath+=dir
+      "set runtimepath+=dir
     endif
   endfor
 
   " load plugins
-  call tofl#plugin_management#UpdatePlugins()
+  call tovl#plugin_management#UpdatePlugins()
 
   call config#SetG('tovl#setup', 1)
 

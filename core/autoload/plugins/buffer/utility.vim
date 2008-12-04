@@ -3,7 +3,7 @@ let s:file = expand('<sfile>')
 function! plugins#buffer#utility#PluginCreateDirOnBufWrite()
   let d = {
         \ 'Tags': ['buffer','demo'],
-        \ 'Info': "return ".string('create directories before writing files'),
+        \ 'Info': 'create directories before writing files',
         \ }
 
   function! d.Load()

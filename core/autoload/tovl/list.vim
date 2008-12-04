@@ -1,4 +1,4 @@
-function! tofl#list#Concat(list_of_lists)
+function! tovl#list#Concat(list_of_lists)
   let result = []
   for l in a:list_of_lists
     call extend(result, l)
@@ -7,7 +7,7 @@ function! tofl#list#Concat(list_of_lists)
 endfunction
 
 " returns the items beeing contained only in and not in b (might be slow)
-function! tofl#list#Difference(a,b)
+function! tovl#list#Difference(a,b)
   let result = []
   for i in a:a
     if index(a:b, i) == -1
@@ -15,4 +15,11 @@ function! tofl#list#Difference(a,b)
     endif
   endfor
   return result
+endfunction
+
+function! tovl#list#AddUnique(list, value)
+  if index(a:list, a:value) == -1
+    call add(a:list, a:value)
+  endif
+  return a:list
 endfunction

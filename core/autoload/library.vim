@@ -17,7 +17,7 @@ function! library#Exec(cmd)
     call writefile(lines, file)
     exec 'source '.file
     call delete(file)
-  else
+  elseif !empty(lines)
     exec lines[0]
   endif
 endfunction
@@ -26,9 +26,9 @@ endfunction
 function! library#ReadLazy(f,...)
   let opts = a:0 > 0 ? a:1 : {}
   if get(opts, 'join',0)
-    return 'return join(readfile('.string(a:f).'),"\n")'
+    return library#EvalWhenRequested(library#Function('return join(readfile('.string(a:f).'),"\n")'))
   else
-    return 'return readfile('.string(a:f).')'
+    return library#EvalWhenRequested(library#Function('return readfile('.string(a:f).')'))
   endif
 endfunction
 
@@ -140,43 +140,48 @@ function! library#Call(...)
   if (len(args) < 3)
     call add(args, {})
   endif
-  if t == 1
-    " function is a String, call exec
-    let ARGS = args[1]
-    let SELF = args[2]
-    exec args[0]
-  elseif t == 2
+  if t == 2
     " funcref: function must have been laoded
     return call(function('call'), args)
   elseif t == 4434
-    " pseudo function, let's load it..
     let Fun = args[0]['faked_function_reference']
-    if type(Fun) == 1
-      if !exists('*'.Fun)
-        let file = substitute(substitute(Fun,'#[^#]*$','',''),'#','/','g')
-        for path in split(&runtimepath,',')
-          let realfile = path.'/autoload/'.file.'.vim'
-          if filereadable(realfile)
-            exec 'source '.realfile
-            break
-          endif
-        endfor
-      endif
-      let Fun2 = function(Fun)
-    else
-      let Fun2 = Fun
-    endif
-    if has_key(args[0], 'args') " add args from closure
-      if get(args[0], 'evalLazyClosedArgs', 0)
-        let args[1] = map(args[0]['args'], 'library#EvalLazy(v:val)')+args[1]
+    if Fun[:len('return ')-1] == 'return ' || Fun[:len('call ')-1] == 'call '
+      " function is a String, call exec
+      let ARGS = args[1]
+      let SELF = args[2]
+      exec Fun
+    else 
+      " pseudo function, let's load it..
+      if type(Fun) == 1
+        if !exists('*'.Fun)
+          let file = substitute(substitute(Fun,'#[^#]*$','',''),'#','/','g')
+          for path in split(&runtimepath,',')
+            let realfile = path.'/autoload/'.file.'.vim'
+            if filereadable(realfile)
+              exec 'source '.realfile
+              break
+            endif
+          endfor
+        endif
+        let Fun2 = function(Fun)
       else
-        let args[1] = args[0]['args']+args[1]
+        let Fun2 = Fun
       endif
+      if has_key(args[0], 'args') " add args from closure
+        if get(args[0], 'evalLazyClosedArgs', 0)
+          let args[1] = map(args[0]['args'], 'library#EvalLazy(v:val)')+args[1]
+        else
+          let args[1] = args[0]['args']+args[1]
+        endif
+      endif
+      if has_key(args[0], 'self')
+        let args[2] = args[0]['self']
+      endif
+      let args[0] = Fun
+      return call(function('call'), args)
     endif
-    if has_key(args[0], 'self')
-      let args[2] = args[0]['self']
-    endif
-    let args[0] = Fun
-    return call(function('call'), args)
+  else
+    " no function, return the value
+    return args[0]
   endif
 endfunction

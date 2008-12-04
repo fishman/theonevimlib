@@ -5,7 +5,7 @@
 " 'loadAfter' : ['z' ] where x, y and z may be plugins or "virtual" targets
 " such as "setupmappings"
 
-function! tofl#plugin_management#PluginDict(p)
+function! tovl#plugin_management#PluginDict(p)
    exec "let d = ".a:p."()"
    " for convinience at the plugin name
    let d['pluginName'] = a:p
@@ -14,7 +14,7 @@ function! tofl#plugin_management#PluginDict(p)
    if has_key(d,'defaults') && !has_key(d, 'AddDefaultConfigOptions')
      function! d.AddDefaultConfigOptions(d)
        for k in keys(self.defaults)
-         call config#GetByPath(a:d, self.pluginName.'#'.k, {'default': self.defaults[k], 'set' : 1})
+         call config#GetByPath(a:d, self.pluginName.'#'.k, {'default': library#EvalLazy(self.defaults[k]), 'set' : 1})
        endfor
      endfunction
    endif
@@ -22,21 +22,21 @@ function! tofl#plugin_management#PluginDict(p)
 endfunction
 
 " return dict of loaded plugin
-function! tofl#plugin_management#Plugin(name)
+function! tovl#plugin_management#Plugin(name)
   return config#GetG('tovl#plugins#loaded#')[a:name]
 endfunction
 
 " loads, unloads plugins based on current configuration
-function! tofl#plugin_management#UpdatePlugins()
+function! tovl#plugin_management#UpdatePlugins()
   let loaded = config#GetG('tovl#plugins#loaded',{ 'default' : {}, 'set' :1})
   let loadedKey = keys(loaded)
   let cfg = config#Get('loadablePlugins', { 'default' : {}})
 
   " config says they should be active
-  let markedActive = tofl#plugin_management#PluginsFromDict([],cfg,"v > 0")
+  let markedActive = tovl#plugin_management#PluginsFromDict([],cfg,"v > 0")
 
-  let toload = tofl#list#Difference(markedActive, loadedKey)
-  let tounload = tofl#list#Difference(loadedKey, markedActive)
+  let toload = tovl#list#Difference(markedActive, loadedKey)
+  let tounload = tovl#list#Difference(loadedKey, markedActive)
 
   " try to unload plugins
   for p in tounload
@@ -56,7 +56,7 @@ function! tofl#plugin_management#UpdatePlugins()
 
   " try to load plugins and be silent, this will be done on startup as well
   for p in toload
-    let d = tofl#plugin_management#PluginDict(p)
+    let d = tovl#plugin_management#PluginDict(p)
     if has_key(d, 'Load')
       try
         call library#Call(d['Load'],[],d)
@@ -71,7 +71,7 @@ function! tofl#plugin_management#UpdatePlugins()
   endfor
 endfunction
 
-function! tofl#plugin_management#AllPluginFiles()
+function! tovl#plugin_management#AllPluginFiles()
   let list = []
   for path in split(&runtimepath,",")
     call extend(list, split(glob(path."/autoload/plugins/**/*.vim"),"\n"))
@@ -79,15 +79,15 @@ function! tofl#plugin_management#AllPluginFiles()
   return list
 endfunction
 
-function! tofl#plugin_management#PluginNamesFromFile(file)
+function! tovl#plugin_management#PluginNamesFromFile(file)
   return  map( filter(readfile(a:file),'v:val =~ '.string('^\s*fun[^\S]*\s\+\S\+#Plugin\%(\S*\)'))
         \ , 'matchstr(v:val,'.string('^\s*fun\S*\s\+\zs.*[^(]*\ze(').')')
 endfunction
 
-function! tofl#plugin_management#AllPlugins()
-  return tofl#list#Concat(
-        \ map(tofl#plugin_management#AllPluginFiles(),
-              \ 'tofl#plugin_management#PluginNamesFromFile(v:val)'))
+function! tovl#plugin_management#AllPlugins()
+  return tovl#list#Concat(
+        \ map(tovl#plugin_management#AllPluginFiles(),
+              \ 'tovl#plugin_management#PluginNamesFromFile(v:val)'))
 endfunction
 
 function! s:PluginsFromDict(path, dict, filter)
@@ -110,7 +110,7 @@ endfunction
 " 'path#PluginFoo' plugins.
 " filter: filter plugins based on exec expressions. "v == 1" will only give
 " you valid ones. "v > 0" means activated
-function! tofl#plugin_management#PluginsFromDict(path, dict, filter)
+function! tovl#plugin_management#PluginsFromDict(path, dict, filter)
   return map(s:PluginsFromDict([],a:dict,"v > 0"), 'join(v:val,"#")')
 endfunction
 
@@ -118,10 +118,10 @@ endfunction
 " if a plugin is marked active but does no longer exist mark it by 2 (instead of 1)
 " remove all entries set to 0 which are no longer present
 " add new plugins marked 0
-function! tofl#plugin_management#TidyUp(dict)
-  let all = tofl#plugin_management#AllPlugins()
-  let inactive = tofl#plugin_management#PluginsFromDict([], a:dict, "v == 0")
-  let markedActive = tofl#plugin_management#PluginsFromDict([], a:dict, "v > 0")
+function! tovl#plugin_management#TidyUp(dict)
+  let all = tovl#plugin_management#AllPlugins()
+  let inactive = tovl#plugin_management#PluginsFromDict([], a:dict, "v == 0")
+  let markedActive = tovl#plugin_management#PluginsFromDict([], a:dict, "v > 0")
 
   " mark as 2 when plugin is no longer present
   for p in markedActive
@@ -129,8 +129,8 @@ function! tofl#plugin_management#TidyUp(dict)
   endfor
 
   " remove not activeted plugins which do not exist
-  for p in tofl#list#Difference(inactive, all)
-    call config#DelByPath(a:dict, split(p, "#"))
+  for p in tovl#list#Difference(inactive, all)
+    call config#RemoveByPath(a:dict, split(p, "#"))
   endfor
 
   " add new plugins marked 0
@@ -146,19 +146,20 @@ endfunction
 " if you don't have very special needs, you only want to expose some
 " commands then use this function. It will be extended to remove mappings
 " automatically later on. Pass the additional key "cmd" which defines default
-" mappings
-function! tofl#plugin_management#DefaultPluginDictCmd(opts)
+" mappings, add the key filetype to run this command only when a specific
+" filetype has been set
+function! tovl#plugin_management#DefaultPluginDictCmd(opts)
   function! a:opts.Load()
-    let self.cmdPath = self['pluginName'].'#cmd'
-    let cmd = config#Get(self.cmdPath,"")
+    let cmd = config#Get(self['pluginName'].'#cmd',"")
     let self['cmdExecuted'] = cmd
-    call library#Exec(cmd)
+    if has_key(self,'filetype')
+      exec "au FileType ".self.filetype." call library#Exec(".string(cmd)")"
+      let g:g = "au FileType ".self.filetype." call library#Exec(".string(cmd)")"
+    else
+      call library#Exec(cmd)
+    endif
   endfunction
 
-  function! a:opts.AddDefaultConfigOptions(dict)
-      call config#GetByPath(a:dict, self.cmdPath,
-            \ {'set' :1, 'default' : library#Call(self['cmd']) })
-  endfunction
-
+  let a:opts['defaults'] = {'cmd' : a:opts['cmd'] }
   return a:opts
 endfunction
