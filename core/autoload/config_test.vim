@@ -30,14 +30,24 @@ function! config_test#ToBufferFromBufferEq(v, msg)
 endfunction
 
 function! config_test#Test()
+  let m = expand('<sfile>').' '
+
+  let dict = {"a": {"b": 7}}
+
+  let d = deepcopy(dict)
+  call config#DelByPath(d, "a.b")
+  call assert#Equal({}, d, m." DelByPath no keep")
+
+  let d = deepcopy(dict)
+  call config#DelByPath(d, "a.b", 0)
+  call assert#Equal({"a":{}}, d, m." DelByPath keep")
+
   let tovl = config#TOVL()
   try
     let g:tovl = {}
     call config#SetG('config.types', library#EvalWhenRequested(library#Function('config#DefaultTypes')))
 
     "call s:Dummy()
-
-    let m = expand('<sfile>').' '
 
     " test serialization
     let tests = [

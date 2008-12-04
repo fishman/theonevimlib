@@ -59,6 +59,24 @@ function! config#SetByPath(dict, path, value)
   return a:value
 endfunction
 
+function! config#DelByPath(dict, path, ...)
+  let removeEmptyDicts =  a:0 > 0 ? a:1 : 1
+  let path = config#Path(a:path)
+  let idx = 0
+  let head = path[0]
+  if has_key(a:dict, head)
+    if len(path) == 1
+      call remove(a:dict, head)
+    else
+      let v = a:dict[head]
+      call config#DelByPath(v, path[1:], removeEmptyDicts)
+      if removeEmptyDicts && empty(v)
+        call remove(a:dict, head)
+      endif 
+    endif
+  endif
+endfunction
+
 function! config#DefaultConfigFiles()
   " adding per directory project configuration files would be cool.
   " But maybe this is bad for security? Ask the user once and store md5sum?
@@ -604,14 +622,21 @@ function! config#EditConfiguration(opts)
     \ "It tells you how to use multiple (project specific) configuration files.",
     \ '',
     \ "If you have any questions, don't know where to start or how to add your code",
-    \ "write an email to marco-oweber@gmx.de (I'm also on irc.freenode.net, nick MarcWeber)"
+    \ "write an email to marco-oweber@gmx.de (I'm also on irc.freenode.net, nick MarcWeber)",
+    \ '',
+    \ "use :messages to see which plugins has been loaded"
     \ ]
 
+  " TODO improve syntax highlighting!
   call tofl#scratch_buffer#ScratchBuffer({
         \ 'name' : name,
         \ 'help': "return ".string(help),
         \ 'getContent' : "return config#ToBuffer(".string(s:indent).", '',library#Call(".string(a:opts['getData'])."))",
-        \ 'onWrite' : a:opts['onWrite'] })
+        \ 'onWrite' : a:opts['onWrite'],
+        \ 'cmds' : [
+            \ "for i in ['number', 'string', 'dictionary', 'list'] | exec 'syn match  Keyword '.string(i.'=') | endfor",
+            \ 'syn match  Identifier "^\s*\S\+:"' ]
+        \ })
 endfunction
 
 " uses config#EditConfiguration to open a scratch buffer in which you can edit
@@ -627,7 +652,8 @@ function! config#EditConfig(...)
   call config#EditConfiguration({
     \ 'name' : 'your editing config file '.file,
     \ 'onWrite' : library#Function('config#EditConfigWrite', {'args' : [file]}),
-    \ 'getData' : library#Function('config#EditConfigGetData', {'args' : [file]})
+    \ 'getData' : library#Function('config#EditConfigGetData', {'args' : [file]}),
+    \ 'buftype' : 'tovl_config'
     \ })
 endfunction
 
@@ -659,14 +685,11 @@ function! config#EditConfigGetData(file)
         call library#Call(d['AddDefaultConfigOptions'])
       endif
     endfor
-    " add all plugins so that the user can enable them
-    let all = tofl#plugin_management#AllPlugins()
-    let loadable = config#Get('loadablePlugins', {'default' : {}, 'set' : 1})
-    call filter(loadable, 'index(all, v:key) >= 0')
-    for p in all
-      let loadable[p] = get(loadable, p, 0)
-    endfor
-    call config#Set('loadablePlugins', loadable)
+    " update plugin list.. don't remove user stuff
+    call tofl#plugin_management#TidyUp(
+          \ config#Get('loadablePlugins', {'default' : {}, 'set' : 1}))
+    " should mark as dirty here to be sure. However the changes made by TidyUp
+    " are not important and will be done again
     call config#ResumeFlushing(a:file)
   endif
   return config#ConfigContents(a:file)

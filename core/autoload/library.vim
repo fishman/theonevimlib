@@ -43,9 +43,10 @@ endfunction
 " the result of the first suceeding function is returned
 function! library#Try(funcList,...)
   let errors=[]
-  for F in a:funcList
+  " using idx here to not get E705
+  for idx in range(0,len(a:funcList)-1)
     try
-      return call(function("library#Call"), [F] + [a:000])
+      return call(function("library#Call"), [a:funcList[idx]] + [a:000])
     catch /.*/
       call add(errors, v:exception)
     endtry

@@ -23,6 +23,7 @@ endfunction
 "  help  : callback returning additional information lines
 "  getContent : callback returning lines
 "  cmds    : extra commands to be run (optional)
+"  buftype : ...
 function! tofl#scratch_buffer#ScratchBuffer(opts)
   let a:opts['name'] = get(a:opts,'name', 'strach_buffer_without_name')
   exec 'sp '.escape(a:opts['name'],' ')
@@ -34,10 +35,13 @@ function! tofl#scratch_buffer#ScratchBuffer(opts)
   " setup write notification
   au TOVLWrite BufWriteCmd <buffer> call tofl#scratch_buffer#Write()
 
-  GetContents
-  " mark buffer as not modified
+  exec 'setlocal buftype='.get(a:opts, 'buftype', '')
 
+  GetContents
+
+  " mark buffer as not modified
   setlocal nomodified
+
   " run addittional commands
   for cmd in get(a:opts,'cmds',[])
     exec cmd
