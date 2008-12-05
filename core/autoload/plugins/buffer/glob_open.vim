@@ -3,7 +3,7 @@ function! plugins#buffer#glob_open#PluginGlobOpen()
   let d = {
         \ 'Tags': ['navigation', 'glob','open','edit'],
         \ 'Info': "open a file by glob pattern. Don't use it in big directories.",
-        \ 'cmd' : "noremap <m-g><m-o> :exec 'e 'plugins#buffer#glob_open#FileByGlobCurrentDir(input('glob open '))<cr>",
+        \ 'cmd' : "nnoremap <m-g><m-o> :exec 'e 'plugins#buffer#glob_open#FileByGlobCurrentDir(input('glob open '))<cr>",
         \ 'defaults' : {
               \ 'exclude' : ['v:val !~ '.string('\.o$\|\.hi$\|\.svn$\|.git$\|_darcs$$\|.darcs$\|.hg'),'!isdirectory(v:val)'],
               \ 'listMax' : 20
