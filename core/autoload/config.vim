@@ -614,9 +614,9 @@ endfunction
 "         onSave callback
 " TODO implement completion etc
 function! config#EditConfiguration(opts)
-  let name = get(a:opts, 'name', 'config')
-  let help = [ 
-    \ 'edit configuration file '.name,
+  let a:opts['name'] = get(a:opts, 'name', 'config')
+  let help = [
+    \ 'edit configuration file '.a:opts['name'],
     \ 'Start by enabling the example plugin by setting the number to 1',
     \ 'Then write the buffer. This should load the plugin and add default',
     \ 'configuration options (commandName and command).',
@@ -634,24 +634,38 @@ function! config#EditConfiguration(opts)
     \ "If you have any questions, don't know where to start or how to add your code",
     \ "write an email to marco-oweber@gmx.de (I'm also on irc.freenode.net, nick MarcWeber)",
     \ '',
-    \ "use :messages to see which plugins has been loaded"
+    \ "use :messages to see which plugins has been loaded",
+    \ "use :DiffDefaults to see how your configuration differs from the proposed one"
     \ ]
+    let a:opts['help'] = help
+    let a:opts['getContent'] = library#Function(
+              \ "return config#ToBuffer(".string(s:indent).", '',library#Call(".string(a:opts['getData'])."))")
 
+  call tovl#scratch_buffer#ScratchBuffer(a:opts)
+
+
+  " tweak buffer
+  "syntax:
   " TODO improve syntax highlighting!
-  call tovl#scratch_buffer#ScratchBuffer({
-        \ 'name' : name,
-        \ 'help': "return ".string(help),
-        \ 'getContent' : library#Function(
-              \ "return config#ToBuffer(".string(s:indent).", '',library#Call(".string(a:opts['getData'])."))"),
-        \ 'onWrite' : a:opts['onWrite'],
-        \ 'cmds' : [
-            \ "for i in ['number', 'string', 'dictionary', 'list'] | exec 'syn match  Keyword '.string(i.'=') | endfor",
-            \ 'syn match  Identifier "^\s*\S\+:"',
-            \ 'runtime! syntax/vim.vim',
-            \ 'setlocal autoindent'
-            \ ]
-        \ })
+  setlocal filetype=tovl_config
+  for i in ['number', 'string', 'dictionary', 'list'] | exec 'syn match  Keyword '.string(i.'=') | endfor
+  syn match  Identifier "^\s*\S\+:"
+  runtime! syntax/vim.vim
+  setlocal autoindent
+
+  if has_key(a:opts,'getDefaults')
+    command DiffDefaults :call config#DiffDefaults()<cr>
+  endif
 endfunction
+
+fun! config#DiffDefaults()
+  diffthis
+  call config#EditConfiguration({
+        \ 'name' : 'defaults of '.b:settings['name'],
+        \ 'getData' : b:settings['getDefaults']
+        \ })
+  diffthis
+endfun
 
 " uses config#EditConfiguration to open a scratch buffer in which you can edit
 " the cached configuration files.
@@ -667,7 +681,7 @@ function! config#EditConfig(...)
     \ 'name' : 'your editing config file '.file,
     \ 'onWrite' : library#Function('config#EditConfigWrite', {'args' : [file]}),
     \ 'getData' : library#Function('config#EditConfigGetData', {'args' : [file]}),
-    \ 'buftype' : 'tovl_config'
+    \ 'getDefaults' : library#Function('config#EditConfigGetDefault'),
     \ })
 endfunction
 
@@ -706,6 +720,17 @@ function! config#EditConfigGetData(file)
     call config#ResumeFlushing(a:file)
   endif
   return config#ConfigContents(a:file)
+endfunction
+
+function! config#EditConfigGetDefault(...)
+  let cfgDict = {}
+  let loaded = config#GetG('tovl#plugins#loaded',{ 'default' : {}, 'set' :1})
+  for p in values(loaded)
+    if (has_key(p, 'AddDefaultConfigOptions'))
+      call library#Call(p['AddDefaultConfigOptions'],[cfgDict],p)
+    endif
+  endfor
+  return cfgDict
 endfunction
 
 augroup TOVLWrite

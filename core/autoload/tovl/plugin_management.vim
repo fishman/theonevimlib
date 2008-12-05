@@ -159,7 +159,6 @@ function! tovl#plugin_management#DefaultPluginDictCmd(opts)
       call library#Exec(cmd)
     endif
   endfunction
-
-  let a:opts['defaults'] = {'cmd' : a:opts['cmd'] }
+  call config#SetByPath(a:opts, 'defaults#cmd', a:opts['cmd'])
   return a:opts
 endfunction

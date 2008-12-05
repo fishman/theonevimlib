@@ -35,8 +35,6 @@ function! tovl#scratch_buffer#ScratchBuffer(opts)
   " setup write notification
   au TOVLWrite BufWriteCmd <buffer> call tovl#scratch_buffer#Write()
 
-  exec 'setlocal buftype='.get(a:opts, 'buftype', '')
-
   GetContents
 
   " mark buffer as not modified
