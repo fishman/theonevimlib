@@ -363,7 +363,6 @@ function! tovl#ft#vimscript#vimfile#GetFuncLocation(addNonExisting)
   let func = matchstr(b,'\zs[#a-zA-Z0-9]*\ze$').matchstr(a,'^\zs[#a-zA-Z0-9]*\ze')
   let results = []
   let autofile_list = tovl#ft#vimscript#vimfile#ListOfAutoloadFiles()
-  call filter(autofile_list,'v:val =~ "list"')
   let keys = keys(autofile_list)
   for file in keys
     let functions = config#ScanIfNewer(

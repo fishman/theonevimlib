@@ -6,19 +6,19 @@
 " such as "setupmappings"
 
 function! tovl#plugin_management#PluginDict(p)
-   exec "let d = ".a:p."()"
-   " for convinience at the plugin name
-   let d['pluginName'] = a:p
+  try
+    " try returning loaded plugin first
+    return tovl#plugin_management#Plugin(a:p)
+  catch /.*/
+    let d = deepcopy(config#GetG('config#tovlPlugin'))
+    " for convinience at the plugin name
+    let d['pluginName'] = a:p
+    let d['pluginNameFlat'] = substitute(a:p,'#','_','g')
+    let d['s'] = "tovl#plugin_management#Plugin(".string(a:p).")"
 
-   " default implementation, set default values if they haven't been set
-   if has_key(d,'defaults') && !has_key(d, 'AddDefaultConfigOptions')
-     function! d.AddDefaultConfigOptions(d)
-       for k in keys(self.defaults)
-         call config#GetByPath(a:d, self.pluginName.'#'.k, {'default': library#EvalLazy(self.defaults[k]), 'set' : 1})
-       endfor
-     endfunction
-   endif
-   return d
+    " now load the plugin code
+    return {a:p}(d)
+  endtry
 endfunction
 
 " return dict of loaded plugin
@@ -56,18 +56,22 @@ function! tovl#plugin_management#UpdatePlugins()
 
   " try to load plugins and be silent, this will be done on startup as well
   for p in toload
-    let d = tovl#plugin_management#PluginDict(p)
-    if has_key(d, 'Load')
-      try
-        call library#Call(d['Load'],[],d)
-        let  loaded[p] = d
-        echom "loaded: ".p
-      catch /.*/
-        echom "loading of plugin ".p." failed due to exception ".v:exception
-      endtry
-    else
-      echom "loading of plugin ".p." failed, key 'Load' missing."
-    endif
+    try
+      let d = tovl#plugin_management#PluginDict(p)
+      if has_key(d, 'LoadPlugin')
+        try
+          call library#Call(d['LoadPlugin'],[],d)
+          let  loaded[p] = d
+          echom "loaded: ".p
+        catch /.*/
+          echom "loading of plugin ".p." failed due to exception ".v:exception
+        endtry
+      else
+        echom "loading of plugin ".p." failed, key 'Load' missing."
+      endif
+    catch /.*/
+      echom "loading of plugin ".p." failed, couldn't get plugin dict: ".v:exception
+    endtry
   endfor
 endfunction
 
@@ -111,7 +115,7 @@ endfunction
 " filter: filter plugins based on exec expressions. "v == 1" will only give
 " you valid ones. "v > 0" means activated
 function! tovl#plugin_management#PluginsFromDict(path, dict, filter)
-  return map(s:PluginsFromDict([],a:dict,"v > 0"), 'join(v:val,"#")')
+  return map(s:PluginsFromDict([],a:dict, a:filter), 'join(v:val,"#")')
 endfunction
 
 " tidies the dict up.
@@ -142,23 +146,148 @@ function! tovl#plugin_management#TidyUp(dict)
   return a:dict
 endfunction
 
-" simple default plugin implementation
-" if you don't have very special needs, you only want to expose some
-" commands then use this function. It will be extended to remove mappings
-" automatically later on. Pass the additional key "cmd" which defines default
-" mappings, add the key filetype to run this command only when a specific
-" filetype has been set
-function! tovl#plugin_management#DefaultPluginDictCmd(opts)
-  function! a:opts.Load()
-    let cmd = config#Get(self['pluginName'].'#cmd',"")
-    let self['cmdExecuted'] = cmd
-    if has_key(self,'filetype')
-      exec "au FileType ".self.filetype." call library#Exec(".string(cmd)")"
-      let g:g = "au FileType ".self.filetype." call library#Exec(".string(cmd)")"
-    else
-      call library#Exec(cmd)
+" this class prototype is written to global option config#tovlPlugin
+" this way you can override this in your .vimrc
+fun! tovl#plugin_management#NewPlugin()
+  let d = tovl#obj#NewObject('tovl plugin')
+
+  " they will be added automatically (see example, Load below)
+  let d.mappings = {}
+  let d.autocommands = {}
+
+  " they have been added and will be removed when unloading a plugin
+  let d.mappings_ = []
+  let d.aucommands_ = []
+
+  let d.defaults = {'mappings' : {}, 'autocommands' :{}}
+
+  " if filetype is given the mapping will be added by autocommand
+  " {'ft' :filetype, 'm': mode / "", 'lhs': keys="<c-x>", 'c': a:cmd=":echo 'foo'<cr>"}
+  fun! d.Map(opts)
+    if a:opts['lhs'] == ""
+      return
     endif
-  endfunction
-  call config#SetByPath(a:opts, 'defaults#cmd', a:opts['cmd'])
-  return a:opts
-endfunction
+    call add(self.mappings_, a:opts )
+    if a:opts['ft'] == ""
+      exec a:opts['m'].'noremap '.a:opts['lhs'].' '.a:opts['rhs']
+    else
+      call self.Au({'events' : 'BufNewFile,BufRead', 'pattern' : '*',
+        \ 'cmd' : a:opts['m'].'noremap <buffer> '.a:opts['lhs'].' '.a:opts['rhs']})
+    endif
+  endf
+
+  " {'events' : events,'pattern' : pattern, 'cmd' : command }
+  fun! d.Au(opts)
+    if empty(self.aucommands_)
+      exec 'augroup '.self.pluginNameFlat.'| augroup end'
+    endif
+    call add(self.aucommands_, a:opts)
+    exec 'au '.self.pluginNameFlat.' '.a:opts['events'].' '.a:opts['pattern'].' '.a:opts['cmd']
+  endf
+
+  " calls d.Load() if configuration is not empty
+  " it is empty after enabling it. If you save the next time defaults will be
+  " present
+  fun! d.LoadPlugin()
+    let self.cfg = config#Get(self.pluginName, {'default' : {}})
+    if !empty(self.cfg)
+      call self.Load()
+    endif
+  endfun
+
+  fun! d.Load()
+    let cfg = self.cfg
+    call config#AddToListUniq('config#onChange', library#Function(self['OnConfigChange'],{'self' : self}))
+    for name in keys(self.mappings)
+      try
+        let m = copy(self.mappings[name])
+        let m['lhs'] = cfg.mappings[name].lhs
+        let m['rhs'] = cfg.mappings[name].rhs
+        call self.Map(m)
+      catch /.*/
+        echom self.pluginName.": failed setting up mapping :".name." due to ".v:exception
+      endtry
+    endfor
+    for name in keys(self.autocommands)
+      try
+        let a = copy(self.autocommands[name])
+        let a['p'] = cfg.autocommands[name].pattern
+        call self.Au(a)
+      catch /.*/
+        echom self.pluginName.": failed setting up autocommand :".name." due to ".v:exception
+      endtry
+    endfor
+  endf
+
+  fun! d.Unload()
+    " remove mappings and augroup
+    if !empty(self.aucommands_)
+      exec 'aug! '.self.pluginNameFlat
+    endif
+    let bm = []
+    for m in self.mappings_
+      if m['ft'] == ""
+        try
+          exec m['m'].'unmap '.m['lhs']
+        catch /.*/
+          echom self.pluginName." error removing mapping ".m['lhs']." ".e:exception
+        endtry
+      else
+        " Remove mappings from buffers!
+        call add(bm, 'bufdo  if maparg('.string(m['lhs']).','.string(m['m']).',"") == '.string(m['rhs'])
+                  \ .'|'.m['m'].'unmap <buffer> '.m['rhs']
+                  \ .'|endif' )
+      endif
+    endfor
+    try
+      if !empty(bm)
+          " this might be slow if you have many buffers open ? mapping :e! % could be an alternative
+          " bufdo stops at the last buffer processed. There should be no erros. So go on to the buffer we started from
+          "exec 'bufdo '.join(bm, "|")
+          "bn
+      endif
+    catch /.*/
+      echom self.pluginName." error removing filetype mappings"
+    endtry
+    let d.mappings_ = []
+    let d.aucommands_ = []
+  endf
+
+  fun! d.OnConfigChange()
+    try
+      if self.cfg != config#Get(self.pluginName, {'default': {}})
+        call self.Unload()
+        call self.LoadPlugin()
+      endif
+    catch /.*/
+      echom "reloading of plugin ".self.pluginName." failed due to exception ".v:exception
+    endtry
+  endfun
+
+  fun! d.DoAddDefaults(dict, p, d)
+    for k in keys(a:d)
+      let v = a:d[k]
+      if type(v) == 4
+        " add subkeys
+        call self.DoAddDefaults(a:dict, a:p.'#'.k, v)
+      else 
+        call config#GetByPath(a:dict, a:p.'#'.k, {'default': library#EvalLazy(v), 'set' : 1})
+      endif
+      unlet v
+    endfor
+  endfun
+
+  fun! d.AddDefaultConfigOptions(d)
+    for name in keys(self.mappings)
+      let m = self.mappings[name]
+      let self.defaults.mappings[name] = {'lhs' : m['lhs'], 'rhs' : m['rhs']}
+    endfor
+    for name in keys(self.autocommands)
+      let a = self.autocommands[name]
+      let x ={'pattern' : a['pattern']}
+      let self.defaults.autocommands[name] = x
+    endfor
+    call self.DoAddDefaults(a:d, self.pluginName, self.defaults)
+  endf
+  return d
+endfun

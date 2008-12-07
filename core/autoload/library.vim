@@ -145,7 +145,9 @@ function! library#Call(...)
     return call(function('call'), args)
   elseif t == 4434
     let Fun = args[0]['faked_function_reference']
-    if Fun[:len('return ')-1] == 'return ' || Fun[:len('call ')-1] == 'call '
+    if type(Fun) == 1 
+        \ && (Fun[:len('return ')-1] == 'return ' 
+              \ || Fun[:len('call ')-1] == 'call ')
       " function is a String, call exec
       let ARGS = args[1]
       let SELF = args[2]

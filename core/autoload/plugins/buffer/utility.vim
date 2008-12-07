@@ -1,17 +1,15 @@
-let s:file = expand('<sfile>')
+function! plugins#buffer#utility#PluginCreateDirOnBufWrite(p)
+  let p = a:p
+  let p['Tags'] = ['buffer','demo']
+  let p['Info'] = 'create directories before writing files'
+  let p['defaults']['ask'] = 1
 
-function! plugins#buffer#utility#PluginCreateDirOnBufWrite()
-  let d = {
-        \ 'Tags': ['buffer','demo'],
-        \ 'Info': 'create directories before writing files',
-        \ }
+  let p['autocommands']['on_thing_handler'] = {
+        \ 'events' : 'BufWritePre',
+        \ 'pattern' : '*',
+        \ 'cmd' : "call ".p.s.".CreateDir()" }
 
-  function! d.Load()
-    " can't use self here :-(
-    exec "autocmd BufWritePre * call tofl#plugin_management#Plugin(".string(self['pluginName']).").CreateDir()"
-  endfunction
-
-  function! d.CreateDir()
+  function! p.CreateDir()
     let dir = expand('%:h')
     let cfg = config#Get(self.pluginName, {'default' : {}})
     if !isdirectory(dir) && dir != ""
@@ -22,9 +20,8 @@ function! plugins#buffer#utility#PluginCreateDirOnBufWrite()
         endif
       endif  
       call mkdir(dir, 'p')
-     endif
+    endif
   endfunction
 
-  let d['defaults'] = { 'ask' : 1 }
-  return d
+  return p
 endfunction

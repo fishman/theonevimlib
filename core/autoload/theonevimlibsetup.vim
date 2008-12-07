@@ -10,6 +10,8 @@ function! theonevimlibsetup#Setup()
   call config#SetG('config#files', library#Call(F,[]))
   call config#SetG('config#types', library#EvalWhenRequested(library#Function('config#DefaultTypes')))
 
+  call config#GetG('config#tovlPlugin', {'set' : 1, 'default' : tovl#plugin_management#NewPlugin()})
+
   " add runtime paths of contrib
   for dir in split(glob(expand('<sfile>:h').'/contrib/*'),"\n")
     if isdirectory(dir)

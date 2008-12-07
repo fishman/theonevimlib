@@ -32,8 +32,8 @@
 " Note: using # as separator to allow keys such as www.company.foo which
 " could be a plugin directory.
 
-function! config#AddToList(path, v)
-  call add(config#GetG(a:path, {'set' : 1, 'default' : []}),a:v)
+function! config#AddToListUniq(path, v)
+  call tovl#list#AddUnique(config#GetG(a:path, {'set' : 1, 'default' : []}),a:v)
 endfunction
 
 function! config#FireEvent(path, ...)
@@ -261,7 +261,7 @@ function! config#FlushConfig(configFile, assumeDirty)
       echoe "flushing configuration file ".a:configFile." failed!"
     else
       call config#SetG(dirtyP, 0)
-      call config#FireEvent('config.onChange')
+      call config#FireEvent('config#onChange')
     endif
     return 1
   else
@@ -411,10 +411,12 @@ function! config#String()
   let d = {}
   function d.toBuffer(sp,ind,s)
     let lines = split(a:s,"\n")
-    if len(lines) > 1
-      return ['string='] + map(lines, string(a:ind.a:sp).'.v:val')
-    else
+    if empty(lines)
+      return ['string=']
+    elseif len(lines) == 1
       return ['string='.lines[0]]
+    else
+      return ['string='] + map(lines, string(a:ind.a:sp).'.v:val')
     endif
   endfunction
   function d.fromBuffer(lines, idx, currInd, sp, ind)
@@ -426,62 +428,6 @@ function! config#String()
       let lines2 = []
       while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
         call add(lines2, a:lines[idx][len(next_ind):])
-        let idx = idx+1
-      endwhile
-      return [idx, join(lines2, "\n")]
-    else
-      return [idx, rest]
-    endif
-    let rest = s:PrefixMatch('string=', a:lines[a:idx][(a:currInd):])
-    let idx = a:idx +1
-    let next_ind = a:ind.a:sp
-    if idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
-      " multiple lines
-      let lines2 = []
-      while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
-        call add(lines2, a:lines[idx][len(next_ind)+1:])
-        let idx = idx+1
-      endwhile
-      return [idx, join(lines2, "\n")]
-    else
-      return [idx, rest]
-    endif
-    let rest = s:PrefixMatch('string=', a:lines[a:idx][(a:currInd):])
-    let idx = a:idx +1
-    let next_ind = a:ind.a:sp
-    if idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
-      " multiple lines
-      let lines2 = []
-      while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
-        call add(lines2, a:lines[idx][len(next_ind)+1:])
-        let idx = idx+1
-      endwhile
-      return [idx, join(lines2, "\n")]
-    else
-      return [idx, rest]
-    endif
-    let rest = s:PrefixMatch('string=', a:lines[a:idx][(a:currInd):])
-    let idx = a:idx +1
-    let next_ind = a:ind.a:sp
-    if idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
-      " multiple lines
-      let lines2 = []
-      while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
-        call add(lines2, a:lines[idx][len(next_ind)+1:])
-        let idx = idx+1
-      endwhile
-      return [idx, join(lines2, "\n")]
-    else
-      return [idx, rest]
-    endif
-    let rest = s:PrefixMatch('string=', a:lines[a:idx][(a:currInd):])
-    let idx = a:idx +1
-    let next_ind = a:ind.a:sp
-    if idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
-      " multiple lines
-      let lines2 = []
-      while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
-        call add(lines2, a:lines[idx][len(next_ind)+1:])
         let idx = idx+1
       endwhile
       return [idx, join(lines2, "\n")]
@@ -566,9 +512,12 @@ endfunction
 function! config#Dictionary()
   let d = {}
   function! d.toBuffer(sp, ind, l)
-    let new_ind = string(a:ind.a:sp)
-    return ['dictionary='] + tovl#list#Concat(
-        \ values(map(copy(a:l), 's:DictionaryHelper('.new_ind.',v:key, config#ToBuffer('.string(a:sp).','.new_ind.',v:val))')))
+    let new_ind = a:ind.a:sp
+    let res = []
+    for k in sort(keys(a:l))
+      call extend(res, s:DictionaryHelper(new_ind, k, config#ToBuffer(a:sp,new_ind,a:l[k])))
+    endfor
+    return ['dictionary='] + res
   endfunction
   function d.fromBuffer(lines, idx, currInd, sp, ind)
     let rest = s:PrefixMatch('dictionary=', a:lines[a:idx][(a:currInd):])
@@ -654,7 +603,7 @@ function! config#EditConfiguration(opts)
   setlocal autoindent
 
   if has_key(a:opts,'getDefaults')
-    command DiffDefaults :call config#DiffDefaults()<cr>
+    command! DiffDefaults :call config#DiffDefaults()<cr>
   endif
 endfunction
 
@@ -707,12 +656,18 @@ function! config#EditConfigGetData(file)
   if a:file == config#GetG('config#files')[0]
     call config#StopFlushing(a:file)
     let cfgDict = config#ConfigContents(a:file)
-    " editing main config, ask plugins to add their default options
-    let loaded = config#GetG('tovl#plugins#loaded',{ 'default' : {}, 'set' :1})
-    for p in values(loaded)
-      if (has_key(p, 'AddDefaultConfigOptions'))
-        call library#Call(p['AddDefaultConfigOptions'],[cfgDict],p)
-      endif
+    " editing main config,
+    " ask plugins to add their default options.
+    let toload = tovl#plugin_management#PluginsFromDict([],cfgDict['loadablePlugins'],"v > 0")
+    for pl in toload
+      try
+        let p = tovl#plugin_management#PluginDict(pl)
+        if (has_key(p, 'AddDefaultConfigOptions'))
+          call library#Call(p['AddDefaultConfigOptions'],[cfgDict],p)
+        endif
+      catch /.*/
+        echom "plugin ".pl." threw an exception while adding defaults:".v:exception
+      endtry
     endfor
     " update plugin list.. don't remove user stuff
     let d = tovl#plugin_management#TidyUp(

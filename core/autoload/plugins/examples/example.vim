@@ -1,66 +1,47 @@
-" link-doc: ./exmple.txt
-" a basic plugin should define the following keys:
+" This example is the most simple one
+" just define a user interface with one mapping echoing a customizable string
 
-" load:   this code will run by exec to setup plugin stuff.
-" unload: this code should do the opposite. [optional]
-" info:   some short text about whot the plugin is supposed to do
-" AddDefaultConfigOptions: Use this to add default configuration options
-"                          be careful to not override user changes!
-"                          Will be called before the main configuration is
-"                          shown for all activated plugins
+function! plugins#examples#example#PluginExample(p)
+  " the default implementation of a:p from which we inherit 
+  " can be found in tovl#plugin_management#NewPlugin() [1]
 
-function! plugins#example#PluginSimpleCommandExample()
-  return {
-  \ 'load': 'call plugins#example#Load()',
-  \ 'unload': 'call plugins#example#Unload()',
-  \ 'info': string('basic plugin demo'),
-  \ 'tags' : ['example','demo']
-  \ 'AddDefaultConfigOptions' : "call plugins#example#AddDefaultConfigOptions()"
-  \ }
+  " some general information about this plugin
+  let p = a:p
+  let p['Tags'] = ['example','demo']
+  let p['Info'] = 'basic plugin demo showing how to override things'
+
+  " == setting up default options ==
+  let p['defaults']['string'] = "Hello!"
+  " ft = filetype: empty = all
+  " m = mode: "" = all
+  " lhs, rhs, you know them (:h map)
+  " self.s is a string representing this plugin (-> tovl#plugin_management#PluginDict())
+  let p['mappings']['helloworld'] 
+    \ = {'ft' : '', 'm':'n', 'lhs' : '<leader>hw', 'rhs' : ':echo '.p.s.'.cfg["string"]<cr>' }
+  " == end                        ==
+
+  let child = {}
+  " these three functions only show that they exist :-)
+  fun! child.vl#lib#vimscript#scriptsettings#Load()
+    echom self.pluginName.": loading? yipiee!"
+    call self.vl#lib#vimscript#scriptsettings#Load()
+    echom self.pluginName.": loaded"
+  endf
+  fun! child.Unload()
+    echom self.pluginName.": unloaded! goodbye!"
+    call self.Parent_Unload()
+  endf
+  fun! child.OnConfigChange()
+    echom self.pluginName.": My configuration has changed!"
+    call self.Parent_OnConfigChange()
+  endf
+
+  return p.createChildClass(p.pluginName, child)
 endfunction
 
-function! plugins#example#Load()
-  call config#AddToList('config#onChange', library#Function('plugins#example#OnChange'))
 
-  echom "loading example plugin stub"
-  let g:example_loaded = 1
-  let d = config#Get('example', {'default' : {}})
+" [1]
+" you'll find more info about this minimal 
+" duck typing when following tovl#obj#NewObject()
 
-  " make a copy of the settings to get to know wether something has changed
-  call config#SetG('plugins#example#opts', deepcopy(d))
-
-  let cmdName = get(d,'commandName','ExamplePluginHW')
-
-  " remember command name so that we can remove it again..
-  call config#SetG('plugins#example#cmdName',cmdName)
-
-  exec 'command! '.cmdName.' '.get(d,'command','echo "unset"')
-endfunction
-
-function! plugins#example#Unload()
-  echom "unloading example plugin stub"
-  let g:example_loaded = 0
-  try
-    exec 'delc '.config#GetG('plugins#example#cmdName')
-  catch /.*/
-  endtry
-endfunction
-
-function! plugins#example#AddDefaultConfigOptions()
-  let g:g = "ward"
-  let d = config#Get('example', {'default' : {}, 'set' :1})
-  if !has_key(d, 'commandName')
-    call config#Set('example#commandName',"ExamplePluginHW")
-  endif
-  if !has_key(d, 'command')
-    call config#Set('example#command', "echo ".string("hello world to you from example plugin"))
-  endif
-endfunction
-
-function! plugins#example#OnChange()
-  if config#GetG('plugins#example#opts') != config#Get('example', {})
-    " options have changed, reload
-    call plugins#example#Unload()
-    call plugins#example#Load()
-  endif
-endfunction
+" also have a look at the move_copy plugin to see how you can add commands

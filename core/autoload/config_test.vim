@@ -31,11 +31,12 @@ function! config_test#Test()
           \ 20,
           \ "abc",
           \ "ab\nc",
+          \ "",
           \ [1,2,3],
           \ ["a","b","c"],
           \ {"a":"A", "b":"B"},
           \ {"a":[1,2,3], "b":"B"},
-          \ {"a":{"a":[1,2,3], "b":"B"},"b":"B"},
+          \ {"a":{"a":[1,2,3], "b":"B"},"b":"B","foo":""},
           \ library#Function('doesnt#exist')
           \ ]
     "for i in range(0,len(tests)-1)
@@ -44,6 +45,7 @@ function! config_test#Test()
       call config_test#ToBufferFromBufferEq(t, m." ".library#Type(t))
       unlet t
     endfor
+    return 
 
     call assert#Equal(['a','b'], config#Path('a#b'), m.'config#Path') 
 
