@@ -1,3 +1,7 @@
+" Both the FixPrefixesOfAutoloadFunctions command and mapping are experimental 
+" For example it tries to fx' fun!  dict.Name() which is wrong
+" However you can always just use undo..
+
 function! plugins#filetype#vim#vl_repo#PluginVL_RepoStuff(p)
   let p = a:p
   let p['Tags'] = ['filetype','vimscript']

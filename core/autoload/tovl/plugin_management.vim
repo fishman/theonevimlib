@@ -5,6 +5,10 @@
 " 'loadAfter' : ['z' ] where x, y and z may be plugins or "virtual" targets
 " such as "setupmappings"
 
+fun! s:Log(level, msg)
+  call tovl#log#Log("tovl#plugin_management",a:level, a:msg)
+endf
+
 function! tovl#plugin_management#PluginDict(p)
   try
     " try returning loaded plugin first
@@ -23,7 +27,7 @@ endfunction
 
 " return dict of loaded plugin
 function! tovl#plugin_management#Plugin(name)
-  return config#GetG('tovl#plugins#loaded#')[a:name]
+  return config#GetG('tovl#plugins#loaded')[a:name]
 endfunction
 
 " loads, unloads plugins based on current configuration
@@ -45,12 +49,12 @@ function! tovl#plugin_management#UpdatePlugins()
       try
         call library#Call(d['Unload'],[],d)
         call remove(loaded, p)
-        echom "unloaded:".p
+        call s:Log(1,"unloaded:".p)
       catch /.*/
-        echom "unloading of plugin ".p." failed due to exception ".v:exception
+        call s:Log(0,"unloading of plugin ".p." failed due to exception ".v:exception)
       endtry
     else
-      echom "unloading of plugin ".p." failed, not implemented."
+      call s:Log(0,"unloading of plugin ".p." failed, not implemented.")
     endif
   endfor
 
@@ -62,15 +66,15 @@ function! tovl#plugin_management#UpdatePlugins()
         try
           call library#Call(d['LoadPlugin'],[],d)
           let  loaded[p] = d
-          echom "loaded: ".p
+          call s:Log(1, "loaded: ".p)
         catch /.*/
-          echom "loading of plugin ".p." failed due to exception ".v:exception
+          call s:Log(0, "loading of plugin ".p." failed due to exception ".v:exception)
         endtry
       else
-        echom "loading of plugin ".p." failed, key 'Load' missing."
+        call s:Log(0, "loading of plugin ".p." failed, key 'Load' missing.")
       endif
     catch /.*/
-      echom "loading of plugin ".p." failed, couldn't get plugin dict: ".v:exception
+      call s:Log(0, "loading of plugin ".p." failed, couldn't get plugin dict: ".v:exception)
     endtry
   endfor
 endfunction
@@ -161,18 +165,36 @@ fun! tovl#plugin_management#NewPlugin()
 
   let d.defaults = {'mappings' : {}, 'autocommands' :{}}
 
+  " args: level, msg
+  fun! d.Log(...)
+    call call('tovl#log#Log', [self.pluginName]+a:000)
+  endf
+
+  fun! d.LogExec(level, pre, cmd)
+    call self.Log(a:level, a:pre.' '.a:cmd)
+    exec a:cmd
+  endf
+
   " if filetype is given the mapping will be added by autocommand
   " {'ft' :filetype, 'm': mode / "", 'lhs': keys="<c-x>", 'c': a:cmd=":echo 'foo'<cr>"}
   fun! d.Map(opts)
-    if a:opts['lhs'] == ""
+    let opts = copy(a:opts)
+    let opts['lhs'] = substitute(opts['lhs'], '<leader>', get(self.cfg, 'mapleader', '\\'),'')
+    if opts['lhs'] == ""
       return
     endif
-    call add(self.mappings_, a:opts )
-    if a:opts['ft'] == ""
-      exec a:opts['m'].'noremap '.a:opts['lhs'].' '.a:opts['rhs']
+    call add(self.mappings_,opts )
+    if get(opts,'ft','') == ""
+     call self.LogExec(1, 'mapping : ',opts['m'].'noremap '.opts['lhs'].' '.opts['rhs'])
     else
-      call self.Au({'events' : 'BufNewFile,BufRead', 'pattern' : '*',
-        \ 'cmd' : a:opts['m'].'noremap <buffer> '.a:opts['lhs'].' '.a:opts['rhs']})
+      if opts['ft'] == 'quickfix'
+        " special case quickfix
+        call self.Au({'events' : 'QuickFixCmdPost', 'pattern' : '*',
+          \ 'cmd' : opts['m'].'noremap <buffer> '.opts['lhs'].' '.opts['rhs']})
+      else
+        call self.Au({'events' : 'FileType', 'pattern' : get(opts,'pattern','*'),
+          \ 'cmd' : opts['m'].'noremap <buffer> '.opts['lhs'].' '.opts['rhs']})
+      endif
     endif
   endf
 
@@ -182,7 +204,15 @@ fun! tovl#plugin_management#NewPlugin()
       exec 'augroup '.self.pluginNameFlat.'| augroup end'
     endif
     call add(self.aucommands_, a:opts)
-    exec 'au '.self.pluginNameFlat.' '.a:opts['events'].' '.a:opts['pattern'].' '.a:opts['cmd']
+    call self.LogExec(1, 'autocommand: ','au '.self.pluginNameFlat.' '.a:opts['events'].' '.a:opts['pattern'].' '.a:opts['cmd'])
+  endf
+
+  fun! d.Debug(n, f)
+    if get(self.cfg, a:n, 0)
+      debug return call(a:f,[],self)
+    else
+      return call(a:f,[],self)
+    endif
   endf
 
   " calls d.Load() if configuration is not empty
@@ -190,8 +220,13 @@ fun! tovl#plugin_management#NewPlugin()
   " present
   fun! d.LoadPlugin()
     let self.cfg = config#Get(self.pluginName, {'default' : {}})
+    if get(self.cfg,'logAll',0)
+      " hacky, but works :-)
+      let log = tovl#log#GetLogger()
+      let log.whiteList .= '| a:context[:'.(len(self.pluginName)-1).'] == '.string(self.pluginName)
+    endif
     if !empty(self.cfg)
-      call self.Load()
+      call self.Debug('debugLoad', self.Load)
     endif
   endfun
 
@@ -205,7 +240,7 @@ fun! tovl#plugin_management#NewPlugin()
         let m['rhs'] = cfg.mappings[name].rhs
         call self.Map(m)
       catch /.*/
-        echom self.pluginName.": failed setting up mapping :".name." due to ".v:exception
+        call self.Log(0, self.pluginName.": failed setting up mapping :".name." due to ".v:exception)
       endtry
     endfor
     for name in keys(self.autocommands)
@@ -214,7 +249,7 @@ fun! tovl#plugin_management#NewPlugin()
         let a['p'] = cfg.autocommands[name].pattern
         call self.Au(a)
       catch /.*/
-        echom self.pluginName.": failed setting up autocommand :".name." due to ".v:exception
+        call self.Log(0, self.pluginName.": failed setting up autocommand :".name." due to ".v:exception)
       endtry
     endfor
   endf
@@ -230,7 +265,7 @@ fun! tovl#plugin_management#NewPlugin()
         try
           exec m['m'].'unmap '.m['lhs']
         catch /.*/
-          echom self.pluginName." error removing mapping ".m['lhs']." ".e:exception
+          call self.Log(0, self.pluginName." error removing mapping ".m['lhs']." ".e:exception)
         endtry
       else
         " Remove mappings from buffers!
@@ -247,10 +282,10 @@ fun! tovl#plugin_management#NewPlugin()
           "bn
       endif
     catch /.*/
-      echom self.pluginName." error removing filetype mappings"
+      call self.Log(0, self.pluginName." error removing filetype mappings ".v:exception)
     endtry
-    let d.mappings_ = []
-    let d.aucommands_ = []
+    let self.mappings_ = []
+    let self.aucommands_ = []
   endf
 
   fun! d.OnConfigChange()
@@ -260,7 +295,7 @@ fun! tovl#plugin_management#NewPlugin()
         call self.LoadPlugin()
       endif
     catch /.*/
-      echom "reloading of plugin ".self.pluginName." failed due to exception ".v:exception
+      call self.Log(0, "reloading of plugin ".self.pluginName." failed due to exception ".v:exception)
     endtry
   endfun
 

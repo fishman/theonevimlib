@@ -13,7 +13,10 @@
 2.  Open the buffer
 3.  Using the buffer
 4.  What is in the buffer?
-5.  Diffing options
+5.  Diffing options (backing up and so on)
+6.  Plugin documentation
+
+24. Tutorial
 
 (Also read |tovl-why|)
 
@@ -71,6 +74,9 @@
   The default reaction is unload and load again. (This works more or less
   depending on plugin implementation)
 
+  if you set the lhs or pattern of a mapping or au command to an empty string
+  it will be disabled
+
   *tovl-config-special-keys* :
    You can add the following keys below each Plugin*:dictionary= line
       debugLoad:number=1 to any plugin configuration to start the vim debugger on Load()
@@ -83,30 +89,60 @@
 ==============================================================================
 5.  Diffing options
 
-    edit configuration file '.a:opts['name']
-    Start by enabling the example plugin by setting the number to 1
-    Then write the buffer. This should load the plugin and add default
-    configuration options (commandName and command).
-    each time you change the settings and write them the plugin will get notified
-    about those changes and will reload itself. Try running the command ExamplePluginHW
-    and watch it changing..
+  There is the command *DiffDefaults* which opens a new configuration file
+  only adding defaults of the activated plugins. This way you can find changes
+  and updates easily.. 
+
+  You can make a backup of your configuration files by either backing up the
+  file itself or by copy pasting the buffer contents somewhere else.
+
+  In most cases undo is enough.
+
+==============================================================================
+6.  Plugin documentation
+
+  Where can I find more information about a particular plugin?
+  Q: How would like this information to be presented?
+    for now have a look at the source code, please. TOVL is still work in
+    progress. (-> |tovl-contribute|)
+    By following the dictionary keys within all autoload directories
+    (runtimepath) you'll find the right file
+    (TODO: Create a mapping)
+
+==============================================================================
+24. Tutorial *tovl-config-tutorial*
+
+    Installation: setup runtimepath (See |tovl-update|)
+
+    Open the configuration file :TOVLConfig
+
+    Start by enabling the example plugin "PluginExample".
+    You do this by replacing the number=0 by number=1
+
+    Write the buffer (:w). This should load the plugin.
+
+    Refresh the buffer (:e! %)
+
+    You'll notice that a plugins:dictionary= section has appeared.
+    Customize the settings lhs and string but keep the rhs as is.
+    Now write again (:w) You should now see the example plugin telling
+    you that it has been loaded.
+
+    Normally plugins are not that verbose. (See |tovl-logging|)
+
+    Try the mapping (\hw) and the command (:Example)
+    You should see "Hello!" beeing echoed.
+
+    Each time you change the settings and write the buffer the plugin will get notified.
+    It tries to reload itself. Play with the string setting.
+
+    Now its time to try the (:DiffDefaults) command.
+    It adds the default options of all enabled plugins to the buffer.
+    You can find no longer used plugin configurations easily this way.
     
-    If you remove the options (commandName and command) the plugin will add them
-    for you again. This behaviour is plugin dependand.
-    
-    Maybe you want to have a look at core/autoload/example.vim now?
-    Also make sure you've read the head comments in core/autoload/config.vim
-    It tells you how to use multiple (project specific) configuration files.
-    
-    If you have any questions, don't know where to start or how to add your code
-    write an email to marco-oweber@gmx.de (I'm also on irc.freenode.net, nick MarcWeber)
-    
-    use :messages to see which plugins has been loaded
-    use :DiffDefaults to see how your configuration differs from the proposed one
-    
-    You can add the following keys to any plugins:
-    
-    If you set lhs or pattern to an empty string no au/ mapping will be added
-    
-    You can add mapleader:string=\ to set a different mapleader for this plugin only
-    
+    If you remove the options (commandName and command) the plugin will readd
+    them. Disabling commands is done by making the lhs empty.
+
+    Where to go from here? Read the whole documentation
+    |tovl-config-buffer.txt| and |tovl.txt|. Then tell me what you liked and
+    what caused trouble (|tovl-contact|).

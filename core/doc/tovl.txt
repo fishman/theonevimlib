@@ -9,6 +9,9 @@
   !First of all: I need your help to make this a big success!
 
 ==============================================================================
+
+You want to see TOVL in action? Visit the |tovl-config-tutorial|
+
 1. Contents						*tovl-contents*  {{{1
 
 1.  Contents  .............................................|tovl-contents|
@@ -42,6 +45,8 @@
 
 10.  TOVL FUNCTION REFERENCE (TODO)
       list of TOVL functions you should know about.
+
+100. wish-list
 
 ==============================================================================
 2. Why and what is TOVL					*tovl-why*  {{{1
@@ -87,6 +92,7 @@
   To install TOVL simply add this to your .vimrc
     set runtimepath+=<pathtotovl>/core
   
+  *tovl-contribute*
   You can contribute in various ways:
     a) tell me what you (dis)like
     b) send (git) patches or tell me to pull from somewhere
@@ -96,8 +102,12 @@
   risk. Anyway you have to trust me ;-)
 
 ----------------------
+  *tovl-contact*
   contact: (add your address as well if you like)
   MarcWeber on irc.freenode.org or mail: marco-oweber@gmx.de
+
+  If this project takes of we'll either move discussion to vim-users (if there
+  is low traffic only) or create a new mailinglist..
 ==============================================================================
 4.  TOVL and plugin configuration                          *tovl-config* {{{1
 
@@ -191,7 +201,7 @@ TOVL TESTS						*tovl-tests* {{{2
     be automatic test runners in the future.
 
 TOVL TYPES						*tovl-type* {{{2
-    I was faced by a problem (-> |tovl-function-references|). Therefor
+    I was faced by a problem (-> |tovl-function-references|). Therefore
     I had to extend the vim type system. (See |type()|)
     This is done by adding special keys to a dictionary to indicate it is not
     an arbitrary dictionary but a different type. see library#Type()
@@ -295,15 +305,19 @@ TOVL ....
   Have a look at the core/autoload/plugins/examples/example.vim
   file. (TODO)
 
-  A TOVL plugin basically is an object |tovl-object| having these methods:
+  A TOVL plugin is a |tovl-object| having these methods at least:
     Load()      : this setups the plugin
     Unload()    : this unloads the plugin
-    Map         : adds a mapping [1]
-    Au          : adds an au command [2]
+
+    Map()       : adds a mapping [1]
+    Au()        : adds an au command [2]
 
   less important:
     LoadPlugin(): internal, this calls Load
     Log(level, msg): |tovl-logging|
+    LogExec(level, prefix, cmd): Use this function to setup any user
+                                interaction (such as commands) [3]
+    OnConfigChange(): This is registered as config change notification handler
     AddDefaultConfigOptions(): This adds default options to the configuration
                                Consider using self['default']['key'] = value
                                instead.
@@ -311,11 +325,29 @@ TOVL ....
   Both [1] and [2] are remembered. The plugin tries to remove those mappings
   on unload automatically. See core/autoload/tovl/plugin_management.vim.
 
+  [3] users will be thankful because they can debug trouble more easily
+
   LoadPlugin() automatically gets a self.cfg dict from configuration.
-  Hower this conflicts with *tovl-config-merge* . So please use
+  Hower this conflicts with |tovl-config-merge| . So please use
   config#Get(self.pluginName.'#mypath#opt') instead if you feel that someone
   would like to merge options here for now. (Maybe the implementation should
   be enhanced..)
+
+==============================================================================
+10.  TOVL FUNCTION REFERENCE (TODO)
+      list of TOVL functions you should know about.
+
+==============================================================================
+100. wish-list
+
+  * plugin dependencies. A depends on B and causes loading of B (thereby
+    revealing its config options)
+  * order of loading. Add options that one plugin is loaded before another.
+  * add completion stuff to the config editor
+  * At least add a command jumping to the plugin source code or help document
+  * ...
+
+  You want to help? See |tovl-contribute|.
 
 ==============================================================================
 Modelines: {{{1

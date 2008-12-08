@@ -25,7 +25,7 @@ function! plugins#buffer#move_copy#PluginMoveCopyFile(p)
     delc ContinueWorkOnCopy
     call self.Parent_Unload()
   endf
-  return p.createChildClass(p.pluginName, child)
+  return p.createChildClass(child)
 endfunction
 
 fun! plugins#buffer#move_copy#RenameFile(newname)

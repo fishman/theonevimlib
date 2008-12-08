@@ -23,3 +23,14 @@ function! tovl#list#AddUnique(list, value)
   endif
   return a:list
 endfunction
+
+fun! tovl#list#Uniq(list)
+  let i = len(a:list)-1
+  while i > 0
+    if index(a:list, a:list[i]) < i
+      call remove(a:list, i)
+    endif
+    let i = i -1
+  endwhile
+  return a:list
+endf

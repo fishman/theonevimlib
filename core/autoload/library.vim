@@ -41,6 +41,10 @@ endfunction
 "|        exec GetOptionalArg('snd_optional_arg',string('no optional arg given'),2)
 "|        echo 'optional arg is '.string(optional_arg)
 "|      endfunction
+"|
+"|  note: probably this function will be replaced.
+"|  let arg = a:0 > 0 ? a:1 : default or TVarArg should be prefered.. (TODO:
+"|   cleanup code!)
 function! library#GetOptionalArg( name, default, ...)
   if a:0 == 1
     let idx = a:1

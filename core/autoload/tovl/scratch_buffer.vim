@@ -23,10 +23,11 @@ endfunction
 "  help  : callback returning additional information lines
 "  getContent : callback returning lines
 "  cmds    : extra commands to be run (optional)
+"  sp_cmd  : the command to use to create the new buffer. Defaults to :e
 "  buftype : ...
 function! tovl#scratch_buffer#ScratchBuffer(opts)
   let a:opts['name'] = get(a:opts,'name', 'strach_buffer_without_name')
-  exec 'sp '.escape(a:opts['name'],' ')
+  exec get(a:opts, 'sp_cmd', 'e').' '.escape(a:opts['name'],' ')
   let b:settings = a:opts
   setlocal buftype=acwrite
   command! -buffer -nargs=0 GetContents call tovl#scratch_buffer#GetContents()
@@ -36,6 +37,9 @@ function! tovl#scratch_buffer#ScratchBuffer(opts)
   au TOVLWrite BufWriteCmd <buffer> call tovl#scratch_buffer#Write()
 
   GetContents
+  "let u=&undolevels
+  "setlocal undolevels=-1
+  "exec 'setlocal undolevels='.u
 
   " mark buffer as not modified
   setlocal nomodified

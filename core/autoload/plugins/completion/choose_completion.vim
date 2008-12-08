@@ -15,5 +15,5 @@ function!  plugins#completion#choose_completion#PluginChooseCompletionFunc(p)
     delc ChooseCompletionFunc
     call self.Parent_Unload()
   endf
-  return p.createChildClass(p.pluginName, child)
+  return p.createChildClass(child)
 endfunction

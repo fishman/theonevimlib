@@ -32,6 +32,13 @@
 " Note: using # as separator to allow keys such as www.company.foo which
 " could be a plugin directory.
 
+
+" which is your .vim directory where you keep your custom stuff?
+" Eg this is used to define some mappings opening ftplugin files
+fun! config#DotVim()
+  return config#GetG('config#.vim', split(&runtimepath,',')[0])
+endf
+
 function! config#AddToListUniq(path, v)
   call tovl#list#AddUnique(config#GetG(a:path, {'set' : 1, 'default' : []}),a:v)
 endfunction
@@ -173,7 +180,8 @@ function! config#ConfigContents(file)
   try
     return config#ScanIfNewer(a:file,
           \ {'fileCache' : 0, 'asLines' : 1, 'scan_func' : function('config#EvalFirstLine'),
-             \ 'useCached' : config#GetG(['config','dirty',a:file],0)
+          \  'useCached' : config#GetG(['config','dirty',a:file],0),
+          \  'default' : ["{}"]
           \ })
   catch /.*/
     return {}
@@ -280,6 +288,7 @@ endfunction
 "                   functions. If not set pass the filename (Maybe you want to
 "                   use and external application to process the file)
 "       useCached  : don't update file, use cache if already present
+"       default: what to return if file doesn't exist
 function! config#ScanIfNewer(file, opts)
   let cache = get(a:opts, 'fileCache', 0)
   let file = expand(a:file) " simple kind of normalization. necessary when using file caching
@@ -306,7 +315,16 @@ function! config#ScanIfNewer(file, opts)
     endif
   endif
   if asLines
-    let scan_result = library#Call(Func, [readfile(a:file)])
+    try 
+      let contents = readfile(a:file)
+    catch /.*/
+      if has_key(a:opts,'default')
+        let contents = a:opts['default']
+      else
+        throw "ScanIfNewer: Could'n read file ".a:file." error: ".v:exception
+      endif
+    endtry
+    let scan_result = library#Call(Func, [contents])
   else
     let scan_result = library#Call(Func, [a:file])
   endif
@@ -555,6 +573,7 @@ function! config#KeyToString(s)
   return escape(a:s, ':\')
 endfunction
 
+" depreceated: only kept in case you'd like to edit only subdictionaries..
 " opts is a dictionary with these keys:
 " onWrite: function reference beeing called to save data
 " getData:  function reference beeing called to provide data to update the view
@@ -564,57 +583,16 @@ endfunction
 " TODO implement completion etc
 function! config#EditConfiguration(opts)
   let a:opts['name'] = get(a:opts, 'name', 'config')
-  let help = [
-    \ 'edit configuration file '.a:opts['name'],
-    \ 'Start by enabling the example plugin by setting the number to 1',
-    \ 'Then write the buffer. This should load the plugin and add default',
-    \ 'configuration options (commandName and command).',
-    \ 'each time you change the settings and write them the plugin will get notified',
-    \ 'about those changes and will reload itself. Try running the command ExamplePluginHW',
-    \ 'and watch it changing..',
-    \ '',
-    \ 'If you remove the options (commandName and command) the plugin will add them',
-    \ 'for you again. This behaviour is plugin dependand.',
-    \ '',
-    \ 'Maybe you want to have a look at core/autoload/example.vim now?',
-    \ "Also make sure you've read the head comments in core/autoload/config.vim",
-    \ "It tells you how to use multiple (project specific) configuration files.",
-    \ '',
-    \ "If you have any questions, don't know where to start or how to add your code",
-    \ "write an email to marco-oweber@gmx.de (I'm also on irc.freenode.net, nick MarcWeber)",
-    \ '',
-    \ "use :messages to see which plugins has been loaded",
-    \ "use :DiffDefaults to see how your configuration differs from the proposed one"
-    \ ]
-    let a:opts['help'] = help
-    let a:opts['getContent'] = library#Function(
-              \ "return config#ToBuffer(".string(s:indent).", '',library#Call(".string(a:opts['getData'])."))")
+  let a:opts['help'] = help
+  let a:opts['getContent'] = library#Function(
+            \ "return config#ToBuffer(".string(s:indent).", '',library#Call(".string(a:opts['getData'])."))")
 
   call tovl#scratch_buffer#ScratchBuffer(a:opts)
-
-
   " tweak buffer
   "syntax:
   " TODO improve syntax highlighting!
   setlocal filetype=tovl_config
-  for i in ['number', 'string', 'dictionary', 'list'] | exec 'syn match  Keyword '.string(i.'=') | endfor
-  syn match  Identifier "^\s*\S\+:"
-  runtime! syntax/vim.vim
-  setlocal autoindent
-
-  if has_key(a:opts,'getDefaults')
-    command! DiffDefaults :call config#DiffDefaults()<cr>
-  endif
 endfunction
-
-fun! config#DiffDefaults()
-  diffthis
-  call config#EditConfiguration({
-        \ 'name' : 'defaults of '.b:settings['name'],
-        \ 'getData' : b:settings['getDefaults']
-        \ })
-  diffthis
-endfun
 
 " uses config#EditConfiguration to open a scratch buffer in which you can edit
 " the cached configuration files.
@@ -623,15 +601,8 @@ endfun
 function! config#EditConfig(...)
   exec library#GetOptionalArg('file', "tovl#ui#choice#LetUserSelectIfThereIsAChoice('choose the config file to edit', config#GetG('config#files'))")
   let file = config#GetG('config#files')[0]
-  if !filereadable(file)
-    call writefile(['{}'],file)
-  endif
-  call config#EditConfiguration({
-    \ 'name' : 'your editing config file '.file,
-    \ 'onWrite' : library#Function('config#EditConfigWrite', {'args' : [file]}),
-    \ 'getData' : library#Function('config#EditConfigGetData', {'args' : [file]}),
-    \ 'getDefaults' : library#Function('config#EditConfigGetDefault'),
-    \ })
+  exec 'e tovl_config://'.file
+  return 
 endfunction
 
 function! config#EditConfigWrite(file)
@@ -648,14 +619,15 @@ function! config#EditConfigWrite(file)
   if !config#FlushConfig(a:file, 1)
     call config#SetG(['config','dirty',a:file],1)
   endif
-  GetContents
   setlocal nomodified
 endfunction
 
 function! config#EditConfigGetData(file)
   if a:file == config#GetG('config#files')[0]
     call config#StopFlushing(a:file)
+    
     let cfgDict = config#ConfigContents(a:file)
+    call config#GetByPath(cfgDict, 'loadablePlugins', {'set' : 1, 'default' : {}})
     " editing main config,
     " ask plugins to add their default options.
     let toload = tovl#plugin_management#PluginsFromDict([],cfgDict['loadablePlugins'],"v > 0")
@@ -671,13 +643,29 @@ function! config#EditConfigGetData(file)
     endfor
     " update plugin list.. don't remove user stuff
     let d = tovl#plugin_management#TidyUp(
-          \ config#Get('loadablePlugins', {'default' : {}, 'set' : 1}))
+          \ config#GetByPath(cfgDict, 'loadablePlugins', {'default' : {}, 'set' : 1}))
     call config#ResumeFlushing(a:file)
   endif
   return config#ConfigContents(a:file)
 endfunction
 
-function! config#EditConfigGetDefault(...)
+augroup TOVLWrite
+augroup end
+
+fun! config#TOVLConfigReadCmd()
+  " Why doesn't the autocmmand work?
+  setlocal ft=tovl_config
+  command! DiffDefaults :diffsplit tovl_config_default
+
+  let file = matchstr(expand('%'), 'tovl_config://\zs.*')
+  call append(0, config#ToBuffer(s:indent, '',config#EditConfigGetData(file)))
+  command! -buffer Help :h 
+  echo " "
+  echo '>> use :h tovl-config-buffer to get more information (core/doc/tovl-config-buffer.txt)'
+endf
+
+fun! config#TOVLConfigDefaultReadCmd()
+  setlocal ft=tovl_config
   let cfgDict = {}
   let loaded = config#GetG('tovl#plugins#loaded',{ 'default' : {}, 'set' :1})
   for p in values(loaded)
@@ -685,8 +673,11 @@ function! config#EditConfigGetDefault(...)
       call library#Call(p['AddDefaultConfigOptions'],[cfgDict],p)
     endif
   endfor
-  return cfgDict
-endfunction
+  call append(0, config#ToBuffer(s:indent, '',cfgDict))
+endf
 
-augroup TOVLWrite
-augroup end
+fun! config#TOVLConfigWriteCmd()
+  let file = matchstr(expand('%'), 'tovl_config://\zs.*')
+  call config#EditConfigWrite(file)
+  echo ">> config written, now use :e! % to refresh contents"
+endf

@@ -26,4 +26,14 @@ function! theonevimlibsetup#Setup()
 
   command -nargs=* TOVLConfig call config#EditConfig(<f-args>)
 
+  " additional setups see config#TOVLConfigReadCmd()
+  augroup TOVL
+    au BufReadCmd tovl_config://* call config#TOVLConfigReadCmd()
+    au BufWriteCmd tovl_config://* call config#TOVLConfigWriteCmd()
+    au BufRead,BufNewFile tovl_config* set ft=tovl_config
+
+    au BufReadCmd tovl_config_default call config#TOVLConfigDefaultReadCmd()
+    au BufRead,BufNewFile tovl_config_default set ft=tovl_config
+  augroup END
+
 endfunction
