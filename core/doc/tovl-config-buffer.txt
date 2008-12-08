@@ -1,0 +1,112 @@
+*tovl-config-buffer.txt*	For Vim version 7.2.
+==============================================================================
+
+            ---------------------------------------
+              Plugin configuration takes place here
+            ---------------------------------------
+
+
+==============================================================================
+1. Contents 		*tovl-config-buffer-contents'*  {{{1
+
+1.  Contents  .............................................
+2.  Open the buffer
+3.  Using the buffer
+4.  What is in the buffer?
+5.  Diffing options
+
+(Also read |tovl-why|)
+
+==============================================================================
+2.  Open the buffer 					{{{1
+
+    You can edit any configuration file by :e tovl_config://<path>
+    However using the *TOVLConfig* command is more convinient.
+    It let's you choose the configuration file to edit from the list
+    (|tovl-project-secific|)
+
+==============================================================================
+3.  Using the buffer
+    The buffer contains a serialized dict representation.
+    Example
+
+        PluginGlobOpen:dictionary=
+          exclude:list=
+            string=v:val !~ '\.o$\|\.hi$\|\.svn$\|.git$\|_darcs$$\|.darcs$\|.hg'
+            string=!isdirectory(v:val)
+          multilineString=
+            first line
+            second line
+            third line
+    
+    Right now I think the type= style is verbose. But it works and I don't
+    want to spend more time on it.
+    Simply write the file (:w) to save config and reload plugins.
+
+==============================================================================
+4.  tovl-main-config
+
+  The head of the configuration file list (|tovl-project-specific|) is the
+  *main-configuration-file* .
+  That contains the list of availible plugins.
+
+  You can find a small picture describing it here: 
+  http://www.mawercer.de/~vim/tovl.png
+
+  The file contains two sections (top level keys):
+  a) loadablePlugins (contains the plugins you can enable)
+    [...]
+  b) plugins         (contains the plugin configuration options)
+    [...]
+
+  a) is only present in the |main-configuration-file| (head of configuration
+  file list). The runtimepath/autoload/plugins/**/*.vim files are scanned for
+  functions starting with Plugin. Those are added here.
+
+  After writing the |main-configuration-file| the plugins will be asked to add
+  their default configuration settings to b). You should review and customize
+  them.
+
+  If you change a configuration of a plugin it'll get notified.
+  The default reaction is unload and load again. (This works more or less
+  depending on plugin implementation)
+
+  *tovl-config-special-keys* :
+   You can add the following keys below each Plugin*:dictionary= line
+      debugLoad:number=1 to any plugin configuration to start the vim debugger on Load()
+      logAll:number=1 to add all levels of messages from this plugin. See |tovl-logging|
+      mapleader (TODO)
+
+  Trouble ? See also
+  |tovl-logging| |tovl-config-special-keys|
+
+==============================================================================
+5.  Diffing options
+
+    edit configuration file '.a:opts['name']
+    Start by enabling the example plugin by setting the number to 1
+    Then write the buffer. This should load the plugin and add default
+    configuration options (commandName and command).
+    each time you change the settings and write them the plugin will get notified
+    about those changes and will reload itself. Try running the command ExamplePluginHW
+    and watch it changing..
+    
+    If you remove the options (commandName and command) the plugin will add them
+    for you again. This behaviour is plugin dependand.
+    
+    Maybe you want to have a look at core/autoload/example.vim now?
+    Also make sure you've read the head comments in core/autoload/config.vim
+    It tells you how to use multiple (project specific) configuration files.
+    
+    If you have any questions, don't know where to start or how to add your code
+    write an email to marco-oweber@gmx.de (I'm also on irc.freenode.net, nick MarcWeber)
+    
+    use :messages to see which plugins has been loaded
+    use :DiffDefaults to see how your configuration differs from the proposed one
+    
+    You can add the following keys to any plugins:
+    
+    If you set lhs or pattern to an empty string no au/ mapping will be added
+    
+    You can add mapleader:string=\ to set a different mapleader for this plugin only
+    
