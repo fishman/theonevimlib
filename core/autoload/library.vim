@@ -151,7 +151,8 @@ function! library#Call(...)
     let Fun = args[0]['faked_function_reference']
     if type(Fun) == 1 
         \ && (Fun[:len('return ')-1] == 'return ' 
-              \ || Fun[:len('call ')-1] == 'call ')
+              \ || Fun[:len('call ')-1] == 'call '
+              \ || Fun[:len('if ')-1] == 'if ')
       " function is a String, call exec
       let ARGS = args[1]
       let SELF = args[2]

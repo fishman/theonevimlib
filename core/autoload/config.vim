@@ -681,3 +681,15 @@ fun! config#TOVLConfigWriteCmd()
   call config#EditConfigWrite(file)
   echo ">> config written, now use :e! % to refresh contents"
 endf
+
+fun! config#Fold(lnum)
+  let curr=indent(a:lnum)/2
+  if v:lnum == line('$')
+    return curr
+  else
+    let next = indent(a:lnum+1)/2
+    if next > curr
+      return curr +1
+    endif
+    return curr
+endf

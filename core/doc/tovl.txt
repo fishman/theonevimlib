@@ -37,7 +37,8 @@ You want to see TOVL in action? Visit the |tovl-config-tutorial|
       TOVL LOGGING
       TOVL CHOOSE
       TOVL TRY
-      TOVL RUN TASK IN BACKGROUND
+      TOVL ERROR FORMATS
+      TOVL RUN TASK MAYBE IN BACKGROUND
       TOVL FUNCTION REFERENCES
       TOVL ...
 
@@ -162,7 +163,7 @@ EDITING THE CONFIGURATION AND LOADING PLUGINS      *tovl-config-edit* {{{2
     See |tovl-config-buffer.txt|
 
 ==============================================================================
-5.   TOVL design notes
+5.   TOVL design notes				*tovl-design-nodes* {{{1
 
   If you implement a feature try to do it in a way that it can be reused.
   Example: multiple_completions.vim keeps a list for each buffer.
@@ -186,6 +187,17 @@ EDITING THE CONFIGURATION AND LOADING PLUGINS      *tovl-config-edit* {{{2
   scripts on www.vim.org.
 
   Another example is tovl/ui/open_thing_at_cursor.vim or |library#Try()|
+
+  If you don't know yet what arguments a function will require consider using
+  a dictionary as optional arg. Then use something like this:
+
+    fun X(...)
+      let opts = a:0 > 0 ? a:1 : <+default+>
+      if get(opts, 'key', default)
+      endif
+    endfun
+
+  What else to put here?
 
 ==============================================================================
 6.   TOVL library:					*tovl-library* {1
@@ -236,15 +248,40 @@ TOVL TRY					        *tovl-try* {{{2
     If you want test wether you should the one or the other setup then
     |library#Try| could be the function you'd like to use..
 
-TOVL RUN TASK IN BACKGROUND		 *tovl-run-in-background* {{{2
-    TODO:
-    status: It can be done. You can run multiple python threads and use
-    vim.command("..") however this is very likely to crash vim because vim
-    is not threadsafe (yet). The only theradsafe way I know is running another
-    thread either by using python threads or starting /bin/sh & .
-    If you want to tell vim about therad status/ termination the only safe way
-    I know about is |client-server|. I already have implemnted parts of this.
-    I'd like to cleanup the code before adding it.
+TOVL ERROR FORMATS		 	*tovl-error-formats* {{{2
+    See |tovl#errorformat#SetErrorFormat(id)|
+    and plugin autoload/plugins/tovl/errorformats.vim
+    (I never want to have the quoting hell again :-)
+
+TOVL RUN TASK MAYBE IN BACKGROUND		 *tovl-run-in-background* {{{2
+
+    ! You must configure running tasks using the plugin
+    autoload/plugins/tovl/runtaskinbackground.vim
+
+    autoload/tovl/runtaskinbackground.vim provides methods to run external
+    commands. The default is to run them in background. This requires
+    has('client-server') because using |client-server| is the only way
+    to notify vim about events (what process id and when the process has
+    finished) asynchronously without increasing the probablity crashing vim.
+
+
+    let process = tovl#runtaskinbackground#NewProcess(
+      \ { 'name' : 'compilation', 'cmd': ["/bin/sh","-c",'sleep 10; echo done'],
+      \   'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php' })
+    call process.Run()
+
+    You cann add the key 'fg' : 1 to force running in foreground only (TODO
+    implement this)
+
+    You can set a different decorator to override the default OnStrart and
+    OnFinish events thereby making vim changing colors depending on process
+    status etc. (Example: tovl#runtaskinbackground#DefaultDecorator() )
+
+    There is also a very simple system() replacement:
+    |tovl#runtaskinbackground#System()| It is used to run the shell background
+    process. It checks the exit code for you automatically.
+
+    Enjoy!
 
 TOVL FUNCTION REFERENCES 		 *tovl-function-reference* {{{2
     vim already provides |function()| to create function references.

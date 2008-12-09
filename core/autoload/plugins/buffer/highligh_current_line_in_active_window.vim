@@ -28,10 +28,13 @@ function! plugins#buffer#highligh_current_line_in_active_window#PluginHighlightC
     \ 'pattern' : '*',
     \ 'cmd' : "if g:HighlightCurrentLine | setlocal nocul | endif"
     \  }
+  let p['defaults']['highlight_on_load'] = 1
   let child = {}
   fun! child.Load()
     let g:HighlightCurrentLine=0
-    call self.ToggleHighlightCurrentLine()
+    if self.cfg.highlight_on_load
+      call self.ToggleHighlightCurrentLine()
+    endif
     call self.Parent_Load()
   endf
   fun! child.Unload()

@@ -24,8 +24,8 @@ function! plugins#mappings#various#PluginUsefulBufferMappings(p)
   let p['Info'] = "define some useful mappings for faster navigation"
 
   let p['mappings']['inv_wrap'] = {'ft' : '', 'm':'n', 'lhs' : '<leader>wp', 'rhs' : ':set invwrap<cr>' }
-  let p['mappings']['inv_list'] = {'ft' : '', 'm':'n', 'lhs' : '<leader>lt', 'rhs' : ':set ilist<cr>' }
-  let p['mappings']['inv_hlsearch'] = {'ft' : '', 'm':'n', 'lhs' : '<leader>hl', 'rhs' : ':set ilist<cr>' }
+  let p['mappings']['inv_list'] = {'ft' : '', 'm':'n', 'lhs' : '<leader>lt', 'rhs' : ':set invlist<cr>' }
+  let p['mappings']['inv_hlsearch'] = {'ft' : '', 'm':'n', 'lhs' : '<leader>hl', 'rhs' : ':set invhlsearch<cr>' }
 
   let p['mappings']['normal_mode_write'] = {'ft' : '', 'm':'n', 'lhs' : '<m-s-r>', 'rhs' : '<esc>:w<cr>' }
   let p['mappings']['insert_mode_write'] = {'ft' : '', 'm':'i', 'lhs' : '<m-s-r>', 'rhs' : '<esc>:w<cr>' }
