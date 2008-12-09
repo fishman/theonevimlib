@@ -128,7 +128,7 @@
     Now write again (:w) You should now see the example plugin telling
     you that it has been loaded.
 
-    Normally plugins are not that verbose. (See |tovl-logging|)
+    Normally plugins are not that verbose. (See |tovl-log|)
 
     Try the mapping (\hw) and the command (:Example)
     You should see "Hello!" beeing echoed.

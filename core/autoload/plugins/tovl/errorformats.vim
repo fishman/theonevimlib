@@ -72,5 +72,7 @@ function! plugins#tovl#errorformats#PluginErrorFormats(p)
               \    "%E%f:%l: %m\n"
               \  . "%-C:%l: %s\n"
               \  . "%Z%s:%p^\n"
+  " remember to use grep -n !
+  let ef['grep'] = "%f:%l:%m"
   return p
 endfunction

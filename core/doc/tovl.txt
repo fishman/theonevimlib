@@ -226,7 +226,7 @@ TOVL OBJECT OOP						*tovl-object* {{{2
     keep startup time of vim as short as possible.
     Examples can be found in obj_test.vim.
 
-TOVL LOGGING					        *tovl-logging* {{{2
+TOVL LOGGING					*tovl-log* *tovl-logging* {{{2
     TOVL provides a minimal logging facility. The code has been optimized for
     speed (by keeping a list of log items which is cut only once in a while).
     Yet you can replace the code by your own if you have to.
@@ -272,6 +272,9 @@ TOVL RUN TASK MAYBE IN BACKGROUND		 *tovl-run-in-background* {{{2
 
     You cann add the key 'fg' : 1 to force running in foreground only (TODO
     implement this)
+
+    You must have enabled the |PluginErrorFormats| because the example is
+    using 'ef'. If you haven't you'll get some error in the |tovl-log|
 
     You can set a different decorator to override the default OnStrart and
     OnFinish events thereby making vim changing colors depending on process
@@ -351,7 +354,7 @@ TOVL ....
 
   less important:
     LoadPlugin(): internal, this calls Load
-    Log(level, msg): |tovl-logging|
+    Log(level, msg): |tovl-log|
     LogExec(level, prefix, cmd): Use this function to setup any user
                                 interaction (such as commands) [3]
     OnConfigChange(): This is registered as config change notification handler
