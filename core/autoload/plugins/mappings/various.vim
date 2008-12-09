@@ -40,14 +40,25 @@ function! plugins#mappings#various#PluginUsefulBufferMappings(p)
   let p['mappings']['fold_by_search_string'] = {'ft' : '', 'm':'n', 'lhs' : '<leader>fbss',
         \ 'rhs' : ':setlocal<space>foldexpr=getline(v:lnum)!~@/<bar>setlocal foldmethod=expr<CR><Bar>zM'}
 
+
+  let a:p['mappings']['keep_lines'] = {'ft' : '', 'm':'n', 'lhs' : '<m-k><m-l>',
+        \ 'rhs' : ":exec 'g!/'.input('filter expr :').'/d'<cr>"}
+  let a:p['mappings']['drop_lines'] = {'ft' : '', 'm':'n', 'lhs' : '<m-d><m-l>',
+        \ 'rhs' : ":exec 'g/'.input('filter expr :').'/d'<cr>"}
+
+
   let p['mappings']['switch_buffer'] = {'ft' : '', 'm':'n', 'lhs' : '<m-a>', 'rhs' : ":b " }
   let p['mappings']['buffer_next'] = {'ft' : '', 'm':'n', 'lhs' : '<m-b><m-n>', 'rhs' : ":bnext<cr>" }
   let p['mappings']['buffer_previous'] = {'ft' : '', 'm':'n', 'lhs' : '<m-b><m-p>', 'rhs' : ":bprevious<cr>" }
 
   let p['mappings']['reload_file_throw_away_changes'] = {'ft' : '', 'm':'n', 'lhs' : '<m-s-f>', 'rhs' : ":e! %<cr>" }
 
+  let p['mappings']['search_word_forward'] = {'ft' : '', 'm':'n', 'lhs' : '<m-w>/', 'rhs' : '/\<\><left><left>'}
+  let p['mappings']['search_word_backward'] = {'ft' : '', 'm':'n', 'lhs' : '<m-w>?', 'rhs' : '?\<\><left><left>'}
+
   let p['mappings']['cmd_insert_directory'] = {'ft' : '', 'm':'c', 'lhs' : '>fn', 'rhs' : "<c-r>=expand('%:p')<cr>" }
   let p['mappings']['cmd_insert_filename'] = {'ft' : '', 'm':'c', 'lhs' : '>fd', 'rhs' : "<c-r>=expand('%:p:h').'/'<cr>" }
+
 
   " useful for debugging TOVL.. should we use a proper logging system?
   let p['mappings']['messages'] = {'ft' : '', 'm':'n', 'lhs' : '<m-m><m-s>', 'rhs' : ":messages<cr>" }
