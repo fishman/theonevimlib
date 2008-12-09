@@ -17,7 +17,7 @@ fun! tovl#template_systems#vl#ExtendPlugin()
       return 
     endif
     let text = repeat("\<bs>",len(word)).library#Call(self.TemplateById(id)['text'])
-    return text."\<c-o>:set ".(paste ? "" : "no")."paste\<cr>"
+    return text."\<c-o>:silent! set ".(paste ? "" : "no")."paste\<cr>"
   endfunction
 
   " returns list of { 'id' :..., 'text' : text or function }

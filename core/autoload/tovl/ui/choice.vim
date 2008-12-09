@@ -35,7 +35,6 @@ function! tovl#ui#choice#LetUserSelectIfThereIsAChoice(caption, list, ...)
   if len(a:list) == 0
     throw "LetUserSelectIfThereIsAChoice: list has no elements"
   elseif len(a:list) == 1
-    echo "one element, choosing that: ".a:list[0]
     return a:list[0]
   else
     if a:0 > 0 
