@@ -27,7 +27,7 @@ endf
 fun! tovl#log#NewLogObj()
   let o = {}
   let o.levelToStr = { 0 : "error", 1: "info", 2: "debug" }
-  let o.level = 0
+  let o.level = 1
   let o.keep = 1000
   let o.max = 1500
   let o.maxLineLen = 200
