@@ -51,6 +51,7 @@ fun! tovl#runtaskinbackground#NewProcess(p)
     if has_key(self, 'ef')
       call tovl#errorformat#SetErrorFormat(self.ef)
       exec 'cf '.self.tempfile
+      cw
     else
       call self.EchoResult()
     endif
@@ -64,13 +65,14 @@ fun! tovl#runtaskinbackground#NewProcess(p)
   fun! process.OnStart()
   endf
   fun! process.Run()
+    let self.realCmd = map(copy(self.cmd), 'library#Call(v:val)')
     try
       try
         call self.OnStart()
       catch /.*/
         call s:Log(0, "got exception while running OnStart handler ".v:exception)
       endtry
-      call s:Log(1, "trying to run command ".string(self.cmd))
+      call s:Log(1, "trying to run command ".string(self.realCmd))
       let s:status[self['id']] = self
       try
         let handlers = config#Get('plugins#tovl#runtaskinbackground#PluginRunTaskInBackground#run_handlers')
@@ -83,6 +85,7 @@ fun! tovl#runtaskinbackground#NewProcess(p)
     catch /.*/
       call s:Log(0,"running command failed due to unexpceted exception : ".v:exception)
     endtry
+    return self
   endf
   fun! process.SetProcessId(pid)
     call s:Log(2,"vim process id ".self.id." got pid: ".a:pid)
@@ -150,6 +153,11 @@ fun! tovl#runtaskinbackground#RunHandlerSh(process)
   if !executable('/bin/sh') | throw "no /bin/sh found" | endif
 
   if get(a:process, 'fg',0)
+    " run in foreground
+    let out = tovl#runtaskinbackground#System(a:process.realCmd, {'status' : a:process.expectedExitCode} )
+    call writefile(split(out,"\n"), a:process.tempfile)
+    debug call a:process.Finished(v:shell_error)
+  else
     " run in background
     let vim = tovl#runtaskinbackground#Vim()
     " lets hope this vim has clientserver support..
@@ -157,14 +165,11 @@ fun! tovl#runtaskinbackground#RunHandlerSh(process)
           \ S('call config#GetG(''tovl#running_background_processes'')['.a:process.id.']').'".SetProcessId("$$")"')
     let tellResult = s:CallVimUsingSh(vim,
            \ S('call config#GetG(''tovl#running_background_processes'')['.a:process.id.']').'".Finished("$?")"')
-    let cmd = join(map(copy(a:process.cmd),
+    let cmd = join(map(copy(a:process.realCmd),
    \ "tovl#runtaskinbackground#EscapeShArg(v:val)"),' ')
     " FIXME: requiring linux for now..
     call tovl#runtaskinbackground#System(['/bin/sh'], 
       \ {'stdin-text' :  '{ '.tellPid."\n".cmd.'&>'.a:process.tempfile."\n".tellResult.'; } &'} )
-  else
-    " run in foreground
-    call tovl#runtaskinbackground#System(self.cmd, {'status' : self.expectedExitCode} )
   endif
 endf
 
@@ -202,48 +207,6 @@ fun! tovl#runtaskinbackground#VimFilepathByGlibc(v)
   endif
 endfunction
 
-
-if exists('g:pythonthreadclassinitialized') || !has('python')
-  finish
-endif
-let g:pythonthreadclassinitialized=1
-py << EOF
-from subprocess import Popen, PIPE
-import threading
-import os
-import vim
-class MyThread ( threading.Thread ):
-  def __init__(self, thisOb, vim, servername, tempfile):
-    threading.Thread.__init__(self)
-    self.thisOb = thisOb
-    self.command = vim.eval("%s['cmd']"%(thisOb))
-    self.vim = vim
-    self.tempfile = tempfile
-    self.servername = servername
-
-  def run ( self ):
-    try:
-      popenobj  = Popen(self.cmd,stdout=PIPE,stderr=PIPE)
-      self.executeVimCommand("%s.SetProcessId(%s)"%(self.thisOb,popenobj.pid))
-      stdoutwriter = open(self.tempfile,'w')
-      stdoutwriter.writelines(popenobj.stdout.readlines())
-      stdoutwriter.writelines(popenobj.stderr.readlines())
-      stdoutwriter.close()
-      popenobj.wait()
-      self.executeVimCommand("%s.Finished(%d)"%(self.thisOb,popenobj.returncode))
-    except Exception, e:
-      self.executeVimCommand("echoe '%s'"%("exception: "+str(e)))
-    except:
-      # I hope command not found is the only error which might  occur here
-      self.executeVimCommand("echoe '%s'"%("command not found"))
-  def executeVimCommand(self, cmd):
-    # can't use vim.command! here because vim hasn't been written for multiple
-    # threads. I'm getting Xlib: unexpected async reply (sequence 0x859) ;-)
-    # will use server commands again
-    popenobj = Popen([self.vim,"--servername","%s"%(self.servername),"--remote-send","<esc>:%(cmd)s<cr>"%locals()])
-    popenobj.wait()
-EOF
-
 fun! tovl#runtaskinbackground#EscapeShArg(arg)
   return escape(a:arg, ";()*<> '\"\\`")
 endf
@@ -271,7 +234,7 @@ fun! tovl#runtaskinbackground#System(items, ... )
   let g:systemResult = result
 
   let s = get(opts,'status',0)
-  if v:shell_error != s
+  if v:shell_error != s && ( s != '*')
     let g:systemResult = result
     throw "command ".cmd."failed with exit code ".v:shell_error
      \ . " but ".s." expected. Have a look at the program output with :echo g:systemResult".repeat(' ',400)
@@ -279,3 +242,44 @@ fun! tovl#runtaskinbackground#System(items, ... )
   endif
   return result
 endfun
+
+if exists('g:pythonthreadclassinitialized') || !has('python')
+  finish
+endif
+let g:pythonthreadclassinitialized=1
+py << EOF
+from subprocess import Popen, PIPE
+import threading
+import os
+import vim
+class MyThread ( threading.Thread ):
+  def __init__(self, thisOb, vim, servername, tempfile):
+    threading.Thread.__init__(self)
+    self.thisOb = thisOb
+    self.command = vim.eval("%s['realCmd']"%(thisOb))
+    self.vim = vim
+    self.tempfile = tempfile
+    self.servername = servername
+
+  def run ( self ):
+    try:
+      popenobj  = Popen(self.cmd,stdout=PIPE,stderr=PIPE)
+      self.executeVimCommand("%s.SetProcessId(%s)"%(self.thisOb,popenobj.pid))
+      stdoutwriter = open(self.tempfile,'w')
+      stdoutwriter.writelines(popenobj.stdout.readlines())
+      stdoutwriter.writelines(popenobj.stderr.readlines())
+      stdoutwriter.close()
+      popenobj.wait()
+      self.executeVimCommand("%s.Finished(%d)"%(self.thisOb,popenobj.returncode))
+    except Exception, e:
+      self.executeVimCommand("echoe '%s'"%("exception: "+str(e)))
+    except:
+      # I hope command not found is the only error which might  occur here
+      self.executeVimCommand("echoe '%s'"%("command not found"))
+  def executeVimCommand(self, cmd):
+    # can't use vim.command! here because vim hasn't been written for multiple
+    # threads. I'm getting Xlib: unexpected async reply (sequence 0x859) ;-)
+    # will use server commands again
+    popenobj = Popen([self.vim,"--servername","%s"%(self.servername),"--remote-send","<esc>:%(cmd)s<cr>"%locals()])
+    popenobj.wait()
+EOF
