@@ -30,10 +30,10 @@ function! theonevimlibsetup#Setup()
   augroup TOVL
     au BufReadCmd tovl_config://* call config#TOVLConfigReadCmd()
     au BufWriteCmd tovl_config://* call config#TOVLConfigWriteCmd()
-    au BufRead,BufNewFile tovl_config* set ft=tovl_config
+    au BufRead,BufNewFile tovl_config* setlocal ft=tovl_config
 
     au BufReadCmd tovl_config_default call config#TOVLConfigDefaultReadCmd()
-    au BufRead,BufNewFile tovl_config_default set ft=tovl_config
+    au BufRead,BufNewFile tovl_config_default setlocal ft=tovl_config
   augroup END
 
 endfunction

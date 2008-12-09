@@ -14,7 +14,7 @@ function! plugins#buffer#highligh_current_line_in_active_window#PluginHighlightC
   " run this to fix prefixes of autoload functions (remember that you can use undo.. :-)
   let p['mappings']['toggle_highlighting'] = {
     \ 'ft' : 'vim', 'm':'n', 'lhs' : '\hc',
-    \ 'rhs' : ':call '.p.s.'.ToggleHighlightCurrentLine()<cr>' }
+    \ 'rhs' : ':silent! call '.p.s.'.ToggleHighlightCurrentLine()<cr>' }
 
   " put cursor on autolad function and press gf to jump to the file or to create
   " a new file.
