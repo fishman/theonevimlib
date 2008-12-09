@@ -26,13 +26,13 @@ endfunction
 fun! plugins#tovl#log#ShowTOVLLog()
   call tovl#scratch_buffer#ScratchBuffer({
         \ 'name' : "TOVL-Log",
-        \ 'getContent' : library#Function("return tovl#list#Concat(map(tovl#log#GetLogger().GetLines(),'[v:val[0].'' ''.v:val[1].'' ''.v:val[2].'':'',v:val[3]]'))"),
+        \ 'getContent' : library#Function("return tovl#list#Concat(map(tovl#log#GetLogger().GetLines(),'[v:val[1].'' ''.v:val[0].'' ''.v:val[2].'':'']+split(v:val[3],\"\\n\")'))"),
         \ 'hepl' : [
           \ "Use :GetContents to refresh the view",
           \ "I recommend the filter lines mappings from various or TToC for filtering"
           \ ]
         \ })
   setlocal nowrap
-  syn match Error "^....-..-.. ..:..:.. 0.*"
-  syn match Identifier "^....-..-.. ..:..:.. 1.*"
+  syn match Error "^0 ....-..-.. ..:..:.. .*"
+  syn match Identifier "^1 ....-..-.. ..:..:.. .*"
 endf
