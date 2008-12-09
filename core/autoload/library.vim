@@ -85,11 +85,7 @@ endfunction
 " library#Function("Foo", { 'args' : [2, "foo"], 'self' : dict}) will create a closure. args
 " these args + args passed to Call will be the list of args passed to call()
 function! library#Function(name,...)
-  if a:0 > 0
-    let d = a:1
-  else
-    let d = {'evalLazyClosedArgs': 1}
-  endif
+  let d = a:0 > 0 ? a:1 : {}
   let d['faked_function_reference'] = a:name
   return d
 endfunction
@@ -175,7 +171,7 @@ function! library#Call(...)
         let Fun2 = Fun
       endif
       if has_key(args[0], 'args') " add args from closure
-        if get(args[0], 'evalLazyClosedArgs', 0)
+        if get(args[0], 'evalLazyClosedArgs', 1)
           let args[1] = map(args[0]['args'], 'library#EvalLazy(v:val)')+args[1]
         else
           let args[1] = args[0]['args']+args[1]
