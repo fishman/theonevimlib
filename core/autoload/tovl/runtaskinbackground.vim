@@ -156,7 +156,7 @@ fun! tovl#runtaskinbackground#RunHandlerSh(process)
     " run in foreground
     let out = tovl#runtaskinbackground#System(a:process.realCmd, {'status' : a:process.expectedExitCode} )
     call writefile(split(out,"\n"), a:process.tempfile)
-    debug call a:process.Finished(v:shell_error)
+    call a:process.Finished(v:shell_error)
   else
     " run in background
     let vim = tovl#runtaskinbackground#Vim()
