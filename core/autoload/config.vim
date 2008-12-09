@@ -492,6 +492,7 @@ function! config#List()
       while idx < len(a:lines) && a:lines[idx][:len(next_ind)-1] == next_ind
         let [idx, item] = config#FromBuffer(a:lines, idx, len(next_ind), a:sp, next_ind)
         call add(items, item)
+        unlet item
       endwhile
       return [idx, items]
     else

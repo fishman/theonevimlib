@@ -28,6 +28,7 @@ function! config_test#Test()
 
     " test serialization
     let tests = [
+          \ [1,library#Function('doesnt#exist')],
           \ 20,
           \ "abc",
           \ "ab\nc",
@@ -39,8 +40,7 @@ function! config_test#Test()
           \ {"a":{"a":[1,2,3], "b":"B"},"b":"B","foo":""},
           \ library#Function('doesnt#exist')
           \ ]
-    "for i in range(0,len(tests)-1)
-    for i in range(0,7)
+    for i in range(0,len(tests)-1)
       let t = tests[i]
       call config_test#ToBufferFromBufferEq(t, m." ".library#Type(t))
       unlet t
