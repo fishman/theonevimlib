@@ -68,7 +68,7 @@
 
   After writing the |main-configuration-file| the plugins will be asked to add
   their default configuration settings to b). You should review and customize
-  them.
+  them. (You can disable this -> |tovl-config-dont-add-defaults|)
 
   If you change a configuration of a plugin it'll get notified.
   The default reaction is unload and load again. (This works more or less
@@ -77,17 +77,26 @@
   if you set the lhs or pattern of a mapping or au command to an empty string
   it will be disabled
 
+
   *tovl-config-special-keys* :
    You can add the following keys below each Plugin*:dictionary= line
       debugLoad:number=1 to any plugin configuration to start the vim debugger on Load()
       logAll:number=1 to add all levels of messages from this plugin. See |tovl-logging|
       mapleader (TODO)
 
+  *tovl-config-dont-add-defaults*
+    If a plugin adds new options they'll be added without asking you. Plugins
+    should never override existing options though.
+    Add this to your .vimrc to make tovl not add defaults:
+      call config#SetG('config#AddDefaults', 0)
+    Then |tovl-config-diff| and |tovl-log| are the tools you have to debug
+    failures when a plugin got updated..
+
   Trouble ? See also
   |tovl-logging| |tovl-config-special-keys|
 
 ==============================================================================
-5.  Diffing options
+5.  Diffing options                              *tovl-config-diff*
 
   There is the command *DiffDefaults* which opens a new configuration file
   only adding defaults of the activated plugins. This way you can find changes

@@ -123,6 +123,7 @@ GLOBAL CONFIG                                   *tovl-global-config*
   * |config#filesFunc|
   * |tovl-log-config|
   * |tovl-shell-esc-hack|
+  * |tovl-config-dont-add-defaults|
   * vim setting (additional to tovl#runtaskinbackground#Vim()) (TODO)
 
 TOVL SHELL ESC HACK				*tovl-shell-esc-hack*

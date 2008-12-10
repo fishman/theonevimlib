@@ -632,16 +632,18 @@ function! config#EditConfigGetData(file)
     " editing main config,
     " ask plugins to add their default options.
     let toload = tovl#plugin_management#PluginsFromDict([],cfgDict['loadablePlugins'],"v > 0")
-    for pl in toload
-      try
-        let p = tovl#plugin_management#PluginDict(pl)
-        if (has_key(p, 'AddDefaultConfigOptions'))
-          call library#Call(p['AddDefaultConfigOptions'],[cfgDict],p)
-        endif
-      catch /.*/
-        echom "plugin ".pl." threw an exception while adding defaults:".v:exception
-      endtry
-    endfor
+    if config#GetG('config#AddDefaults', 1)
+      for pl in toload
+        try
+          let p = tovl#plugin_management#PluginDict(pl)
+          if (has_key(p, 'AddDefaultConfigOptions'))
+            call library#Call(p['AddDefaultConfigOptions'],[cfgDict],p)
+          endif
+        catch /.*/
+          echom "plugin ".pl." threw an exception while adding defaults:".v:exception
+        endtry
+      endfor
+    endif
     " update plugin list.. don't remove user stuff
     let d = tovl#plugin_management#TidyUp(
           \ config#GetByPath(cfgDict, 'loadablePlugins', {'default' : {}, 'set' : 1}))
