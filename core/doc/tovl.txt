@@ -22,6 +22,8 @@ You want to see TOVL in action? Visit the |tovl-config-tutorial|
     contact
 
 4.  TOVL and plugin configuration  ........................... |tovl-config|
+      GLOBAL CONFIG
+      TOVL SHELL ESC HACK
       STRUCTURE
       MULTIPLE (PROJECT SPECIFIC) CONFIGURATION FILES
       CONFIG CACHE
@@ -112,6 +114,29 @@ You want to see TOVL in action? Visit the |tovl-config-tutorial|
 ==============================================================================
 4.  TOVL and plugin configuration                          *tovl-config* {{{1
 
+GLOBAL CONFIG                                   *tovl-global-config*
+
+  Ideally this should be done by a plugin as well.
+  But there is no way to control which plugins are loaded first yet.
+  (-> |tovl-wish-list|). 
+  However you can set these options in your .vimrc
+  * |config#filesFunc|
+  * |tovl-log-config|
+  * |tovl-shell-esc-hack|
+  * vim setting (additional to tovl#runtaskinbackground#Vim()) (TODO)
+
+TOVL SHELL ESC HACK				*tovl-shell-esc-hack*
+  Most shells don't support <m-*> mappings because the Meta key is sent as
+  Esc. By using <m-a> will be replaced by <esc>a and <m-s-a> by <esc>A 
+  which is what the terminal vim is most likely to receive. However don't
+  blame me if strange things start happening because multiple key combinations
+  will be mapped to the same codes.. I'm happy with this setup.
+
+  if !has('gui_running')
+    call config#SetG('config#lhsMap', 
+      \ library#Function("return substitute(substitute(ARGS[0],'<m-\\(.\\)>','<esc>\\1','g'),'<m-s-\\(.\\)>','<esc><s-\\1>','g')"))
+  endif
+
 STRUCTURE                                       *tovl-config-bar* {{{2
 
     The TOVL configuration is basically a huge dictionary. Vim can serialize
@@ -130,6 +155,7 @@ MULTIPLE PROJECT SPECIFIC CONFIGURATION FILES  *tovl-project-secific* {{{2
 
     TOVL supports multiple configuration files. Use
 
+    *config#filesFunc*
 	call config#SetG('config#filesFunc',
 	  \ library#Function("return [expand('$HOME').'/.theonevimlib_config']")
 
@@ -233,6 +259,7 @@ TOVL LOGGING					*tovl-log* *tovl-logging* {{{2
     See |tovl#log#Log()| and the plugin |PluginLog|to view the log
     to log every log level (error=0,info=1,debug=2) use
 
+      *tovl-log-config*
       call tovl#log#GetLogger().SetLevel(999)
 
     only logging errors (level 0) is the default
@@ -378,7 +405,7 @@ TOVL ....
       list of TOVL functions you should know about.
 
 ==============================================================================
-100. wish-list
+100. wish-list             *tovl-wish-list*
 
   * plugin dependencies. A depends on B and causes loading of B (thereby
     revealing its config options)

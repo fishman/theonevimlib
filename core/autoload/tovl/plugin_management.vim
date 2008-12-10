@@ -165,6 +165,8 @@ fun! tovl#plugin_management#NewPlugin()
 
   let d.defaults = {'mappings' : {}, 'autocommands' :{}}
 
+  let d.lhsMap = config#GetG('config#lhsMap', { 'default' : library#Function('library#Id') })
+
   " args: level, msg
   fun! d.Log(...)
     call call('tovl#log#Log', [self.pluginName]+a:000)
@@ -179,7 +181,8 @@ fun! tovl#plugin_management#NewPlugin()
   " {'ft' :filetype, 'm': mode / "", 'lhs': keys="<c-x>", 'c': a:cmd=":echo 'foo'<cr>"}
   fun! d.Map(opts)
     let opts = copy(a:opts)
-    let opts['lhs'] = substitute(opts['lhs'], '<leader>', get(self.cfg, 'mapleader', '\\'),'')
+    let opts['lhs'] = library#Call(self.lhsMap,
+        \ [substitute(opts['lhs'], '<leader>', get(self.cfg, 'mapleader', '\\'),'')])
     if opts['lhs'] == ""
       return
     endif
