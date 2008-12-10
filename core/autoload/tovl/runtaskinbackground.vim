@@ -184,7 +184,7 @@ fun! tovl#runtaskinbackground#Vim()
    \ library#Function('tovl#runtaskinbackground#VimFilepathByGlibc', {'args' : [5]}),
    \ library#Function('tovl#runtaskinbackground#VimFilepathByGlibc', {'args' : [6]}),
    \ library#Function('if executable("gvim")| return "gvim" | else | throw "no gvim"|endif'),
-   \ library#Function('if executable("vim")| return "vim" | else | throw "no gvim"|endif')
+   \ library#Function('if executable("vim")| return "vim" | else | throw "no vim"|endif')
    \ ])
 endf
 
