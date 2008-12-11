@@ -376,7 +376,7 @@ fun! tovl#plugin_management#NewPlugin()
   fun! d.AddDefaultConfigOptions(d)
     for name in keys(self.commands)
       let c = self.commands[name]
-      let self.defaults.commands[name] = {'name' : c['name'], 'attrs' : c['attrs'], 'cmd' : c['cmd'], 'tags' : c['tags'], 'buffer' : get(c,'buffer',0)}
+      let self.defaults.commands[name] = {'name' : c['name'], 'attrs' : get(c,'attrs',''), 'cmd' : c['cmd'], 'tags' : c['tags'], 'buffer' : get(c,'buffer',0)}
     endfor
     for name in keys(self.mappings2)
       let c = self.mappings2[name]

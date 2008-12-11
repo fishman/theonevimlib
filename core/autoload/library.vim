@@ -3,6 +3,10 @@ function! library#Id(a)
   return a:a
 endfunction
 
+fun! library#Eq(a,b)
+  return type(a:a) == type(a:b) && a:a == a:b
+endf
+
 " no operation dummy
 " useful eg for start debugging this way
 function! library#NOP(...)
