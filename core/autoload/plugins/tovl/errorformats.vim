@@ -65,9 +65,9 @@ function! plugins#tovl#errorformats#PluginErrorFormats(p)
               \ . "%m. %f:%l\n"
               \ . "%f:%l"
   let ef['ghc'] = 
-              \ '%f:%l:%c:%m\n'
-              \ .'%E%f:%l:%c:\n'
-              \ .'%m:%f:%l:%c:' 
+              \ "%f:%l:%c:%m\n"
+              \ ."%E%f:%l:%c:\n"
+              \ ."%m:%f:%l:%c:"
   let ef['js_spidermonkey'] =
               \    "%E%f:%l: %m\n"
               \  . "%-C:%l: %s\n"
