@@ -87,8 +87,9 @@
   *tovl-config-dont-add-defaults*
     If a plugin adds new options they'll be added without asking you. Plugins
     should never override existing options though.
-    Add this to your .vimrc to make tovl not add defaults:
+    Add this to your .vimrc to make tovl not add defaults: >
       call config#SetG('config#AddDefaults', 0)
+<
     Then |tovl-config-diff| and |tovl-log| are the tools you have to debug
     failures when a plugin got updated..
 

@@ -32,6 +32,9 @@
 " Note: using # as separator to allow keys such as www.company.foo which
 " could be a plugin directory.
 
+fun! s:Log(level, msg)
+  call tovl#log#Log("tovl#config",a:level, a:msg)
+endf
 
 " which is your .vim directory where you keep your custom stuff?
 " Eg this is used to define some mappings opening ftplugin files
@@ -170,6 +173,9 @@ endfunction
 function! config#GetB(...)
   return call(function('config#GetByPath'), [config#GetOrSet('b:tovl',{})] + a:000)
 endfunction
+fun! config#RemoveB(...)
+  return call(function('config#RemoveByPath'), [config#GetOrSet('b:tovl',{})] + a:000)
+endf
 
 function! config#EvalFirstLine(a)
   return eval(a:a[0])
@@ -321,7 +327,7 @@ function! config#ScanIfNewer(file, opts)
       if has_key(a:opts,'default')
         let contents = a:opts['default']
       else
-        throw "ScanIfNewer: Could'n read file ".a:file." error: ".v:exception
+        throw "ScanIfNewer: Could'n read file ".a:file." error: ".tovl#log#FormatException()
       endif
     endtry
     let scan_result = library#Call(Func, [contents])
@@ -640,7 +646,7 @@ function! config#EditConfigGetData(file)
             call library#Call(p['AddDefaultConfigOptions'],[cfgDict],p)
           endif
         catch /.*/
-          echom "plugin ".pl." threw an exception while adding defaults:".v:exception
+          call s:Log(0, "exception while adding defaults of plugin ".pl)
         endtry
       endfor
     endif
@@ -682,7 +688,7 @@ endf
 fun! config#TOVLConfigWriteCmd()
   let file = matchstr(expand('%'), 'tovl_config://\zs.*')
   call config#EditConfigWrite(file)
-  echo ">> config written, now use :e! % to refresh contents"
+  echo ">> config written, now use :e! to refresh contents"
 endf
 
 fun! config#Fold(lnum)

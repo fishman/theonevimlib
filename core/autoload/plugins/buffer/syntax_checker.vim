@@ -58,7 +58,7 @@ function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
               \ 'cmd': "silent! call tovl#runtaskinbackground#NewProcess( "
               \         ."{ 'name' : 'syntax_checker_plugin', 'cmd': ".string(v.cmd).", 'ef' : ".string(v.ef).", 'fg' : ".(!get(v,'background',0)).", 'expectedExitCode' : '*' }).Run()"})
       catch /.*/
-        call self.Log(0, 'failed setting up syntax check for '.k.'. Exception :'.v:exception)
+        call self.Log(0, 'exception while setting up syntax check for '.k)
       endtry
     endfor
     call self.Parent_Load()

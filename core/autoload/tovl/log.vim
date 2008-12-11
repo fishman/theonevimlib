@@ -1,5 +1,9 @@
 " minimal logging facility:
 " optimized for speed
+"
+" shortcut for logging exceptions:
+" if a message starts with "exception" the logging system will append
+" FormatException() automatically
 
 " keep it simple and fast, only 3 levels:
 " 0 = error
@@ -10,7 +14,11 @@
 " interface for this instance:
 " call tovl#log#Log('myplugin',0,'an error has occured')
 fun! tovl#log#Log(...)
-  call call(s:logger.Log, a:000,s:logger)
+  let args = copy(a:000)
+  if args[2][:len('exception')-1] == 'exception'
+    let args[2] = args[2].tovl#log#FormatException()
+  endif
+  call call(s:logger.Log, args,s:logger)
 endf
 
 fun! tovl#log#GetLogger()
@@ -59,5 +67,9 @@ fun! tovl#log#NewLogObj()
   return o
 endf
 
-
 call tovl#log#SetLogger(tovl#log#NewLogObj())
+
+" use this in your own error messages..
+fun! tovl#log#FormatException()
+  return "\n".v:exception."\n".v:throwpoint
+endf

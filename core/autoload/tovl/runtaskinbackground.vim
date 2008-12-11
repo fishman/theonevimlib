@@ -39,8 +39,11 @@ fun! tovl#runtaskinbackground#NewProcess(p)
     try
       call self.OnFinish()
     catch /.*/
-      call s:Log(0, "got exception while running OnFinish handler ".v:exception)
+      call s:Log(0, "exception while running OnFinish handler")
     endtry
+    for i in get(self,'onFinishCallbacks',[])
+      call library#Call(i,[self])
+    endfor
     call self.DelTemp()
     call remove(s:status,self['id'])
   endf
@@ -70,7 +73,7 @@ fun! tovl#runtaskinbackground#NewProcess(p)
       try
         call self.OnStart()
       catch /.*/
-        call s:Log(0, "got exception while running OnStart handler ".v:exception)
+        call s:Log(0, "exception while running OnStart handler")
       endtry
       call s:Log(1, "trying to run command ".string(self.realCmd))
       let s:status[self['id']] = self
@@ -83,7 +86,7 @@ fun! tovl#runtaskinbackground#NewProcess(p)
         call library#Try(handlers, self)
       endtry
     catch /.*/
-      call s:Log(0,"running command failed due to unexpceted exception : ".v:exception)
+      call s:Log(0,"exception while running command")
     endtry
     return self
   endf
@@ -148,7 +151,7 @@ endfun
 
 fun! tovl#runtaskinbackground#RunHandlerSh(process)
   let S = function('tovl#runtaskinbackground#EscapeShArg')
-  if get(a:process, 'fg', 0) && !has('clientserver') | throw "RunHandlerSh: no client server support!" | endif
+  if !get(a:process, 'fg', 0) && !has('clientserver') | throw "RunHandlerSh: no client server support!" | endif
   if has('win16') || has('win32') || has('win64') | throw "RunHandlerSh: win not supported yet!" | endif
   if !executable('/bin/sh') | throw "no /bin/sh found" | endif
 
@@ -164,7 +167,7 @@ fun! tovl#runtaskinbackground#RunHandlerSh(process)
     let tellPid = s:CallVimUsingSh(vim,
           \ S('call config#GetG(''tovl#running_background_processes'')['.a:process.id.']').'".SetProcessId("$$")"')
     let tellResult = s:CallVimUsingSh(vim,
-           \ S('call config#GetG(''tovl#running_background_processes'')['.a:process.id.']').'".Finished("$?")"')
+          \ S('call config#GetG(''tovl#running_background_processes'')['.a:process.id.']').'".Finished("$?")"')
     let cmd = join(map(copy(a:process.realCmd),
    \ "tovl#runtaskinbackground#EscapeShArg(v:val)"),' ')
     " FIXME: requiring linux for now..

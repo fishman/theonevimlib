@@ -1,8 +1,8 @@
 " support for multiple completion functions
 " see plugins/completion/choose_completion.vim
 "
-" a is dict { 'description' : .., 'func' : ... } 
-fun! tovl#ui#multiple_completions#RegisterBufferCompletionFunc(a) 
+" a is dict { 'description' : .., 'completion_func' : ... } 
+fun! tovl#ui#multiple_completions#RegisterBufferCompletionFunc(a)
   call tovl#list#AddUnique(config#GetB('completion#functions',{'default' : [], 'set' : 1}),a:a)
   " adding indirection, so that you can use functions created by library#Function
   " containing closed args
@@ -10,8 +10,16 @@ fun! tovl#ui#multiple_completions#RegisterBufferCompletionFunc(a)
   setlocal completefunc=tovl#ui#multiple_completions#Complete
 endf
 
+fun! tovl#ui#multiple_completions#UnregisterBufferCompletionFunc(a)
+  let l = config#GetB('completion#functions')
+  call remove(l, index(l, a:a))
+  if config#GetB("completion#func") == a:a
+    call config#RemoveB("completion#func")
+  endif
+endf
+
 fun! tovl#ui#multiple_completions#Complete(...)
-  return library#Call(config#GetB('completion#func')['func'],a:000)
+  return library#Call(config#GetB('completion#func')['completion_func'],a:000)
 endf
 
 fun! tovl#ui#multiple_completions#ChooseCompletionFunc() 

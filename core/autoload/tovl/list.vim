@@ -17,6 +17,16 @@ function! tovl#list#Difference(a,b)
   return result
 endfunction
 
+fun! tovl#list#Intersection(a,b)
+  let result = []
+  for i in a:a
+    if index(a:b, i) != -1
+      call add(result, i)
+    endif
+  endfor
+  return result
+endf
+
 function! tovl#list#AddUnique(list, value)
   if index(a:list, a:value) == -1
     call add(a:list, a:value)

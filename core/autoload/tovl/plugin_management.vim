@@ -8,6 +8,10 @@
 fun! s:Log(level, msg)
   call tovl#log#Log("tovl#plugin_management",a:level, a:msg)
 endf
+fun! s:LogExec(level, msg)
+  call tovl#log#Log("tovl#plugin_management",a:level, "executing :\n".a:msg)
+  exec a:msg
+endf
 
 function! tovl#plugin_management#PluginDict(p)
   try
@@ -25,15 +29,18 @@ function! tovl#plugin_management#PluginDict(p)
   endtry
 endfunction
 
+let s:loaded = config#GetG('tovl#plugins#loaded', {'set' : 1, 'default' : {}})
+
+let s:lhsMap = config#GetG('config#lhsMap', { 'default' : library#Function('library#Id') })
+
 " return dict of loaded plugin
 function! tovl#plugin_management#Plugin(name)
-  return config#GetG('tovl#plugins#loaded')[a:name]
+  return  s:loaded[a:name]
 endfunction
 
 " loads, unloads plugins based on current configuration
 function! tovl#plugin_management#UpdatePlugins()
-  let loaded = config#GetG('tovl#plugins#loaded',{ 'default' : {}, 'set' :1})
-  let loadedKey = keys(loaded)
+  let loadedKey = keys(s:loaded)
   let cfg = config#Get('loadablePlugins', { 'default' : {}})
 
   " config says they should be active
@@ -44,17 +51,17 @@ function! tovl#plugin_management#UpdatePlugins()
 
   " try to unload plugins
   for p in tounload
-    let d = loaded[p]
+    let d = s:loaded[p]
     if has_key(d, 'Unload')
       try
         call library#Call(d['Unload'],[],d)
-        call remove(loaded, p)
-        call s:Log(1,"unloaded:".p)
+        call remove(s:loaded, p)
+        call (1,"unloaded:".p)
       catch /.*/
-        call s:Log(0,"unloading of plugin ".p." failed due to exception ".v:exception)
+        call s:Log(0,"exception while unloading of plugin ".p)
       endtry
     else
-      call s:Log(0,"unloading of plugin ".p." failed, not implemented.")
+      call s:Log(0,"exception while unloading plugin ".p)
     endif
   endfor
 
@@ -65,16 +72,16 @@ function! tovl#plugin_management#UpdatePlugins()
       if has_key(d, 'LoadPlugin')
         try
           call library#Call(d['LoadPlugin'],[],d)
-          let  loaded[p] = d
+          let  s:loaded[p] = d
           call s:Log(1, "loaded: ".p)
         catch /.*/
-          call s:Log(0, "loading of plugin ".p." failed due to exception ".v:exception)
+          call s:Log(0, "exception while loading plugin ".p)
         endtry
       else
         call s:Log(0, "loading of plugin ".p." failed, key 'Load' missing.")
       endif
     catch /.*/
-      call s:Log(0, "loading of plugin ".p." failed, couldn't get plugin dict: ".v:exception)
+      call s:Log(0, "exception while getting plugin dict ".p)
     endtry
   endfor
 endfunction
@@ -156,16 +163,23 @@ fun! tovl#plugin_management#NewPlugin()
   let d = tovl#obj#NewObject('tovl plugin')
 
   " they will be added automatically (see example, Load below)
-  let d.mappings = {}
   let d.autocommands = {}
+
+  " OLD, FIXME! (use new feature stuff)
+  let d.mappings = {}
+  let d.mappings2 = {}
+
+  " NEW
+  let d.commands = {}
 
   " they have been added and will be removed when unloading a plugin
   let d.mappings_ = []
   let d.aucommands_ = []
 
-  let d.defaults = {'mappings' : {}, 'autocommands' :{}}
+  let d.defaults = {'autocommands' :{}, 'commands': {}, 'mappings2' : {}}
 
-  let d.lhsMap = config#GetG('config#lhsMap', { 'default' : library#Function('library#Id') })
+  " depreceated: (TODO)
+  let d.defaults['mappings'] = {}
 
   " args: level, msg
   fun! d.Log(...)
@@ -177,11 +191,21 @@ fun! tovl#plugin_management#NewPlugin()
     exec a:cmd
   endf
 
+  " registers a new item (mapping, completion func or command)
+  " see featureset.vim
+  fun! d.RegI(d)
+    let d = a:d
+    let d['plugin'] = self.pluginName
+    call tovl#featureset#ModifyFeatureItem(d, 'add')
+  endf
+
   " if filetype is given the mapping will be added by autocommand
   " {'ft' :filetype, 'm': mode / "", 'lhs': keys="<c-x>", 'c': a:cmd=":echo 'foo'<cr>"}
+  " ! depreceated, use RegI insead !
   fun! d.Map(opts)
+    " call s:Log(0," is depreceated") TODO
     let opts = copy(a:opts)
-    let opts['lhs'] = library#Call(self.lhsMap,
+    let opts['lhs'] = library#Call(s:lhsMap,
         \ [substitute(opts['lhs'], '<leader>', get(self.cfg, 'mapleader', '\\'),'')])
     if opts['lhs'] == ""
       return
@@ -236,14 +260,26 @@ fun! tovl#plugin_management#NewPlugin()
   fun! d.Load()
     let cfg = self.cfg
     call config#AddToListUniq('config#onChange', library#Function(self['OnConfigChange'],{'self' : self}))
-    for name in keys(self.mappings)
+
+
+    let commands = get(self.cfg,'commands',{})
+    for name in keys(commands)
       try
-        let m = copy(self.mappings[name])
-        let m['lhs'] = cfg.mappings[name].lhs
-        let m['rhs'] = cfg.mappings[name].rhs
-        call self.Map(m)
+        let c = copy(commands[name])
+        let c['plugin'] = self.pluginName
+        call self.RegI(c)
       catch /.*/
-        call self.Log(0, self.pluginName.": failed setting up mapping :".name." due to ".v:exception)
+        call self.Log(0, 'exception while setting up command '.name.' for '.self.pluginName)
+      endtry
+    endfor
+    let mappings2 = get(self.cfg,'mappings2',{})
+    for name in keys(mappings2)
+      try
+        let m = copy(mappings2[name])
+        let m['plugin'] = self.pluginName
+        call self.RegI(m)
+      catch /.*/
+        call self.Log(0, 'exception while setting up mapping2 '.name.' for '.self.pluginName)
       endtry
     endfor
     for name in keys(self.autocommands)
@@ -252,7 +288,29 @@ fun! tovl#plugin_management#NewPlugin()
         let a['p'] = cfg.autocommands[name].pattern
         call self.Au(a)
       catch /.*/
-        call self.Log(0, self.pluginName.": failed setting up autocommand :".name." due to ".v:exception)
+        call self.Log(0, 'exception while setting up autocommand '.name.' for '.self.pluginName)
+      endtry
+    endfor
+
+    " add global tags
+    let tags = get(self.cfg,'tags',[])
+    call tovl#featureset#ModifyTags(0,tags, [])
+    " add buffer type tags
+    let tags_buftype = get(self.cfg,'tags_buftype',{})
+    for k in keys(tags_buftype)
+      call self.Au({'events' : 'filetype', 'pattern' : k,
+        \ 'cmd' : 'call tovl#featureset#ModifyTags(1,'.string(tags_buftype[k]).', [])' })
+    endfor
+
+    " depreceated
+    for name in keys(self.mappings)
+      try
+        let m = copy(self.mappings[name])
+        let m['lhs'] = cfg.mappings[name].lhs
+        let m['rhs'] = cfg.mappings[name].rhs
+        call self.Map(m)
+      catch /.*/
+        call self.Log(0, 'exception while setting up mapping '.name.' for '. self.pluginName)
       endtry
     endfor
   endf
@@ -285,7 +343,7 @@ fun! tovl#plugin_management#NewPlugin()
           "bn
       endif
     catch /.*/
-      call self.Log(0, self.pluginName." error removing filetype mappings ".v:exception)
+      call self.Log(0, 'exception while removing filetype mappings for '.self.pluginName)
     endtry
     let self.mappings_ = []
     let self.aucommands_ = []
@@ -298,7 +356,7 @@ fun! tovl#plugin_management#NewPlugin()
         call self.LoadPlugin()
       endif
     catch /.*/
-      call self.Log(0, "reloading of plugin ".self.pluginName." failed due to exception ".v:exception)
+      call self.Log(0, "exception while reloading plugin ".self.pluginName)
     endtry
   endfun
 
@@ -316,6 +374,14 @@ fun! tovl#plugin_management#NewPlugin()
   endfun
 
   fun! d.AddDefaultConfigOptions(d)
+    for name in keys(self.commands)
+      let c = self.commands[name]
+      let self.defaults.commands[name] = {'name' : c['name'], 'attrs' : c['attrs'], 'cmd' : c['cmd'], 'tags' : c['tags'], 'buffer' : get(c,'buffer',0)}
+    endfor
+    for name in keys(self.mappings2)
+      let c = self.mappings2[name]
+      let self.defaults.commands[name] = {'lhs' : c['lhs'], 'rhs' : c['rhs'], 'mode' : get(c,'mode',''), 'tags' : c['tags'], 'buffer' : get(c,'buffer',0)}
+    endfor
     for name in keys(self.mappings)
       let m = self.mappings[name]
       let self.defaults.mappings[name] = {'lhs' : m['lhs'], 'rhs' : m['rhs']}

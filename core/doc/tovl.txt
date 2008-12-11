@@ -32,7 +32,9 @@ You want to see TOVL in action? Visit the |tovl-config-tutorial|
 
 5.   TOVL design notes
 
-6.   TOVL library: a small introduction to things you should know
+6.   TOVL feature sets
+
+7.   TOVL library: a small introduction to things you should know
       TOVL TESTS
       TOVL TYPE
       TOVL OBJECT (OOP)
@@ -44,7 +46,7 @@ You want to see TOVL in action? Visit the |tovl-config-tutorial|
       TOVL FUNCTION REFERENCES
       TOVL ...
 
-7.   Writing TOVL plugins ................................. |tovl-plugins|
+8.   Writing TOVL plugins ................................. |tovl-plugins|
 
 10.  TOVL FUNCTION REFERENCE (TODO)
       list of TOVL functions you should know about.
@@ -87,14 +89,17 @@ You want to see TOVL in action? Visit the |tovl-config-tutorial|
   To get TOVL there are two ways:
     a) use an packed archive (.zip, .tar.gz)
         http://github.com/MarcWeber/theonevimlib (-> download button)
-    b) use git
+    b) use git >
         git clone git://github.com/MarcWeber/theonevimlib.git
         git pull # this updates the repository
+<
       you'll get the whole developement history as well.
 
-  To install TOVL simply add this to your .vimrc
+  To install TOVL simply add this to your .vimrc >
     set runtimepath+=<pathtotovl>/core
-  
+    " set |tovl-global-config| options
+    call theonevimlibsetup#Setup()
+<
   *tovl-contribute*
   You can contribute in various ways:
     a) tell me what you (dis)like
@@ -131,12 +136,12 @@ TOVL SHELL ESC HACK				*tovl-shell-esc-hack*
   Esc. By using <m-a> will be replaced by <esc>a and <m-s-a> by <esc>A 
   which is what the terminal vim is most likely to receive. However don't
   blame me if strange things start happening because multiple key combinations
-  will be mapped to the same codes.. I'm happy with this setup.
-
+  will be mapped to the same codes.. I'm happy with this setup. >
   if !has('gui_running')
     call config#SetG('config#lhsMap', 
       \ library#Function("return substitute(substitute(ARGS[0],'<m-\\(.\\)>','<esc>\\1','g'),'<m-s-\\(.\\)>','<esc><s-\\1>','g')"))
   endif
+<
 
 STRUCTURE                                       *tovl-config-bar* {{{2
 
@@ -154,12 +159,12 @@ STRUCTURE                                       *tovl-config-bar* {{{2
 
 MULTIPLE PROJECT SPECIFIC CONFIGURATION FILES  *tovl-project-secific* {{{2
 
-    TOVL supports multiple configuration files. Use
+    TOVL supports multiple configuration files. Use >
 
     *config#filesFunc*
 	call config#SetG('config#filesFunc',
 	  \ library#Function("return [expand('$HOME').'/.theonevimlib_config']")
-
+<
     in your .vimrc to define a different list. Be careful that only you have
     access to them because someone else might add malicious code.
     (TODO check file premisions)
@@ -200,11 +205,11 @@ EDITING THE CONFIGURATION AND LOADING PLUGINS      *tovl-config-edit* {{{2
   to have SQL and PHP and maybe even HTML or Javascript complection
   functions..
 
-  I had in mind to never break things by using
+  I had in mind to never break things by using >
     file#v1#Func()
-  then change that to 
+< then change that to  >
     file#v1#Func()
-  if the interface changes
+< if the interface changes
 
   However this will lead to many different files doing the same thing which is
   even more evil than breaking things once to make things better.
@@ -216,18 +221,31 @@ EDITING THE CONFIGURATION AND LOADING PLUGINS      *tovl-config-edit* {{{2
   Another example is tovl/ui/open_thing_at_cursor.vim or |library#Try()|
 
   If you don't know yet what arguments a function will require consider using
-  a dictionary as optional arg. Then use something like this:
-
+  a dictionary as optional arg. Then use something like this: >
     fun X(...)
       let opts = a:0 > 0 ? a:1 : <+default+>
       if get(opts, 'key', default)
       endif
     endfun
-
+<
   What else to put here?
 
 ==============================================================================
-6.   TOVL library:					*tovl-library* {1
+6.   TOVL feature sets:					*tovl-feature-sets* {1
+
+  Have you ever tried using multiple filetypes for one file ?
+  The thing you have to do is >
+  runtime ftplugin/html*.vim
+< or such. However TOVL tries to this in a more flexible way:
+  For each feature (mapping, command, completion func) a plugin provides you
+  assign tags. Then you (or the plugin) assign these tags to buffer thereby
+  adding the features. Of course you can remove them again.
+  I know that this adds recundancy.. This way you can combine features the way
+  you think.
+
+
+==============================================================================
+7.   TOVL library:					*tovl-library* {1
 
       ----------------------------------------------
       a small introduction to things you should know 
@@ -240,12 +258,14 @@ TOVL TESTS						*tovl-tests* {{{2
     be automatic test runners in the future.
 
 TOVL TYPES						*tovl-type* {{{2
+
     I was faced by a problem (-> |tovl-function-references|). Therefore
     I had to extend the vim type system. (See |type()|)
     This is done by adding special keys to a dictionary to indicate it is not
     an arbitrary dictionary but a different type. see library#Type()
 
 TOVL OBJECT OOP						*tovl-object* {{{2
+
     TOVL supports a basic OOP programming. See |tovl#obj#NewObject()|
     Basically this kind of duck typing (the way its done in Javascript).
     If something behaves like a duck it is one..
@@ -254,18 +274,19 @@ TOVL OBJECT OOP						*tovl-object* {{{2
     Examples can be found in obj_test.vim.
 
 TOVL LOGGING					*tovl-log* *tovl-logging* {{{2
+
     TOVL provides a minimal logging facility. The code has been optimized for
     speed (by keeping a list of log items which is cut only once in a while).
     Yet you can replace the code by your own if you have to.
     See |tovl#log#Log()| and the plugin |PluginLog|to view the log
     to log every log level (error=0,info=1,debug=2) use
 
-      *tovl-log-config*
+      *tovl-log-config*  >
       call tovl#log#GetLogger().SetLevel(999)
-
-    only logging errors (level 0) is the default
+<
 
 TOVL CHOOSE					        *tovl-choose* {{{2
+
     One thing many scripts of need to do: Ask the user to pick an item from a
     list. a very simple function which can do this if you have 20 or less
     items is |tovl#ui#choice#LetUserSelectIfThereIsAChoice| which picks one
@@ -273,10 +294,12 @@ TOVL CHOOSE					        *tovl-choose* {{{2
     However I'd like to replace this by a TToC like implementation.
 
 TOVL TRY					        *tovl-try* {{{2
+
     If you want test wether you should the one or the other setup then
     |library#Try| could be the function you'd like to use..
 
 TOVL ERROR FORMATS		 	*tovl-error-formats* {{{2
+
     See |tovl#errorformat#SetErrorFormat(id)|
     and plugin autoload/plugins/tovl/errorformats.vim
     (I never want to have the quoting hell again :-)
@@ -288,16 +311,19 @@ TOVL RUN TASK MAYBE IN BACKGROUND		 *tovl-run-in-background* {{{2
 
     autoload/tovl/runtaskinbackground.vim provides methods to run external
     commands. The default is to run them in background. This requires
-    has('client-server') because using |client-server| is the only way
+    has('client-server') because using |client-server| [1] is the only way
     to notify vim about events (what process id and when the process has
-    finished) asynchronously without increasing the probablity crashing vim.
-
+    finished) asynchronously without increasing the probablity crashing vim. >
 
     let process = tovl#runtaskinbackground#NewProcess(
       \ { 'name' : 'compilation', 'cmd': ["/bin/sh","-c",'sleep 10; echo done'],
       \   'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php' })
     call process.Run()
-
+<
+    or as one line (for copy paste and testing) >
+    call tovl#runtaskinbackground#NewProcess( { 'cmd': ["/bin/sh","-c",'sleep 10; echo done'], 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php' }).Run()
+ 
+<
     You cann add the key 'fg' : 1 to force running in foreground only (TODO
     implement this)
 
@@ -314,7 +340,13 @@ TOVL RUN TASK MAYBE IN BACKGROUND		 *tovl-run-in-background* {{{2
 
     Enjoy!
 
+    [1] It seems that vim doesn't set the server name by default. That's why
+    I'v put this into my .bashrc / .zshrc file: >
+        v(){ vim --servername vim$(echo $RANDOM) "$@" }
+<
+
 TOVL FUNCTION REFERENCES 		 *tovl-function-reference* {{{2
+
     vim already provides |function()| to create function references.
     It sucks because it assumes the function has already been loaded.
     That's bad because we'd like to make vim only load things which are
@@ -326,8 +358,7 @@ TOVL FUNCTION REFERENCES 		 *tovl-function-reference* {{{2
     use library#Call(library#Function('dir#MyFunc'),args,self)
     However both Function and Call are much more versatile because you can
     pass self by Function and you can also pass some first args of a function.
-    You can also just write some small string lambdas or just use plain values:
-
+    You can also just write some small string lambdas or just use plain values: >
       " pass plain values
       3 == library#Call(3)
 
@@ -335,12 +366,12 @@ TOVL FUNCTION REFERENCES 		 *tovl-function-reference* {{{2
       let F = library#Function('return [ARGS[0], ARGS[1], SELF]',
             \ { args : [2], self : dict } )
       [2,"end",dict] == library#Call(F, ["end"])
+<
 
     Using Call and Function is often very convinient because they let you
     write lazy code.
 
-    Example:
-
+    Example: >
       fun! DoWithLines(lines)
         return library#Call(a:lines)[3]
       endf
@@ -360,7 +391,7 @@ TOVL FUNCTION REFERENCES 		 *tovl-function-reference* {{{2
         \ 'template1' : readfile('foo'),
         \ 'template2' : readfile('foo2')
         \ })
-
+>
 TOVL ....
 
   TODO
@@ -369,7 +400,7 @@ TOVL ....
   But it hasn't been merged yet.
 
 ==============================================================================
-7.   Writing TOVL plugins ................................. *tovl-plugins*
+8.   Writing TOVL plugins ................................. *tovl-plugins*
   Have a look at the core/autoload/plugins/examples/example.vim
   file. (TODO)
 
