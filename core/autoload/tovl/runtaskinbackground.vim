@@ -208,7 +208,7 @@ fun! tovl#runtaskinbackground#VimFilepathByGlibc(v)
 endfunction
 
 fun! tovl#runtaskinbackground#EscapeShArg(arg)
-  return escape(a:arg, ";()*<> '\"\\`")
+  return escape(a:arg, ";()*<>| '\"\\`")
 endf
 
 " usage: vl#lib#system#system#System( ['echo', 'foo'], {'stdin-text' : 'will be ignored by echo', status : 0 })
@@ -283,3 +283,12 @@ class MyThread ( threading.Thread ):
     popenobj = Popen([self.vim,"--servername","%s"%(self.servername),"--remote-send","<esc>:%(cmd)s<cr>"%locals()])
     popenobj.wait()
 EOF
+
+
+" Thanks to Luc Hermitte <hermitte@free.fr> for his suggestions
+" He has written a similar script which can be found here:
+"     <http://hermitte.free.fr/vim/ressources/lh-BTW.tar.gz> (still in an
+"     alpha stage.)
+"     --
+"      Luc Hermitte
+"      http://hermitte.free.fr/vim/
