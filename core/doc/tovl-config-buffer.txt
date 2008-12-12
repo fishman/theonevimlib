@@ -84,7 +84,7 @@
       logAll:number=1 to add all levels of messages from this plugin. See |tovl-logging|
       mapleader (TODO)
 
-  *tovl-config-dont-add-defaults*
+  *tovl-config-dont-add-defaults* :
     If a plugin adds new options they'll be added without asking you. Plugins
     should never override existing options though.
     Add this to your .vimrc to make tovl not add defaults: >
@@ -92,6 +92,31 @@
 <
     Then |tovl-config-diff| and |tovl-log| are the tools you have to debug
     failures when a plugin got updated..
+
+  *tovl-config-feature-sets* : (Read |tovl-feature-sets| first)
+  To tell tovl that a command or mapping belongs to a particular feature set
+  you simply add the tag to the command. Here the command helloworld_buffer is
+  added to the feature set "example" A feature can belong to multiple sets  >
+    PluginExample:dictionary=
+      commands:dictionary=
+        helloworld_buffer:dictionary=
+          tags:list=
+            string=example
+< 
+  However you still would
+  have to run  |GlobalFeatureTags| feat_set_name   to add the commands.
+  That's why most plugins do also provide the special keys tags and
+  tags_buftype. >
+    PluginExample:dictionary=
+      tags:list=
+        string=example
+      tags_buftype:dictionary=
+        vim:list=
+          string=example
+< In this case TOVL will add the global feature set example automatically
+  when the plugin is loaded. The same is can be done for buffer feature sets.
+  In this example  BufferFeatureTags example   will be executed for you
+  automatically whenever you edit a vim file.
 
   Trouble ? See also
   |tovl-logging| |tovl-config-special-keys|

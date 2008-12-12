@@ -284,6 +284,22 @@ TOVL LOGGING					*tovl-log* *tovl-logging* {{{2
       *tovl-log-config*  >
       call tovl#log#GetLogger().SetLevel(999)
 <
+    I recommend using it this way in your own scripts: >
+    
+    fun! s:Log(level, msg)
+      call tovl#log#Log("your_file",a:level, a:msg)
+    endf
+
+    try
+      throw "test"
+    catch /.*/
+      call s:Log(2,"exception while testing"
+       \ ." the exception and throwpoint will be ammended automatically")
+    endtry
+< 
+    There is some a special treatment for exceptions: When the message begins
+    with "exception" the Log function will automatically append v:exceptions
+    and v:throwpoint.
 
 TOVL CHOOSE					        *tovl-choose* {{{2
 
