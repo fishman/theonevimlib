@@ -49,6 +49,7 @@ endfunction
 function! config#FireEvent(path, ...)
   for F in config#GetG(a:path, [])
     call call(function("library#Call"), [F] + [a:000])
+    unlet F
   endfor
 endfunction
 

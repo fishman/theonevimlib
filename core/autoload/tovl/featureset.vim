@@ -59,6 +59,10 @@
 "   call tovl#featureset#ModifyTags(buffor_or_global,['sql'], ['php'])
 " Again the cfg.tags options and cfg.tags_buftype should do this for you
 
+
+" TODO: get rid of TLet, use autocommands! (TLet is using a regex..)
+" Test postbone for speed reasons?
+
 fun! s:Log(level, msg)
   call tovl#log#Log("tovl#featureset",a:level, a:msg)
 endf
@@ -73,6 +77,8 @@ let s:lhsMap = config#GetG('config#lhsMap', { 'default' : library#Function('libr
 
 let s:pd_add = config#GetG('tovl#features#postbone_add', {'set' : 1, 'default' : {}})
 let s:pd_del = config#GetG('tovl#features#postbone_del', {'set' : 1, 'default' : {}})
+let s:buffer_setup = 'TLet b:tovl_feature_tags = [] | TLet b:tovl_feature_id_counts = {}'
+" can you help me getting rid of s:buffer_setup using autocommands only?
 if !exists('s:next_id') 
   " initialize empty values:
   let s:next_id = 0
@@ -82,11 +88,6 @@ if !exists('s:next_id')
   let s:postbone = 0
   let g:tovl_feature_id_counts = {}
   let g:tovl_feature_tags = []
-  let cmd = 'let b:tovl_feature_tags = [] | let b:tovl_feature_id_counts = {}'
-  exec 'bufdo '.cmd
-  augroup TOVL_FEATURESET
-    exec 'autocmd BufReadPre,FileReadPre *  '.cmd
-  augroup end
 endif
 
 fun! tovl#featureset#ListItems(filter)
@@ -101,8 +102,10 @@ endf
 
 " action = add or del
 fun! tovl#featureset#ModifyFeatureItem(i,action)
-  let s:next_id = s:next_id +1
-  let a:i['id'] = s:next_id
+  if (a:action == 'add')
+    let s:next_id = s:next_id +1
+    let a:i['id'] = s:next_id
+  endif
   " completion functions are always per buffer
   if has_key(a:i, 'completion_func')
     let a:i['buffer'] = 1
@@ -117,30 +120,42 @@ fun! tovl#featureset#ModifyFeatureItem(i,action)
   endif
 endf
 
+fun! tovl#featureset#RemoveItemsOfPlugin(name)
+  let remove = []
+  for t in keys(s:items)
+    call extend(remove, filter(copy(s:items[t]), 'v:val.plugin == '.string(a:name)))
+  endfor
+  for i in remove | call tovl#featureset#ModifyFeatureItem(i, 'del') | endfor
+endf
+
 fun! tovl#featureset#ModifyTags(buffer, tags_add, tags_del)
-  let v = a:buffer ? 'b' : 'g'
-  let add = tovl#list#Difference(a:tags_add, {v}:tovl_feature_tags)
-  let del = tovl#list#Intersection(a:tags_del, {v}:tovl_feature_tags)
+  if a:buffer | exec s:buffer_setup | endif
+  let v = (a:buffer ? 'b' : 'g').':tovl_feature_tags'
+  let add = tovl#list#Difference(a:tags_add, {v})
+  let del = tovl#list#Intersection(a:tags_del, {v})
   call s:Log(2,'modifying tags'.a:buffer.' '.string(add).'/'.string(a:tags_add).' '.string(del))
   call s:WhenTagged(a:buffer, del, function('s:RemoveItem'), s:items)
   call s:WhenTagged(a:buffer, add, function('s:AddItem'), s:items)
-  let {v}:tovl_feature_tags = tovl#list#Difference({v}:tovl_feature_tags, del)
-  call extend({v}:tovl_feature_tags, add)
+  let {v} = tovl#list#Difference({v}, del)
+  call extend({v}, add)
 endf
 
 fun! tovl#featureset#Apply()
   " apply everything postboned..
+
   " remove, then add (buffer options)
+  exec 'bufdo '.s:buffer_setup
   bufdo call s:WhenTagged(1, b:tovl_feature_tags, function('s:RemoveItem'), s:pd_del)
    \ | call s:WhenTagged(1, b:tovl_feature_tags, function('s:AddItem'), s:pd_add)
 
+  " remove, then add (global options)
   call s:WhenTagged(0, g:tovl_feature_tags, function('s:RemoveItem'), s:pd_del)
   call s:WhenTagged(0, g:tovl_feature_tags, function('s:AddItem'), s:pd_add)
 
   " update s:items
   for t in keys(s:pd_del)
     for i in s:pd_del[t]
-      call remove(s:items[t], i)
+      call tovl#list#Remove(s:items[t], i)
     endfor
   endfor
   for t in keys(s:pd_add)
@@ -158,7 +173,7 @@ fun! s:WhenTagged(buffer, tags, f, d)
   for t in keys(a:d)
     if index(a:tags, t) >= 0
       for i in a:d[t]
-        if get(i,'b',0) == a:buffer
+        if get(i,'buffer',0) == a:buffer
           call call(a:f, [i])
         endif
       endfor
@@ -167,10 +182,11 @@ fun! s:WhenTagged(buffer, tags, f, d)
 endf
 
 fun! s:AddItem(i)
+  exec s:buffer_setup
   let b = get(a:i,'buffer',0)
-
   " increment counter. If item has already been added return
   let id = a:i['id']
+
   let v = (b ? 'b:' : 'g:').'tovl_feature_id_counts'
   let was = get({v}, id,0)
   let {v}[id] = 1+ was
@@ -222,11 +238,15 @@ endf
 
 " worker function for ui commands
 fun! tovl#featureset#CommandAction(buffer, ...)
+  if a:buffer | exec s:buffer_setup | endif
   if a:0 == 0
     " list, do nothing
     echo "== active tags =="
     let v = (a:buffer ? 'b:' : 'g:').'tovl_feature_tags'
-    for i in {v} | echo i | endfor
+    echo string({v})
+    echo "== inactive tags =="
+    echo string(tovl#list#Difference(
+      \ tovl#featureset#AvailibleTags(a:buffer), {v}))
     return 
   endif
   let add = []
@@ -241,8 +261,19 @@ fun! tovl#featureset#CommandAction(buffer, ...)
   call tovl#featureset#ModifyTags(a:buffer,add, remove)
 endfun
 
+fun! tovl#featureset#AvailibleTags(buffer)
+  let tags = []
+  for k in keys(s:items)
+    if !empty(filter(copy(s:items[k]),'get(v:val,"buffer",0) == '.a:buffer))
+      call add(tags, k)
+    endif
+  endfor
+  return tags
+endf
+
 " completion function for commands
 fun! tovl#featureset#CommandCompletion(buffer, A,L,P)
+  if a:buffer | exec s:buffer_setup | endif
   let beforeC= a:L[:a:P-1]
   let word = matchstr(beforeC, '\zs\S*$')
   let v = (a:buffer ? 'b:' : 'g:').'tovl_feature_tags'
@@ -250,13 +281,8 @@ fun! tovl#featureset#CommandCompletion(buffer, A,L,P)
     return map( filter(copy({v}),'v:val =~ '.string('^'.word[1:])),
               \ string('-').'.v:val')
   else
-    let tags = []
-    for k in keys(s:items)
-      if !empty(filter(copy(s:items[k]),'get(v:val,"buffer",0) == '.a:buffer))
-        call add(tags, k)
-      endif
-    endfor
-    return vl#lib#listdict#list#Difference(tags, {v})
+    return vl#lib#listdict#list#Difference(
+          \ tovl#featureset#AvailibleTags(a:buffer), {v})
   endif
 endf
 

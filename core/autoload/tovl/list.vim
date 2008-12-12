@@ -44,3 +44,11 @@ fun! tovl#list#Uniq(list)
   endwhile
   return a:list
 endf
+
+" remove element from list
+fun! tovl#list#Remove(l, i)
+  let i = index(a:l, a:i)
+  if i >= 0
+    call remove(a:l, i)
+  endif
+endf

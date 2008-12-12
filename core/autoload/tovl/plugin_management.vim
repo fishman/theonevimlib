@@ -54,9 +54,9 @@ function! tovl#plugin_management#UpdatePlugins()
     let d = s:loaded[p]
     if has_key(d, 'Unload')
       try
-        call library#Call(d['Unload'],[],d)
+        debug call library#Call(d['Unload'],[],d)
         call remove(s:loaded, p)
-        call (1,"unloaded:".p)
+        call s:Log(1,"unloaded:".p)
       catch /.*/
         call s:Log(0,"exception while unloading of plugin ".p)
       endtry
@@ -316,6 +316,12 @@ fun! tovl#plugin_management#NewPlugin()
   endf
 
   fun! d.Unload()
+    " unregister notification
+    call tovl#list#Remove(config#GetG('config#onChange'),
+          \ library#Function(self['OnConfigChange'],{'self' : self}))
+    " remove mappings
+    call tovl#featureset#RemoveItemsOfPlugin(self.pluginName)
+
     " remove mappings and augroup
     if !empty(self.aucommands_)
       exec 'aug! '.self.pluginNameFlat
@@ -380,7 +386,7 @@ fun! tovl#plugin_management#NewPlugin()
     endfor
     for name in keys(self.mappings2)
       let c = self.mappings2[name]
-      let self.defaults.commands[name] = {'lhs' : c['lhs'], 'rhs' : c['rhs'], 'mode' : get(c,'mode',''), 'tags' : c['tags'], 'buffer' : get(c,'buffer',0)}
+      let self.defaults.mappings2[name] = {'lhs' : c['lhs'], 'rhs' : c['rhs'], 'mode' : get(c,'mode',''), 'tags' : c['tags'], 'buffer' : get(c,'buffer',0)}
     endfor
     for name in keys(self.mappings)
       let m = self.mappings[name]

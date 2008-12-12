@@ -12,24 +12,54 @@ function! plugins#examples#example#PluginExample(p)
 
   " == setting up default options ==
   let p['defaults']['string'] = "Hello!"
-  " ft = filetype: empty = all
-  " m = mode: "" = all
-  " lhs, rhs, you know them (:h map)
-  " self.s is a string representing this plugin (-> tovl#plugin_management#PluginDict())
-  let p['mappings']['helloworld'] 
-    \ = {'ft' : '', 'm':'n', 'lhs' : '\hw', 'rhs' : ':echo '.p.s.'.cfg["string"]<cr>' }
-  " == end                        ==
+
+  " global mapping and command
+  " p.s : [2]
+  let p['mappings2']['helloworld_global'] = {
+        \ 'tags' : ['example'],
+        \ 'm':'n',
+        \ 'lhs' : '\hw',
+        \'rhs' : ':echo '.p.s.'.cfg["string"]." - from global mapping"<cr>' }
+  let p['commands']['helloworld_global'] = {
+        \ 'tags' : ['example'],
+        \ 'name': 'Example',
+        \ 'cmd' : 'echo '.p.s.'.cfg["string"]." - from global command"' }
+
+  " mapping and command only for buffers having added the tag "example"
+  " note the key "buffer" : 1
+  let p['mappings2']['helloworld_buffer'] = {
+        \ 'tags' : ['example'],
+        \ 'm':'n',
+        \ 'buffer' : 1,
+        \ 'lhs' : '\bhw',
+        \'rhs' : ':echo '.p.s.'.cfg["string"]." - from buffer mapping"<cr>' }
+  let p['commands']['helloworld_buffer'] = {
+        \ 'tags' : ['example'],
+        \ 'name': 'BufExample',
+        \ 'buffer' : 1,
+        \ 'cmd' : 'echo '.p.s.'.cfg["string"]." - from buffer cmd"' }
+
+
+  " when activating this plugin add global feature tag example
+  let p['defaults']['tags'] = ['example']
+  " automatically add tag "example" to buffers having either filetype help or vim
+  let p['defaults']['tags_buftype'] = {'vim' : ['example'], 'help' : ['example']}
+
+  " == overriding default plugin behaviour == "
+  " see [1]
 
   let child = {}
   " these three functions only show that they exist :-)
+  " You can override them this way and change their behaviour
   fun! child.Load()
     echom self.pluginName.": loading? yipiee!"
-    call self.LogExec(1,'command', 'command Example :echo '.self.s.'.cfg["string"]')
+    " you could do arbitrary stuff here.. such as setting up
+    " make file compilation if a Makifle is found in the current directory
+    " example : core/autoload/plugins/language_support/haskell.vim
     call self.Parent_Load()
     echom self.pluginName.": loaded"
   endf
   fun! child.Unload()
-    call self.LogExec(1,'', 'delc Example')
     echom self.pluginName.": unloaded! goodbye!"
     call self.Parent_Unload()
   endf
@@ -42,12 +72,14 @@ function! plugins#examples#example#PluginExample(p)
 endfunction
 
 
+" Does your plugin contain much code?
+" Have a look at template_systems/vl.vim to see how to load a small "class"
+" loading more code on demand.
+
 " [1]
 " you'll find more info about this minimal 
 " duck typing when following tovl#obj#NewObject()
 
-" also have a look at the move_copy plugin to see how you can add commands
-"
-" Does your plugin contain much code?
-" Have a look at template_systems/vl.vim to see how to load a small "class"
-" loading more code on demand.
+" [2]
+" p.s is a string which determines this plugin
+" Have a look at the options in TOVLConfig to see its expansion
