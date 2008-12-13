@@ -262,7 +262,7 @@ fun! tovl#featureset#CommandCompletion(buffer, A,L,P)
     return map( filter(copy({v}),'v:val =~ '.string('^'.word[1:])),
               \ string('-').'.v:val')
   else
-    return vl#lib#listdict#list#Difference(
+    return tovl#list#Difference(
           \ tovl#featureset#AvailibleTags(a:buffer), {v})
   endif
 endf
