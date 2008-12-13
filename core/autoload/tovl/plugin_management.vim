@@ -31,12 +31,17 @@ endfunction
 
 let s:loaded = config#GetG('tovl#plugins#loaded', {'set' : 1, 'default' : {}})
 
-let s:lhsMap = config#GetG('config#lhsMap', { 'default' : library#Function('library#Id') })
+" shared dict -> featureset.vim 
+let s:featureTypes = config#GetG('tovl#features#types', {'set' : 1, 'default' : {}})
 
 " return dict of loaded plugin
 function! tovl#plugin_management#Plugin(name)
-  return  s:loaded[a:name]
+  return s:loaded[a:name]
 endfunction
+
+fun! tovl#plugin_management#CompareLoadingOrder(a,b)
+  return get(a:a, 'loadingOrder', 100) - get(a:b,'loadingOrder',100)
+endf
 
 " loads, unloads plugins based on current configuration
 function! tovl#plugin_management#UpdatePlugins()
@@ -54,7 +59,7 @@ function! tovl#plugin_management#UpdatePlugins()
     let d = s:loaded[p]
     if has_key(d, 'Unload')
       try
-        debug call library#Call(d['Unload'],[],d)
+        call library#Call(d['Unload'],[],d)
         call remove(s:loaded, p)
         call s:Log(1,"unloaded:".p)
       catch /.*/
@@ -65,23 +70,24 @@ function! tovl#plugin_management#UpdatePlugins()
     endif
   endfor
 
-  " try to load plugins and be silent, this will be done on startup as well
+  let pluginsToLoad = []
   for p in toload
     try
       let d = tovl#plugin_management#PluginDict(p)
-      if has_key(d, 'LoadPlugin')
-        try
-          call library#Call(d['LoadPlugin'],[],d)
-          let  s:loaded[p] = d
-          call s:Log(1, "loaded: ".p)
-        catch /.*/
-          call s:Log(0, "exception while loading plugin ".p)
-        endtry
-      else
-        call s:Log(0, "loading of plugin ".p." failed, key 'Load' missing.")
-      endif
+      call add(pluginsToLoad, d)
     catch /.*/
       call s:Log(0, "exception while getting plugin dict ".p)
+    endtry
+  endfor
+  call sort(pluginsToLoad, 'tovl#plugin_management#CompareLoadingOrder')
+  " try to load plugins and be silent, this will be done on startup as well
+  for d in pluginsToLoad
+    try
+      call library#Call(d['LoadPlugin'],[],d)
+      let  s:loaded[d.pluginName] =d
+      call s:Log(1, "loaded: ".p)
+    catch /.*/
+      call s:Log(0, "exception while loading plugin ".d.pluginName)
     endtry
   endfor
 endfunction
@@ -107,8 +113,7 @@ endfunction
 
 function! s:PluginsFromDict(path, dict, filter)
   let l = []
-  for k in keys(a:dict)
-    let v = a:dict[k]
+  for [k, v] in items(a:dict)
     if type(v) == 4
       " sub dict
       call extend(l, s:PluginsFromDict(a:path + [k], v, a:filter))
@@ -168,9 +173,10 @@ fun! tovl#plugin_management#NewPlugin()
   " OLD, FIXME! (use new feature stuff)
   let d.mappings = {}
   let d.mappings2 = {}
-
-  " NEW
   let d.commands = {}
+  let d.features = {}
+  " d.featureExtensions = {}
+  let d.removeFeatureTypes = []
 
   " they have been added and will be removed when unloading a plugin
   let d.mappings_ = []
@@ -196,33 +202,15 @@ fun! tovl#plugin_management#NewPlugin()
   fun! d.RegI(d)
     let d = a:d
     let d['plugin'] = self.pluginName
-    call tovl#featureset#ModifyFeatureItem(d, 'add')
-  endf
-
-  " if filetype is given the mapping will be added by autocommand
-  " {'ft' :filetype, 'm': mode / "", 'lhs': keys="<c-x>", 'c': a:cmd=":echo 'foo'<cr>"}
-  " ! depreceated, use RegI insead !
-  fun! d.Map(opts)
-    " call s:Log(0," is depreceated") TODO
-    let opts = copy(a:opts)
-    let opts['lhs'] = library#Call(s:lhsMap,
-        \ [substitute(opts['lhs'], '<leader>', get(self.cfg, 'mapleader', '\\'),'')])
-    if opts['lhs'] == ""
-      return
-    endif
-    call add(self.mappings_,opts )
-    if get(opts,'ft','') == ""
-     call self.LogExec(1, 'mapping : ',opts['m'].'noremap '.opts['lhs'].' '.opts['rhs'])
-    else
-      if opts['ft'] == 'quickfix'
-        " special case quickfix
-        call self.Au({'events' : 'QuickFixCmdPost', 'pattern' : '*',
-          \ 'cmd' : opts['m'].'noremap <buffer> '.opts['lhs'].' '.opts['rhs']})
+    " provide default tags
+    if !has_key(d, 'tags')
+      if !has_key(self.defaults, 'tags')
+        throw "request to add feature without 'tags' key. Consider setting  the plugin key defaults.tags = ['your_tag']"
       else
-        call self.Au({'events' : 'FileType', 'pattern' : get(opts,'pattern','*'),
-          \ 'cmd' : opts['m'].'noremap <buffer> '.opts['lhs'].' '.opts['rhs']})
+        let d['tags'] = self.defaults.tags
       endif
     endif
+    call tovl#featureset#ModifyFeatureItem(d, 'add')
   endf
 
   " {'events' : events,'pattern' : pattern, 'cmd' : command }
@@ -232,6 +220,14 @@ fun! tovl#plugin_management#NewPlugin()
     endif
     call add(self.aucommands_, a:opts)
     call self.LogExec(1, 'autocommand: ','au '.self.pluginNameFlat.' '.a:opts['events'].' '.a:opts['pattern'].' '.a:opts['cmd'])
+  endf
+
+  fun! d.RegisterFeatureType(ext)
+    let ext = a:ext
+    let ext['plugin'] = self.pluginName
+    if tovl#featureset#RegisterFeatureType(ext)
+      call add(self.removeFeatureTypes, ext)
+    endif
   endf
 
   fun! d.Debug(n, f)
@@ -258,64 +254,66 @@ fun! tovl#plugin_management#NewPlugin()
   endfun
 
   fun! d.Load()
-    let cfg = self.cfg
-    call config#AddToListUniq('config#onChange', library#Function(self['OnConfigChange'],{'self' : self}))
+    try
+      let cfg = self.cfg
+      call config#AddToListUniq('config#onChange', library#Function(self['OnConfigChange'],{'self' : self}))
+      
+      " register feature types
+      let featT = get(self, 'featureTypes', {})
+      for [k, featT] in items(featT)
+        let featT['name'] = k
+        let f = copy(featT)
+        let f['featType'] = k
+        call self.RegisterFeatureType(f)
+      endfor
 
+      " register feature items
+      for k in keys(s:featureTypes)
+        if has_key(cfg, k)
+          let featE = cfg[k]
+          for name in keys(featE)
+            try
+              let v = featE[name]
+              let v['featType'] = k
+              call self.RegI(v)
+            catch /.*/
+                e:exception
+              call self.Log(0, 'exception while setting feature item '.k.' '.name)
+            endtry
+          endfor
+        endif
+      endfor
 
-    let commands = get(self.cfg,'commands',{})
-    for name in keys(commands)
-      try
-        let c = copy(commands[name])
-        let c['plugin'] = self.pluginName
-        call self.RegI(c)
-      catch /.*/
-        call self.Log(0, 'exception while setting up command '.name.' for '.self.pluginName)
-      endtry
-    endfor
-    let mappings2 = get(self.cfg,'mappings2',{})
-    for name in keys(mappings2)
-      try
-        let m = copy(mappings2[name])
-        let m['plugin'] = self.pluginName
-        call self.RegI(m)
-      catch /.*/
-        call self.Log(0, 'exception while setting up mapping2 '.name.' for '.self.pluginName)
-      endtry
-    endfor
-    for name in keys(self.autocommands)
-      try
-        let a = copy(self.autocommands[name])
-        let a['p'] = cfg.autocommands[name].pattern
-        call self.Au(a)
-      catch /.*/
-        call self.Log(0, 'exception while setting up autocommand '.name.' for '.self.pluginName)
-      endtry
-    endfor
+      for name in keys(self.autocommands)
+        try
+          let a = copy(self.autocommands[name])
+          let a['p'] = cfg.autocommands[name].pattern
+          call self.Au(a)
+        catch /.*/
+          call self.Log(0, 'exception while setting up autocommand '.name.' for '.self.pluginName)
+        endtry
+      endfor
 
-    " add global tags
-    let tags = get(self.cfg,'tags',[])
-    call tovl#featureset#ModifyTags(0,tags, [])
-    " add buffer type tags
-    let tags_buftype = get(self.cfg,'tags_buftype',{})
-    for k in keys(tags_buftype)
-      call self.Au({'events' : 'filetype', 'pattern' : k,
-        \ 'cmd' : 'call tovl#featureset#ModifyTags(1,'.string(tags_buftype[k]).', [])' })
-    endfor
-
-    " depreceated
-    for name in keys(self.mappings)
-      try
-        let m = copy(self.mappings[name])
-        let m['lhs'] = cfg.mappings[name].lhs
-        let m['rhs'] = cfg.mappings[name].rhs
-        call self.Map(m)
-      catch /.*/
-        call self.Log(0, 'exception while setting up mapping '.name.' for '. self.pluginName)
-      endtry
-    endfor
+      " add global tags
+      let tags = get(self.cfg,'tags',[])
+      call tovl#featureset#ModifyTags(0,tags, [])
+      " add buffer type tags
+      let tags_filetype = get(self.cfg,'tags_buftype',{})
+      for k in keys(tags_filetype)
+        call self.Au({'events' : 'filetype', 'pattern' : k,
+          \ 'cmd' : 'call tovl#featureset#ModifyTags(1,'.string(tags_filetype[k]).', [])' })
+      endfor
+    catch /.*/ 
+      call self.Log(0, 'exception while running d.Load')
+    endtry
   endf
 
   fun! d.Unload()
+    " unregister feature extensions
+    for e in self.removeFeatureTypes
+      call tovl#featureset#RegisterExtension(e['name'])
+    endfor
+
     " unregister notification
     call tovl#list#Remove(config#GetG('config#onChange'),
           \ library#Function(self['OnConfigChange'],{'self' : self}))
@@ -379,18 +377,26 @@ fun! tovl#plugin_management#NewPlugin()
     endfor
   endfun
 
+  fun! d.AddFeatureDefaultsDefaultFunc(d,i,n,path)
+    call config#SetByPath(a:d, a:path.'#'.a:n, a:i)
+  endf
+
   fun! d.AddDefaultConfigOptions(d)
-    for name in keys(self.commands)
-      let c = self.commands[name]
-      let self.defaults.commands[name] = {'name' : c['name'], 'attrs' : get(c,'attrs',''), 'cmd' : c['cmd'], 'tags' : c['tags'], 'buffer' : get(c,'buffer',0)}
-    endfor
-    for name in keys(self.mappings2)
-      let c = self.mappings2[name]
-      let self.defaults.mappings2[name] = {'lhs' : c['lhs'], 'rhs' : c['rhs'], 'mode' : get(c,'mode',''), 'tags' : c['tags'], 'buffer' : get(c,'buffer',0)}
-    endfor
-    for name in keys(self.mappings)
-      let m = self.mappings[name]
-      let self.defaults.mappings[name] = {'lhs' : m['lhs'], 'rhs' : m['rhs']}
+    for f in keys(s:featureTypes)
+      if has_key(self, f)
+        if has_key(s:featureTypes[f],'AddDefaults')
+          let F = s:featureTypes[f]['AddDefaults']
+        else
+          let F = self.AddFeatureDefaultsDefaultFunc
+        endif
+        for k in keys(self[f])
+          let feat = copy(self[f][k])
+          " remove id and featType before exposing config to user
+          if has_key(feat,'id') | call remove(feat, 'id') | endif
+          if has_key(feat,'featType') | call remove(feat, 'featType') | endif
+          call library#Call(F, [a:d, feat, k, self.pluginName.'#'.f])
+        endfor
+      endif
     endfor
     for name in keys(self.autocommands)
       let a = self.autocommands[name]

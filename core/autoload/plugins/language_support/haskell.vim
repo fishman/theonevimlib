@@ -5,18 +5,17 @@ function! plugins#language_support#haskell#PluginGhcSupport(p)
   let p['Info'] = "this plugin provides an easy way to compile haskell programs"
 
   " run this to fix prefixes of autoload functions (remember that you can use undo.. :-)
-  let p['commands']['Setup'] = {
+  let p['feat_command'] = { 'Setup' : {
     \ 'name' : 'SetupHaskellCompilationMapping',
     \ 'cmd' : 'call '.p.s.'.CabalSetup()',
-    \ 'tags' : ['haskell']
-    \ }
+    \ }}
 
   let p['defaults']['lhs_compile'] = "<F2>"
 
   " if there is a .cabal file setup compilation mappings etc automatically
   let p['defaults']['autosetup'] = 1
   let p['defaults']['tags'] = ['haskell']
-  let p['defaults']['tags_buftype'] = {'haskell' : 'haskell'}
+  let p['defaults']['tags_filetype'] = {'haskell' : 'haskell'}
   let p['defaults']['known_ghcs'] = ["ghc"]
 
   let child = {}
@@ -41,7 +40,6 @@ function! plugins#language_support#haskell#PluginGhcSupport(p)
       call self.RegI({
          \ 'lhs' : self.cfg.lhs_compile,
          \ 'rhs' : '<esc>:call '. self.s .'.NewSetupProcess().Run()<cr>',
-         \ 'tags' : ['haskell']
          \ })
     else
       call self.Log(1,"cabal file found but no dist directory. You have to configure cabal first!")
@@ -58,7 +56,7 @@ function! plugins#language_support#haskell#PluginGhcSupport(p)
   endf
 
   fun! child.CompilationFinishedCallback(p)
-    " later I'll check wether this is an HAppS server project and restart the
+    " later I'll check wether this is an HappS server project and restart the
     " application ..
   endf
 
@@ -71,10 +69,13 @@ function! plugins#language_support#haskell#PluginGhcSupport(p)
 
   function! child.DefineBuildDir()
     if self.cabal_file != ''
-      let cabalBuildDir = map(
-             \ split(glob("*/setup-config"),"\n")
-           \ , 'fnamemodify(v:val, ":h")')
-      let self.cabalBuildDir = tovl#ui#choice#LetUserSelectIfThereIsAChoice("Which cabal setup to use ?", cabalBuildDir)
+      let cabalBuildDirs = map(
+             \ split(glob("*/setup-config"),"\n"),
+             \ 'fnamemodify(v:val, ":h")')
+      if len(cabalBuildDirs) > 0
+        let self.cabalBuildDir = tovl#ui#choice#LetUserSelectIfThereIsAChoice(
+              \ "Which cabal setup to use ?", cabalBuildDirs)
+      endif
     endif
   endfunction
 

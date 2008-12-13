@@ -7,10 +7,13 @@ function! plugins#background_processes#grep#PluginBackgroundGrep(p)
   let p['Tags'] = ['syntax','php','javascript','xml']
   let p['Info'] = "experimental proof of concept grep interface. Must be enhanced"
 
-  let p['mappings']['background_grep_dialog'] = {
-    \ 'ft' : '', 'm':'n', 'lhs' : '<m-g><m-r>',
-    \ 'rhs' : ':call '.p.s.'.Dialog()<cr>'
-    \ }
+  let p['defaults']['tags'] = ['background_grep']
+
+  let p['feat_mapping'] = {
+    \ 'background_grep_dialog' : {
+      \ 'lhs' : '<m-g><m-r>',
+      \ 'rhs' : ':call '.p.s.'.Dialog()<cr>'
+      \ }}
   let child = {}
   fun! child.Dialog()
     let word = input('string to find -R . :')

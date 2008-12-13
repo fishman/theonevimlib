@@ -7,10 +7,18 @@ function! plugins#filetype#vim#vl_repo#PluginVL_RepoStuff(p)
   let p['Tags'] = ['filetype','vimscript']
   let p['Info'] = "user completion, goto thing on cursor and fix function prefixes"
 
+  let p['defaults']['tags_buftype'] = {'vim' : 'vim'}
+  let p['defaults']['tags'] = ['vim']
   " run this to fix prefixes of autoload functions (remember that you can use undo.. :-)
-  let p['mappings']['fix_function_prefixes'] = {
-    \ 'ft' : 'vim', 'm':'n', 'lhs' : '<m-f><m-p>',
-    \ 'rhs' : ':call tovl#ft#vimscript#vimfile#FixPrefixesOfAutoloadFunctions()<cr>' }
+  let p['feat_mapping'] = {
+    \ 'fix_function_prefixes' : {
+      \ 'lhs' : '<m-f><m-p>',
+      \ 'rhs' : ':call tovl#ft#vimscript#vimfile#FixPrefixesOfAutoloadFunctions()<cr>' }}
+  let p['feat_command'] = {
+    \ 'fix_function_prefixes' : {
+      \ 'name' : 'FixPrefixesOfAutoloadFunctions',
+      \ 'attrs' : '-nargs=0',
+      \ 'cmd' : ':call tovl#ft#vimscript#vimfile#FixPrefixesOfAutoloadFunctions()<cr>' }}
 
   " put cursor on autolad function and press gf to jump to the file or to create
   " a new file.

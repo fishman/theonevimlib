@@ -13,37 +13,41 @@ function! plugins#examples#example#PluginExample(p)
   " == setting up default options ==
   let p['defaults']['string'] = "Hello!"
 
-  " global mapping and command
+  " global and local mappings and commands
   " p.s : [2]
-  let p['mappings2']['helloworld_global'] = {
+  let p['feat_mapping'] = {
+      \ 'helloworld_global' : {
         \ 'tags' : ['example'],
         \ 'm':'n',
         \ 'lhs' : '\hw',
-        \'rhs' : ':echo '.p.s.'.cfg["string"]." - from global mapping"<cr>' }
-  let p['commands']['helloworld_global'] = {
-        \ 'tags' : ['example'],
-        \ 'name': 'Example',
-        \ 'cmd' : 'echo '.p.s.'.cfg["string"]." - from global command"' }
-
-  " mapping and command only for buffers having added the tag "example"
-  " note the key "buffer" : 1
-  let p['mappings2']['helloworld_buffer'] = {
+        \ 'rhs' : ':echo '.p.s.'.cfg["string"]." - from global mapping"<cr>' 
+        \ },
+     \ 'helloworld_buffer' : {
         \ 'tags' : ['example'],
         \ 'm':'n',
         \ 'buffer' : 1,
         \ 'lhs' : '\bhw',
-        \'rhs' : ':echo '.p.s.'.cfg["string"]." - from buffer mapping"<cr>' }
-  let p['commands']['helloworld_buffer'] = {
+        \'rhs' : ':echo '.p.s.'.cfg["string"]." - from buffer mapping"<cr>'
+        \ }
+      \ }
+  let p['feat_command'] = {
+      \ 'helloworld_global' : {
+          \ 'tags' : ['example'],
+          \ 'name' : 'Example',
+          \ 'cmd' : 'echo '.p.s.'.cfg["string"]." - from global command"' 
+      \ },
+      \ 'helloworld_buffer' : {
         \ 'tags' : ['example'],
-        \ 'name': 'BufExample',
+        \ 'name' : 'BufExample',
         \ 'buffer' : 1,
-        \ 'cmd' : 'echo '.p.s.'.cfg["string"]." - from buffer cmd"' }
-
+        \ 'cmd' : 'echo '.p.s.'.cfg["string"]." - from buffer cmd"' 
+      \ }
+    \ }
 
   " when activating this plugin add global feature tag example
   let p['defaults']['tags'] = ['example']
   " automatically add tag "example" to buffers having either filetype help or vim
-  let p['defaults']['tags_buftype'] = {'vim' : ['example'], 'help' : ['example']}
+  let p['defaults']['tags_filetype'] = {'vim' : ['example'], 'help' : ['example']}
 
   " == overriding default plugin behaviour == "
   " see [1]

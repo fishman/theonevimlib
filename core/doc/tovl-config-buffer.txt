@@ -106,11 +106,11 @@
   However you still would
   have to run  |GlobalFeatureTags| feat_set_name   to add the commands.
   That's why most plugins do also provide the special keys tags and
-  tags_buftype. >
+  tags_filetype. >
     PluginExample:dictionary=
       tags:list=
         string=example
-      tags_buftype:dictionary=
+      tags_filetype:dictionary=
         vim:list=
           string=example
 < In this case TOVL will add the global feature set example automatically
@@ -150,6 +150,9 @@
     Installation: setup runtimepath (See |tovl-update|)
 
     Open the configuration file :TOVLConfig
+
+    (FIXME: add to this tutorial: enabling PluginTOVL_Config, PluginMap or
+    PluginMapEscHack, PluginCommand ... and explain why!)
 
     Start by enabling the example plugin "PluginExample".
     You do this by replacing the number=0 by number=1

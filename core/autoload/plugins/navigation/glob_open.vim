@@ -3,9 +3,13 @@ function! plugins#navigation#glob_open#PluginGlobOpen(p)
   let p = a:p
   let p['Tags'] = ['navigation', 'glob','open','edit']
   let p['Info'] = "open a file by glob pattern. Don't use it in big directories."
-  let p['mappings']['glob_open'] = {
-    \ 'ft' : '', 'm':'n', 'lhs' : '<m-g><m-o>',
-    \ 'rhs' : ":exec 'e '.".p.s.".FileByGlobCurrentDir(input('glob open '))<cr>" }
+
+  let p['defaults']['tags'] = ['glob_open']
+  let p['feat_mapping'] = {
+        \ 'glob_open' : {
+        \ 'lhs' : '<m-g><m-o>',
+        \ 'rhs' : ":exec 'e '.".p.s.".FileByGlobCurrentDir(input('glob open '))<cr>" }
+      \ }
   let p['defaults']['exclude'] = ['v:val !~ '.string('\.o$\|\.hi$\|\.svn$\|.git$\|_darcs$$\|.darcs$\|.hg'),'!isdirectory(v:val)']
   let p['defaults']['listMax'] = 20
 

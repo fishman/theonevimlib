@@ -99,7 +99,8 @@ You want to see TOVL in action? Visit the |tovl-config-tutorial|
     set runtimepath+=<pathtotovl>/core
     " set |tovl-global-config| options
     call theonevimlibsetup#Setup()
-<
+< Then run :helptags Path_TO_DEST/core/doc
+
   *tovl-contribute*
   You can contribute in various ways:
     a) tell me what you (dis)like
@@ -122,7 +123,6 @@ You want to see TOVL in action? Visit the |tovl-config-tutorial|
 GLOBAL CONFIG                                   *tovl-global-config*
 
   Ideally this should be done by a plugin as well.
-  But there is no way to control which plugins are loaded first yet.
   (-> |tovl-wish-list|). 
   However you can set these options in your .vimrc
   * |config#filesFunc|
@@ -139,7 +139,7 @@ TOVL SHELL ESC HACK				*tovl-shell-esc-hack*
   will be mapped to the same codes.. I'm happy with this setup. >
   if !has('gui_running')
     call config#SetG('config#lhsMap', 
-      \ library#Function("return substitute(substitute(ARGS[0],'<m-\\(.\\)>','<esc>\\1','g'),'<m-s-\\(.\\)>','<esc><s-\\1>','g')"))
+      \ library#Function(""))
   endif
 <
 
@@ -233,16 +233,37 @@ EDITING THE CONFIGURATION AND LOADING PLUGINS      *tovl-config-edit* {{{2
 ==============================================================================
 6.   TOVL feature sets:					*tovl-feature-sets* {1
 
-  Have you ever tried using multiple filetypes for one file ?
-  The thing you have to do is >
-  runtime ftplugin/html*.vim
-< or such. However TOVL tries to this in a more flexible way:
-  For each feature (mapping, command, completion func) a plugin provides you
-  assign tags. Then you (or the plugin) assign these tags to buffer thereby
-  adding the features. Of course you can remove them again.
-  I know that this adds recundancy.. This way you can combine features the way
-  you think.
+  Vim has: filetypes. To add html features to a php file you typically do
+  runtime ftplugin/php*.vim. However this typically also overrides your
+  completion func.. :-(
 
+  So there should be a way to only add some of the html mappings when editing
+  php files? That what TOVL feature sets are about:
+
+  You have features (mappings, commands, completion functions). You give this
+  set of features a name which I call a tag. For example your tag could be
+  ReplaceSpecialChars
+
+  Then you can use   *BufferFeatureTags*  >
+    BufferFeatureTags ReplaceSpecialChars
+< to add those commands and >
+    BufferFeatureTags -ReplaceSpecialChars
+< to remove them again. You can add more than one tag at the same time: >
+    BufferFeatureTags -ReplaceSpecialChars Foo -Bar
+
+< Get the current status by ivoking the command without arguments: >
+    BufferFeatureTags
+<
+  So what about global mappings such as version control commands or Grep?
+  There is the command *GlobalFeatureTags* for those.
+
+  Note! you have to enable the plugin |PluginFeatureSet| to get those
+  commands.
+
+  You can extend the supported types of features. Have a look at the
+  |PluginMoveToThingAtCursor| plugin. *tovl-feature-set-extending*
+
+  Also see |tovl-config-feature-sets|
 
 ==============================================================================
 7.   TOVL library:					*tovl-library* {1
@@ -280,12 +301,11 @@ TOVL LOGGING					*tovl-log* *tovl-logging* {{{2
     Yet you can replace the code by your own if you have to.
     See |tovl#log#Log()| and the plugin |PluginLog|to view the log
     to log every log level (error=0,info=1,debug=2) use
-
-      *tovl-log-config*  >
+    *tovl-log-config*  >
       call tovl#log#GetLogger().SetLevel(999)
-<
-    I recommend using it this way in your own scripts: >
-    
+<   (You can also use the PluginTOVL_Config now)
+
+    I recommend logging this way in your scripts: >
     fun! s:Log(level, msg)
       call tovl#log#Log("your_file",a:level, a:msg)
     endf
@@ -446,7 +466,21 @@ TOVL ....
   Hower this conflicts with |tovl-config-merge| . So please use
   config#Get(self.pluginName.'#mypath#opt') instead if you feel that someone
   would like to merge options here for now. (Maybe the implementation should
-  be enhanced..)
+  be enhanced..) (TODO think about what is really needed)
+
+  *tovl-plugin-loading-order*
+  You can add the key "loadingOrder" of a plugin to make it load before or
+  after other plugins.
+
+  values used by library plugins:
+
+     10 : used by  |tovl-config| plugin
+     45 : used by  |tovl-feature-set-extending| plugins (map + command)
+     50 : used by  |tovl-feature-set-extending| plugins requiring 45
+
+    100 : default
+
+  its not perfect but is fastest and most simple.
 
 ==============================================================================
 10.  TOVL FUNCTION REFERENCE (TODO)
@@ -457,7 +491,6 @@ TOVL ....
 
   * plugin dependencies. A depends on B and causes loading of B (thereby
     revealing its config options)
-  * order of loading. Add options that one plugin is loaded before another.
   * add completion stuff to the config editor
   * At least add a command jumping to the plugin source code or help document
   * ...

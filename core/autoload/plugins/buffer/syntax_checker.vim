@@ -7,6 +7,9 @@
 " example mapping:
   " noremap <m-h><m-c> :call vl#lib#hl#vim7highlightCurrentLineInActiveWindow#ToggleHighlightCurrentLine()<cr>
 
+" TODO refactor its best to put this all into small items within the filetype
+" directory? Then you can only enable those pieces you want
+
 function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
   let p = a:p
   let p['Tags'] = ['syntax','php','javascript','xml']
@@ -50,6 +53,7 @@ function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
 
   let child = {}
   fun! child.Load()
+    call self.Parent_Load()
     let g:HighlightCurrentLine=0
     for k in keys(self.cfg.filetypes)
       let v = self.cfg.filetypes[k]

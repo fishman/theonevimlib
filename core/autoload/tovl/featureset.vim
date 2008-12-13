@@ -57,8 +57,10 @@
 "
 " You add a tag to the global or buffer tag list:
 "   call tovl#featureset#ModifyTags(buffor_or_global,['sql'], ['php'])
-" Again the cfg.tags options and cfg.tags_buftype should do this for you
+" Again the cfg.tags options and cfg.tags_filetype should do this for you
 
+" adding your own feature types:
+" Exapmle: PluginMoveToThingAtCursor
 
 " TODO: get rid of TLet, use autocommands! (TLet is using a regex..)
 " Test postbone for speed reasons?
@@ -71,9 +73,9 @@ fun! s:LogExec(level, msg)
   exec a:msg
 endf
 
-" s:mappings and s:commands contain a list of commands and mappings.
 let s:items = config#GetG('tovl#features#items_by_feature', {'set' : 1, 'default' : {}})
-let s:lhsMap = config#GetG('config#lhsMap', { 'default' : library#Function('library#Id') })
+" shared dict -> plugin_management.vim
+let s:featureTypes = config#GetG('tovl#features#types', {'set' : 1, 'default' : {}})
 
 let s:pd_add = config#GetG('tovl#features#postbone_add', {'set' : 1, 'default' : {}})
 let s:pd_del = config#GetG('tovl#features#postbone_del', {'set' : 1, 'default' : {}})
@@ -120,7 +122,7 @@ fun! tovl#featureset#ModifyFeatureItem(i,action)
   endif
 endf
 
-fun! tovl#featureset#RemoveItemsOfPlugin(name)
+fun! tovl#featureset#DelItemsOfPlugin(name)
   let remove = []
   for t in keys(s:items)
     call extend(remove, filter(copy(s:items[t]), 'v:val.plugin == '.string(a:name)))
@@ -134,7 +136,7 @@ fun! tovl#featureset#ModifyTags(buffer, tags_add, tags_del)
   let add = tovl#list#Difference(a:tags_add, {v})
   let del = tovl#list#Intersection(a:tags_del, {v})
   call s:Log(2,'modifying tags'.a:buffer.' '.string(add).'/'.string(a:tags_add).' '.string(del))
-  call s:WhenTagged(a:buffer, del, function('s:RemoveItem'), s:items)
+  call s:WhenTagged(a:buffer, del, function('s:DelItem'), s:items)
   call s:WhenTagged(a:buffer, add, function('s:AddItem'), s:items)
   let {v} = tovl#list#Difference({v}, del)
   call extend({v}, add)
@@ -145,17 +147,17 @@ fun! tovl#featureset#Apply()
 
   " remove, then add (buffer options)
   exec 'bufdo '.s:buffer_setup
-  bufdo call s:WhenTagged(1, b:tovl_feature_tags, function('s:RemoveItem'), s:pd_del)
+  bufdo call s:WhenTagged(1, b:tovl_feature_tags, function('s:DelItem'), s:pd_del)
    \ | call s:WhenTagged(1, b:tovl_feature_tags, function('s:AddItem'), s:pd_add)
 
   " remove, then add (global options)
-  call s:WhenTagged(0, g:tovl_feature_tags, function('s:RemoveItem'), s:pd_del)
+  call s:WhenTagged(0, g:tovl_feature_tags, function('s:DelItem'), s:pd_del)
   call s:WhenTagged(0, g:tovl_feature_tags, function('s:AddItem'), s:pd_add)
 
   " update s:items
   for t in keys(s:pd_del)
     for i in s:pd_del[t]
-      call tovl#list#Remove(s:items[t], i)
+      call tovl#list#Del(s:items[t], i)
     endfor
   endfor
   for t in keys(s:pd_add)
@@ -192,27 +194,14 @@ fun! s:AddItem(i)
   let {v}[id] = 1+ was
   if was > 0 | return | endif
   call s:Log(2,'adding feature item '.string(id))
-
-  " add feature
-  if has_key(a:i, 'lhs')
-    " its a mapping
-    call s:LogExec(2, get(a:i,'m','').'noremap '.(b ? '<buffer>' : '').' '
-          \ .library#Call(s:lhsMap, [a:i['lhs']]).' '
-          \ .a:i['rhs'])
-  elseif has_key(a:i, 'cmd')
-    " its a command
-    call s:LogExec(2, 'command! '.(b ? '-buffer' : '').' '
-       \ .get(a:i,'attrs','').' '
-       \ .a:i['name'].' '
-       \ .a:i['cmd'])
-  elseif has_key(a:i, 'completion_func')
-    call tovl#ui#multiple_completions#RegisterBufferCompletionFunc(a:i)
+  if has_key(s:featureTypes, a:i['featType'])
+    call library#Call(s:featureTypes[a:i['featType']]['AddItem'],[a:i])
   else
-    call (0, "unkown item to be added ? How to handle this? ".string(a:i)
+    call s:Log(0, "Couldn't add feature of type ".a:i['featType']." because no handler was found! complete feature item you're missing: ".string(a:i))
   endif
 endf
 
-fun! s:RemoveItem(i)
+fun! s:DelItem(i)
   let b = get(a:i,'buffer',0)
   " decrement counter. Only remove if counter is zero
   let id = a:i['id']
@@ -220,18 +209,10 @@ fun! s:RemoveItem(i)
   let {v}[id] -= 1
   if {v}[id] > 1 | return | endif
   call s:Log(2,'removing feature item '.string(id))
-
-  if has_key(a:i, 'lhs')
-    " its a mapping
-    call s:LogExec(2, get(a:i,'m','').'unmap '.(b ? '<buffer>' : '').' '
-          \ .library#Call(s:lhsMap, [a:i['lhs']]))
-  elseif has_key(a:i, 'cmd')
-    " its a command
-    call s:LogExec(2, 'delc '.a:i['name'])
-  elseif has_key(a:i, 'completion_func')
-    call tovl#ui#multiple_completions#UnregisterBufferCompletionFunc(a:i)
+  if has_key(s:featureTypes, a:i['featType'])
+    call library#Call(s:featureTypes[a:i['featType']]['DelItem'],[a:i])
   else
-    call (0, "unkown item to be added ? How to handle this? ".string(a:i)
+    call s:Log(0, "Couldn't remove feature of type ".a:i['featType']." because no handler was found! complete feature item you're missing: ".string(a:i))
   endif
 endf
 
@@ -293,3 +274,22 @@ endf
 fun! tovl#featureset#CommandCompletionBuffer(...)
   return call(function('tovl#featureset#CommandCompletion'), [1] + a:000)
 endf
+
+" extending features:
+" an extension dict must provide the following methods:
+" AddDefaults(dict, i,n, pluginName)
+"   adds feature i with label n of plugin pluginName to dict
+" AddItem(i)
+" DelItem(i)
+fun! tovl#featureset#RegisterFeatureType(ext)
+  if has_key(s:featureTypes, a:ext['name'])
+    return 0
+  else
+    let s:featureTypes[a:ext['name']] = a:ext
+    return 1
+  endif
+endf
+
+fun! tovl#featureset#UnregisterFeatureType(name)
+  call remove(s:featureTypes[a:name])
+endfun

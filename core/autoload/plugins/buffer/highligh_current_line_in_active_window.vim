@@ -11,10 +11,13 @@ function! plugins#buffer#highligh_current_line_in_active_window#PluginHighlightC
   let p['Tags'] = ['highlight','current line']
   let p['Info'] = "This script highlights the current line within the active window only"
 
+  let p['defaults']['tags'] = ['hl_current_line']
   " run this to fix prefixes of autoload functions (remember that you can use undo.. :-)
-  let p['mappings']['toggle_highlighting'] = {
-    \ 'ft' : 'vim', 'm':'n', 'lhs' : '\hc',
+  let p['feat_mapping'] = {
+    \ 'toggle_highlighting' : {
+    \ 'lhs' : '\hc',
     \ 'rhs' : ':silent! call '.p.s.'.ToggleHighlightCurrentLine()<cr>' }
+  \ }
 
   " put cursor on autolad function and press gf to jump to the file or to create
   " a new file.

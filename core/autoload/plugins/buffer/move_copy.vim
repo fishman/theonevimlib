@@ -3,29 +3,37 @@ function! plugins#buffer#move_copy#PluginMoveCopyFile(p)
   let p = a:p
   let p['Tags'] = ['cp','copy','move','mv','rename']
   let p['Info'] = "shortcut for moving or copying a file"
-  let p['mappings']['copy'] = {
-    \ 'ft' : '', 'm':'n', 'lhs' : '<leader>cp',
-    \ 'rhs' : ':ContinueWorkOnCopy<space>'
-          \ . '<c-r>=expand("%")<cr>'
-          \ . '<c-r>=substitute(setcmdpos(getcmdpos()-strlen(expand("%:t"))),".","","g")<cr>' }
-  let p['mappings']['move'] = {
-    \ 'ft' : '', 'm':'n', 'lhs' : '<leader>mv',
-    \ 'rhs' : ':RenameFile<space>'
-          \ . '<c-r>=expand("%")<cr>'
-          \ . '<c-r>=substitute(setcmdpos(getcmdpos()-strlen(expand("%:t"))),".","","g")<cr>' }
-  let child = {}
-  fun! child.Load()
-    " I don't have functions for commands yet :-( (TODO)
-    command! -nargs=1 -complete=file RenameFile :call plugins#buffer#move_copy#RenameFile(<f-args>)<<cr>
-    command! -nargs=1 -complete=file ContinueWorkOnCopy :call plugins#buffer#move_copy#ContinueWorkOnCopy(<f-args>)<<cr>
-    call self.Parent_Load()
-  endf
-  fun! child.Unload()
-    delc RenameFile
-    delc ContinueWorkOnCopy
-    call self.Parent_Unload()
-  endf
-  return p.createChildClass(child)
+  let p['defaults']['tags'] = ['file_handling']
+
+  " FIXME: those mappings require the commands!
+  let p['feat_mappings'] = {
+    \ 'copy' : {
+      \ 'lhs' : '<leader>cp',
+      \ 'rhs' : ':ContinueWorkOnCopy<space>'
+            \ . '<c-r>=expand("%")<cr>'
+            \ . '<c-r>=substitute(setcmdpos(getcmdpos()-strlen(expand("%:t"))),".","","g")<cr>' 
+     \ },
+    \ 'move' : {
+      \ 'lhs' : '<leader>mv',
+      \ 'rhs' : ':RenameFile<space>'
+            \ . '<c-r>=expand("%")<cr>'
+            \ . '<c-r>=substitute(setcmdpos(getcmdpos()-strlen(expand("%:t"))),".","","g")<cr>'
+      \ }
+    \ }
+
+  let p['feat_command'] = {
+      \ 'continue_work_on_copy' : {
+        \ 'name' : 'ContinueWorkOnCopy',
+        \ 'attrs' : '-nargs=1 -complete=file',
+        \ 'cmd' : ':call plugins#buffer#move_copy#ContinueWorkOnCopy(<f-args>)<<cr>'
+      \ },
+      \ 'rename_file' : {
+        \ 'name' : 'ContinueWorkOnCopy',
+        \ 'attrs' : '-nargs=1 -complete=file',
+        \ 'cmd' : ':call plugins#buffer#move_copy#RenameFile(<f-args>)<<cr>'
+      \ }
+    \ }
+  return p
 endfunction
 
 fun! plugins#buffer#move_copy#RenameFile(newname)
