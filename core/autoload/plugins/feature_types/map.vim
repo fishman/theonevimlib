@@ -37,7 +37,11 @@ function! plugins#feature_types#map#PluginMapEscHack(p)
         \ . " over PluginMap if you want to use <m-*> mappings when running console vim."
   " only this function differs from PluginMap
   fun! p.Subst(s)
-    return substitute(substitute(a:s,'<m-\\(.\\)>','<esc>\\1','g'),'<m-s-\\(.\\)>','<esc><s-\\1>','g')
+    if has('gui_running')
+      return a:s
+    else
+      return substitute(substitute(a:s,'<m-\(.\)>','<esc>\1','g'),'<m-s-\(.\)>','<esc><s-\1>','g')
+    endif
   endf
   return p
 endfunction
