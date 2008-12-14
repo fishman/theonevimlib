@@ -60,17 +60,31 @@ function! plugins#mappings#various#PluginUsefulBufferMappings(p)
   \ 'search_word_backward' : {'lhs' : '<m-w>?', 'rhs' : '?\<\><left><left>'},
   \
   \ 'cmd_insert_directory' : {'m':'c', 'lhs' : '>fn', 'rhs' : "<c-r>=expand('%:p')<cr>" },
-  \ 'cmd_insert_filename' : {'m':'c', 'lhs' : '>fd', 'rhs' : "<c-r>=expand('%:p:h').'/'<cr>" }
+  \ 'cmd_insert_filename' : {'m':'c', 'lhs' : '>fd', 'rhs' : "<c-r>=expand('%:p:h').'/'<cr>" },
+  \ 
+  \ 'set_buf_height_per_ten' : {'lhs' : '<m-w>', 'rhs' : ':call plugins#mappings#various#SetWindowSize("h")<cr>' },
+  \ 'set_buf_width_per_ten' : {'lhs' : '<m-s-w>', 'rhs' : ':call plugins#mappings#various#SetWindowSize("w")<cr>' }
   \ }
 
   " useful for debugging TOVL.. should we use a proper logging system?
-  let p['feat_mapping'] = { 'messages' : {'lhs' : '<m-m><m-s>', 'rhs' : ":messages<cr>" } }
+  let p['feat_mapping']['messages'] = {'lhs' : '<m-m><m-s>', 'rhs' : ":messages<cr>" }
   
   for i in ['h','j','k','l']
-    let p['feat_mapping'] = { 'jump_window_'.i : {
-          \ 'lhs' : '<m-s-'.i.'>', 'rhs' : ':wincmd '.i.'<cr>'}}
+    let p['feat_mapping']['jump_window_'.i] = {
+          \ 'lhs' : '<m-s-'.i.'>', 'rhs' : ':wincmd '.i.'<cr>'}
   endfor
   return p
+endfunction
+
+" set window height/width in 1/10th steps of total height/width
+" parameter: 'h' or 'w' ( set height/width)
+function! plugins#mappings#various#SetWindowSize(orientation)
+    let fract = nr2char(getchar())
+  if a:orientation == 'h'
+    exec fract*&lines/10.'wincmd _'
+  else
+    exec fract*&columns/10.'wincmd |'
+  endif
 endfunction
 
 fun! plugins#mappings#various#PluginUsefulQuickfixMappings(p)

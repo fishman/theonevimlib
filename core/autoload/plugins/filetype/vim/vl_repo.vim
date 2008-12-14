@@ -7,7 +7,7 @@ function! plugins#filetype#vim#vl_repo#PluginVL_RepoStuff(p)
   let p['Tags'] = ['filetype','vimscript']
   let p['Info'] = "user completion, goto thing on cursor and fix function prefixes"
 
-  let p['defaults']['tags_buftype'] = {'vim' : 'vim'}
+  let p['defaults']['tags_buftype'] = {'vim' : ['vim']}
   let p['defaults']['tags'] = ['vim']
   " run this to fix prefixes of autoload functions (remember that you can use undo.. :-)
   let p['feat_mapping'] = {

@@ -265,10 +265,14 @@ fun! tovl#plugin_management#NewPlugin()
       let tags = get(self.cfg,'tags',[])
       call tovl#featureset#ModifyTags(0,tags, [])
       " add buffer type tags
-      let tags_filetype = get(self.cfg,'tags_buftype',{})
-      for k in keys(tags_filetype)
+      for [k,v] in items(get(self.cfg,'tags_buftype',{}))
+        if type(v) != 3
+          call self.Log(0, 'tags_buftype key '.k.': The value must be a list of tags, got: '.string(v))
+          continue
+        endif
         call self.Au({'events' : 'filetype', 'pattern' : k,
-          \ 'cmd' : 'call tovl#featureset#ModifyTags(1,'.string(tags_filetype[k]).', [])' })
+          \ 'cmd' : 'call tovl#featureset#ModifyTags(1,'.string(v).', [])' })
+        unlet k v
       endfor
       
       " register feature types
@@ -281,18 +285,21 @@ fun! tovl#plugin_management#NewPlugin()
       endfor
 
       " register feature items
-      for k in keys(s:featureTypes)
+      for [k,dict] in items(s:featureTypes)
         if has_key(cfg, k)
           let featE = cfg[k]
-          for name in keys(featE)
+          for [name, v] in items(featE)
             try
-              let v = featE[name]
               let v['featType'] = k
+              if has_key(dict, 'FromConfigApply')
+                call library#Call(dict['FromConfigApply'], [v])
+              endif
               call self.RegI(v)
             catch /.*/
-                e:exception
+              e:exception
               call self.Log(0, 'exception while setting feature item '.k.' '.name)
             endtry
+            unlet v
           endfor
         endif
       endfor

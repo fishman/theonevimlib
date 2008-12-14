@@ -23,6 +23,15 @@ function! plugins#tovl#errorformats#PluginErrorFormats(p)
   let ef['nix'] = "%m, at `%f':%l:%c\n"
               \ . "%m at `%f', line %l:\n"
               \ . "error: %m, in `%f'"
+" - Ignore the obvious.
+" - Don't include the 'a-okay' message.  let ef['perl'] = 
+" - Most errors...
+" - As above, including ', near ...'
+" -   ... Which can be multi-line.     " %-G%.%#had\ compilation\ errors.,  
+  let ef['perl'] = "%-G%.%#syntax OK\n"
+              \ . "%m at %f line %l.\n"
+              \ . "%+A%.%# at %f line %l\\,%.%#\n"
+              \ . "%+C%.%#"
   " TODO: tidy this up!
   let ef['php'] = "%m %f:%l\n"
               \ . "%f:%l\n"

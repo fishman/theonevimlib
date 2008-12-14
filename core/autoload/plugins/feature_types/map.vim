@@ -3,7 +3,7 @@ function! plugins#feature_types#map#PluginMap(p)
   let p = a:p
   let p['Tags'] = []
   let p['Info'] = "This feature type adds the mappings. Maybe you prefer map_with_esc_hack over this"
-  let p['loadingOrder'] = 50
+  let p['loadingOrder'] = 45
   fun! p.AddMapping(i)
     call self.LogExec(2, '+mapping ', get(a:i,'m','').'noremap '.(get(a:i, 'buffer', 0) ? '<buffer>' : '').' '
           \ .a:i['lhs'].' '

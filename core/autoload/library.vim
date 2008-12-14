@@ -152,7 +152,8 @@ function! library#Call(...)
     if type(Fun) == 1 
         \ && (Fun[:len('return ')-1] == 'return ' 
               \ || Fun[:len('call ')-1] == 'call '
-              \ || Fun[:len('if ')-1] == 'if ')
+              \ || Fun[:len('if ')-1] == 'if '
+              \ || Fun[:len('let ')-1] == 'let ')
       " function is a String, call exec
       let ARGS = args[1]
       let SELF = args[2]

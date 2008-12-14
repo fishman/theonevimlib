@@ -50,6 +50,12 @@ function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
         \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php',
         \  'cmd' :['php','-l', library#Function("return expand('%')")]
         \ }
+  let ft['perl'] = {
+        \  'pattern' : '*.pl',
+        \  'run_in_background' : 0,
+        \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#perl',
+        \  'cmd' :['perl','-c', library#Function("return expand('%')")]
+        \ }
 
   let child = {}
   fun! child.Load()
