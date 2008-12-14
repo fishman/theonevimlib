@@ -25,8 +25,11 @@ function! tovl#plugin_management#PluginDict(p)
     let d['s'] = "tovl#plugin_management#Plugin(".string(a:p).")"
 
     " now load the plugin code
-    return {a:p}(d)
+    " return {a:p}(d) makes vim hang when using -V20file or debugging this
+    " code.. ! ?
+    let r = {a:p}(d)
   endtry
+  return r
 endfunction
 
 let s:loaded = config#GetG('tovl#plugins#loaded', {'set' : 1, 'default' : {}})
@@ -257,6 +260,16 @@ fun! tovl#plugin_management#NewPlugin()
     try
       let cfg = self.cfg
       call config#AddToListUniq('config#onChange', library#Function(self['OnConfigChange'],{'self' : self}))
+
+      " add global tags
+      let tags = get(self.cfg,'tags',[])
+      call tovl#featureset#ModifyTags(0,tags, [])
+      " add buffer type tags
+      let tags_filetype = get(self.cfg,'tags_buftype',{})
+      for k in keys(tags_filetype)
+        call self.Au({'events' : 'filetype', 'pattern' : k,
+          \ 'cmd' : 'call tovl#featureset#ModifyTags(1,'.string(tags_filetype[k]).', [])' })
+      endfor
       
       " register feature types
       let featT = get(self, 'featureTypes', {})
@@ -293,16 +306,6 @@ fun! tovl#plugin_management#NewPlugin()
           call self.Log(0, 'exception while setting up autocommand '.name.' for '.self.pluginName)
         endtry
       endfor
-
-      " add global tags
-      let tags = get(self.cfg,'tags',[])
-      call tovl#featureset#ModifyTags(0,tags, [])
-      " add buffer type tags
-      let tags_filetype = get(self.cfg,'tags_buftype',{})
-      for k in keys(tags_filetype)
-        call self.Au({'events' : 'filetype', 'pattern' : k,
-          \ 'cmd' : 'call tovl#featureset#ModifyTags(1,'.string(tags_filetype[k]).', [])' })
-      endfor
     catch /.*/ 
       call self.Log(0, 'exception while running d.Load')
     endtry
@@ -311,14 +314,14 @@ fun! tovl#plugin_management#NewPlugin()
   fun! d.Unload()
     " unregister feature extensions
     for e in self.removeFeatureTypes
-      call tovl#featureset#RegisterExtension(e['name'])
+      call tovl#featureset#UnregisterFeatureType(e['name'])
     endfor
 
     " unregister notification
     call tovl#list#Remove(config#GetG('config#onChange'),
           \ library#Function(self['OnConfigChange'],{'self' : self}))
     " remove mappings
-    call tovl#featureset#RemoveItemsOfPlugin(self.pluginName)
+    call tovl#featureset#DelItemsOfPlugin(self.pluginName)
 
     " remove mappings and augroup
     if !empty(self.aucommands_)
@@ -396,6 +399,7 @@ fun! tovl#plugin_management#NewPlugin()
           if has_key(feat,'featType') | call remove(feat, 'featType') | endif
           call library#Call(F, [a:d, feat, k, self.pluginName.'#'.f])
         endfor
+        unlet F
       endif
     endfor
     for name in keys(self.autocommands)

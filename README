@@ -1,17 +1,13 @@
-Have a look at core/doc/tovl.vim !
+Have a look at core/doc/tovl.txt !
+
+!! This readme is outdated. !!
+However I'll keep it for now because it discribes the idea of core/ and contrib/.
 
 spirit: bring the many useful scripts into one repository to make installation and configuration as easy as possible. Bundle power, ideas and creativity of all vim users. There is much out there. Lower the effort to change things. Don't ask authors to modfiy code. Fix it right now and commit.
 
 installation
 ============
-set runtimepath+=directory_containing_this_file/core
-set runtimepath+=directory_containing_this_file/contrib
-
-configuration
-=============
-run the command
-  :Settings
-to enable plugins.
+see above.
 
 Things you should know about this lib:
 =====================================

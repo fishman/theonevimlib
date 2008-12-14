@@ -61,7 +61,7 @@ fun! tovl#runtaskinbackground#NewProcess(p)
   endf
   fun! process.EchoResult()
       echo "process ".self.id. 
-            \ (self.exitCode = self.expectedExitCode
+            \ (self.exitCode == self.expectedExitCode
             \ ? " finised (success!)"
             \ : " failed with exit code (".self.exitCode.")")
   endf

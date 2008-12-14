@@ -10,7 +10,7 @@ function! plugins#tovl#config#PluginTOVL_Config(p)
   let child = {}
   fun! child.Load()
     if has_key(self.cfg, 'log_level')
-      call tovl#log#GetLogger().SetLevel(self.cfg.log_level)
+      let l = tovl#log#GetLogger().SetLevel(self.cfg.log_level)
     endif
     call self.Parent_Load() 
   endfunction

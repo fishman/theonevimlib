@@ -200,28 +200,26 @@ function! config#Get(path, ...)
   let configs = config#GetG('config#files')
   let path = config#Path(a:path)
   for file in reverse(copy(configs))
-    if filereadable(file)
-      " only reread config when all changes have been flushed
-      let cache = config#ConfigContents(file)
-      try
-        let V2 = call(function('config#GetByPath'), [cache, path] + a:000)
-        if exists('V')
-          " merge
-          try
-            if (!exists('M'))
-              let M = config#GetG(['config']+path+['merge'])
-            endif
-            let V = library#Call(M, [V, V2]) " merge values, continue
-          catch /.*/
-            return V " no merge func specified
-          endtry
-        else
-          let V = V2
-        endif
-        unlet V2
-      catch /.*/
-      endtry
-    endif
+    " only reread config when all changes have been flushed
+    let cache = config#ConfigContents(file)
+    try
+      let V2 = call(function('config#GetByPath'), [cache, path] + a:000)
+      if exists('V')
+        " merge
+        try
+          if (!exists('M'))
+            let M = config#GetG(['config']+path+['merge'])
+          endif
+          let V = library#Call(M, [V, V2]) " merge values, continue
+        catch /.*/
+          return V " no merge func specified
+        endtry
+      else
+        let V = V2
+      endif
+      unlet V2
+    catch /.*/
+    endtry
   endfor
   if exists('V')
     return V
@@ -631,7 +629,7 @@ function! config#EditConfigWrite(file)
 endfunction
 
 function! config#EditConfigGetData(file)
-  if a:file == config#GetG('config#files')[0]
+  if expand(a:file) == expand(config#GetG('config#files')[0])
     call config#StopFlushing(a:file)
     
     let cfgDict = config#ConfigContents(a:file)
@@ -639,6 +637,26 @@ function! config#EditConfigGetData(file)
     " editing main config,
     " ask plugins to add their default options.
     let toload = tovl#plugin_management#PluginsFromDict([],cfgDict['loadablePlugins'],"v > 0")
+    if empty(toload)
+      " initial setup?
+      let list = [ 'tovl#config#PluginTOVL_Config', 'feature_types#map#PluginMap', 'feature_types#command#PluginCommand',
+            \ 'tovl#log#PluginLog', 'tovl#featureset#PluginFeatureSet']
+      echo "== Initial setup? Do you want me to activate mandatory and recommendet plugins? =="
+      for l in list | echo "- plugin ".l | endfor
+      if input("[y]") == "y"
+        for l in list
+          call config#SetByPath(cfgDict, 'loadablePlugins#plugins#'.l, 1)
+          " also add default config options else the plugins won't load
+          let p = tovl#plugin_management#PluginDict('plugins#'.l)
+            call library#Call(p['AddDefaultConfigOptions'],[cfgDict],p)
+
+          " load plugins as early as possible, the plugins following Map and
+          " Command depend on their features!
+          call tovl#plugin_management#UpdatePlugins()
+        endfor
+        let toload = tovl#plugin_management#PluginsFromDict([],cfgDict['loadablePlugins'],"v > 0")
+      endif
+    endif
     if config#GetG('config#AddDefaults', 1)
       for pl in toload
         try

@@ -10,7 +10,8 @@
 
 ==============================================================================
 
-You want to see TOVL in action? Visit the |tovl-config-tutorial|
+HOWTO: You want to start using TOVL ? Start by headline 3. installation which
+continues with a small tutorial.
 
 1. Contents						*tovl-contents*  {{{1
 
@@ -89,17 +90,31 @@ You want to see TOVL in action? Visit the |tovl-config-tutorial|
   To get TOVL there are two ways:
     a) use an packed archive (.zip, .tar.gz)
         http://github.com/MarcWeber/theonevimlib (-> download button)
-    b) use git >
+    b) use git (recommended) >
         git clone git://github.com/MarcWeber/theonevimlib.git
         git pull # this updates the repository
-<
-      you'll get the whole developement history as well.
+<      you'll get the whole developement history as well.
 
   To install TOVL simply add this to your .vimrc >
     set runtimepath+=<pathtotovl>/core
     " set |tovl-global-config| options
     call theonevimlibsetup#Setup()
 < Then run :helptags Path_TO_DEST/core/doc
+
+  basic setup (mandatory!):
+  1) Run command >
+     TOVLConfig
+<    You'll be asked wether you want to activae a bunch of recommended
+     plugins. Say y here. If you want to use <m-*> or <m-s-*> mappings
+     in console you shoulde deactivate the PluginMap and activate
+     PluginMapEscHack instead (see |tovl-shell-esc-hack|)
+
+  4) Now write the buffer to make the changes permanent. >
+     :w
+
+< Continue here: |tovl-config-tutorial|
+  (if you don't read this within the vim help browser goto the end of
+  core/doc/tovl-config-buffer.txt)
 
   *tovl-contribute*
   You can contribute in various ways:
@@ -347,20 +362,20 @@ TOVL RUN TASK MAYBE IN BACKGROUND		 *tovl-run-in-background* {{{2
 
     autoload/tovl/runtaskinbackground.vim provides methods to run external
     commands. The default is to run them in background. This requires
-    has('client-server') because using |client-server| [1] is the only way
+    has('client-server') because using |clientserver| [1] is the only way
     to notify vim about events (what process id and when the process has
     finished) asynchronously without increasing the probablity crashing vim. >
 
     let process = tovl#runtaskinbackground#NewProcess(
       \ { 'name' : 'compilation', 'cmd': ["/bin/sh","-c",'sleep 10; echo done'],
-      \   'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php' })
+        \ 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php' })
     call process.Run()
 <
     or as one line (for copy paste and testing) >
     call tovl#runtaskinbackground#NewProcess( { 'cmd': ["/bin/sh","-c",'sleep 10; echo done'], 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php' }).Run()
  
 <
-    You cann add the key 'fg' : 1 to force running in foreground only (TODO
+    You can add the key 'fg' : 1 to force running in foreground only (TODO
     implement this)
 
     You must have enabled the |PluginErrorFormats| because the example is
@@ -378,7 +393,7 @@ TOVL RUN TASK MAYBE IN BACKGROUND		 *tovl-run-in-background* {{{2
 
     [1] It seems that vim doesn't set the server name by default. That's why
     I'v put this into my .bashrc / .zshrc file: >
-        v(){ vim --servername vim$(echo $RANDOM) "$@" }
+        v(){ vim --servername vim$(echo $RANDOM) "$@"; }
 <
 
 TOVL FUNCTION REFERENCES 		 *tovl-function-reference* {{{2

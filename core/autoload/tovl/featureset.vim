@@ -291,5 +291,5 @@ fun! tovl#featureset#RegisterFeatureType(ext)
 endf
 
 fun! tovl#featureset#UnregisterFeatureType(name)
-  call remove(s:featureTypes[a:name])
+  call remove(s:featureTypes, a:name)
 endfun

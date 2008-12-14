@@ -147,9 +147,7 @@
 ==============================================================================
 24. Tutorial *tovl-config-tutorial*
 
-    Installation: setup runtimepath (See |tovl-update|)
-
-    Open the configuration file :TOVLConfig
+    basic setup and installation see |tovl-update| (tovl.txt)
 
     (FIXME: add to this tutorial: enabling PluginTOVL_Config, PluginMap or
     PluginMapEscHack, PluginCommand ... and explain why!)
@@ -158,8 +156,7 @@
     You do this by replacing the number=0 by number=1
 
     Write the buffer (:w). This should load the plugin.
-
-    Refresh the buffer (:e! %)
+    Refresh the buffer (:e!)
 
     You'll notice that a plugins:dictionary= section has appeared.
     Customize the settings lhs and string but keep the rhs as is.
