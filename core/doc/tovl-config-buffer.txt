@@ -26,7 +26,7 @@
     You can edit any configuration file by :e tovl_config://<path>
     However using the *TOVLConfig* command is more convinient.
     It let's you choose the configuration file to edit from the list
-    (|tovl-project-secific|)
+    (|tovl-project-specific|)
 
 ==============================================================================
 3.  Using the buffer
@@ -51,7 +51,7 @@
 
   The head of the configuration file list (|tovl-project-specific|) is the
   *main-configuration-file* .
-  That contains the list of availible plugins.
+  That contains the list of available plugins.
 
   You can find a small picture describing it here: 
   http://www.mawercer.de/~vim/tovl.png

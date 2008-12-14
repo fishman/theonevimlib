@@ -84,7 +84,7 @@ continues with a small tutorial.
 ==============================================================================
 3. installation / updating TOVL / How to contribute / contact *tovl-update* {{{1
 
-  TOVL developement is tracked by git. git is a dezentrazied version control
+  TOVL development is tracked by git. git is a decentralised version control
   system.
 
   To get TOVL there are two ways:
@@ -93,7 +93,7 @@ continues with a small tutorial.
     b) use git (recommended) >
         git clone git://github.com/MarcWeber/theonevimlib.git
         git pull # this updates the repository
-<      you'll get the whole developement history as well.
+<      you'll get the whole development history as well.
 
   To install TOVL simply add this to your .vimrc >
     set runtimepath+=<pathtotovl>/core
@@ -104,9 +104,9 @@ continues with a small tutorial.
   basic setup (mandatory!):
   1) Run command >
      TOVLConfig
-<    You'll be asked wether you want to activae a bunch of recommended
+<    You'll be asked wether you want to activate a bunch of recommended
      plugins. Say y here. If you want to use <m-*> or <m-s-*> mappings
-     in console you shoulde deactivate the PluginMap and activate
+     in console you should deactivate the PluginMap and activate
      PluginMapEscHack instead (see |tovl-shell-esc-hack|)
 
   4) Now write the buffer to make the changes permanent. >
@@ -172,7 +172,7 @@ STRUCTURE                                       *tovl-config-bar* {{{2
     However you don't have to call them yourself, see EDITING below
     Also see |config#GetByPath()| |config#GetG()|
 
-MULTIPLE PROJECT SPECIFIC CONFIGURATION FILES  *tovl-project-secific* {{{2
+MULTIPLE PROJECT SPECIFIC CONFIGURATION FILES  *tovl-project-specific* {{{2
 
     TOVL supports multiple configuration files. Use >
 
@@ -188,9 +188,9 @@ CONFIG CACHE					*tovl-config-cache* {{{2
 
     TOVL doesn't reread the configuration files from disk automatically
     if the timestamp is newer. Also the configuration file is written
-    automatically if you set a value. TOVL tries to mimize the chance that
+    automatically if you set a value. TOVL tries to minimize the chance that
     one vim instance overrides the configuration written by another instance.
-    The funtion doing all the dirty work for you is |config#ScanIfNewer|.
+    The function doing all the dirty work for you is |config#ScanIfNewer|.
     You can use it in your own scripts. (I've done so to provide vimscript
     function completion).
 
@@ -200,7 +200,7 @@ MERGING CONFIGURATION				*tovl-config-merge* {{{2
     it about a list of directories containing those.
     Now you work on a project and you'd like to use your own plugins and
     project specific ones. One solution is to have a
-    plugin#template_sources direcotry list in you personal config and in the
+    plugin#template_sources directory list in you personal config and in the
     configuration file of the project directory. Now you can specify a merge
     function which concatenates both lists (see config.vim) However its very
     likely that this changes. I'd like to define the merge functions within
@@ -217,7 +217,7 @@ EDITING THE CONFIGURATION AND LOADING PLUGINS      *tovl-config-edit* {{{2
   You can pick a completion to be used.
   This is much better than assigning completefunc yourself because users might
   want to use different plugins at the same time. Eg in PHP it does make sense
-  to have SQL and PHP and maybe even HTML or Javascript complection
+  to have SQL and PHP and maybe even HTML or Javascript completion
   functions..
 
   I had in mind to never break things by using >
@@ -346,7 +346,7 @@ TOVL CHOOSE					        *tovl-choose* {{{2
 
 TOVL TRY					        *tovl-try* {{{2
 
-    If you want test wether you should the one or the other setup then
+    If you want test whether you should the one or the other setup then
     |library#Try| could be the function you'd like to use..
 
 TOVL ERROR FORMATS		 	*tovl-error-formats* {{{2
@@ -364,7 +364,7 @@ TOVL RUN TASK MAYBE IN BACKGROUND		 *tovl-run-in-background* {{{2
     commands. The default is to run them in background. This requires
     has('client-server') because using |clientserver| [1] is the only way
     to notify vim about events (what process id and when the process has
-    finished) asynchronously without increasing the probablity crashing vim. >
+    finished) asynchronously without increasing the probability crashing vim. >
 
     let process = tovl#runtaskinbackground#NewProcess(
       \ { 'name' : 'compilation', 'cmd': ["/bin/sh","-c",'sleep 10; echo done'],
@@ -381,7 +381,7 @@ TOVL RUN TASK MAYBE IN BACKGROUND		 *tovl-run-in-background* {{{2
     You must have enabled the |PluginErrorFormats| because the example is
     using 'ef'. If you haven't you'll get some error in the |tovl-log|
 
-    You can set a different decorator to override the default OnStrart and
+    You can set a different decorator to override the default OnStart and
     OnFinish events thereby making vim changing colors depending on process
     status etc. (Example: tovl#runtaskinbackground#DefaultDecorator() )
 

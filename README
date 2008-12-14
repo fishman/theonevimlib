@@ -1,9 +1,9 @@
 Have a look at core/doc/tovl.txt !
 
 !! This readme is outdated. !!
-However I'll keep it for now because it discribes the idea of core/ and contrib/.
+However I'll keep it for now because it describes the idea of core/ and contrib/.
 
-spirit: bring the many useful scripts into one repository to make installation and configuration as easy as possible. Bundle power, ideas and creativity of all vim users. There is much out there. Lower the effort to change things. Don't ask authors to modfiy code. Fix it right now and commit.
+spirit: bring the many useful scripts into one repository to make installation and configuration as easy as possible. Bundle power, ideas and creativity of all vim users. There is much out there. Lower the effort to change things. Don't ask authors to modify code. Fix it right now and commit.
 
 installation
 ============
@@ -27,7 +27,7 @@ contrib/ and core/?
 ------------------
   Everyone should be able to contribute code fast. On the other side we should
   try to minimize code duplication.
-  So you should add your code to contribue/ first. Maybe we can then discuss how to
+  So you should add your code to contribute/ first. Maybe we can then discuss how to
   merge it into the core. This way we strive for high quality code and many features.
   directory layout is:
   core/{plugin,autoload}
@@ -63,7 +63,7 @@ contrib in detail:
 
 never ever break things again
 -----------------------------
-  Not possible. We can try to miminize breakage by not modifying functions and
+  Not possible. We can try to minimize breakage by not modifying functions and
   API's in a non compatible way but cloning the file adding some version information.
    
   foo#bar#Func() will become
@@ -92,7 +92,7 @@ utilities to make contributing easier
 how to install and keep up to date?
 ----------------------------------
   By now the recommended way is cloning the repository.
-  We also have plans to support installtion using vimballs and update files by
+  We also have plans to support installation using vimballs and update files by
   vim commands (TODO)
 
   Thus just run:
@@ -105,7 +105,7 @@ TODO:
   - rewrite this in vim help style only keeping a reference
   ....
 
-raodmap: What would be cool features we should have?
+roadmap: What would be cool features we should have?
 -----------------------------------------------------
   - Do we need kind of abstraction over mappings so that the mappings work in vim
     and gvim, windows, linux equally well?
