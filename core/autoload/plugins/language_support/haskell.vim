@@ -40,6 +40,7 @@ function! plugins#language_support#haskell#PluginGhcSupport(p)
       call self.RegI({
          \ 'lhs' : self.cfg.lhs_compile,
          \ 'rhs' : '<esc>:call '. self.s .'.NewSetupProcess().Run()<cr>',
+         \ 'featType' : 'feat_mapping'
          \ })
     else
       call self.Log(1,"cabal file found but no dist directory. You have to configure cabal first!")
