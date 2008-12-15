@@ -1,5 +1,6 @@
 " support for multiple completion functions
 " see plugins/completion/choose_completion.vim
+" only per buffer is supported right now
 "
 " a is dict { 'description' : .., 'completion_func' : ... } 
 fun! tovl#ui#multiple_completions#RegisterBufferCompletionFunc(a)

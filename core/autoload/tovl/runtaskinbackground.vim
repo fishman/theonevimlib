@@ -68,7 +68,11 @@ fun! tovl#runtaskinbackground#NewProcess(p)
   fun! process.OnStart()
   endf
   fun! process.Run()
-    let self.realCmd = map(copy(self.cmd), 'library#Call(v:val)')
+    if type(self.cmd) == 3
+      let self.realCmd = map(copy(self.cmd), 'library#Call(v:val)')
+    else
+      let self.realCmd = library#Call(self.cmd)
+    endif
     try
       try
         call self.OnStart()
@@ -168,8 +172,13 @@ fun! tovl#runtaskinbackground#RunHandlerSh(process)
           \ S('call config#GetG(''tovl#running_background_processes'')['.a:process.id.']').'".SetProcessId("$$")"')
     let tellResult = s:CallVimUsingSh(vim,
           \ S('call config#GetG(''tovl#running_background_processes'')['.a:process.id.']').'".Finished("$?")"')
-    let cmd = join(map(copy(a:process.realCmd),
-   \ "tovl#runtaskinbackground#EscapeShArg(v:val)"),' ')
+
+    if type(self.cmd) == 3
+      let cmd = join(map(copy(a:process.realCmd),
+     \ "tovl#runtaskinbackground#EscapeShArg(v:val)"),' ')
+    else
+      let cmd = a:process:realCmd
+    endif
     " FIXME: requiring linux for now..
     call tovl#runtaskinbackground#System(['/bin/sh'], 
       \ {'stdin-text' :  '{ '.tellPid."\n".cmd.'&>'.a:process.tempfile."\n".tellResult.'; } &'} )
@@ -211,7 +220,8 @@ fun! tovl#runtaskinbackground#VimFilepathByGlibc(v)
 endfunction
 
 fun! tovl#runtaskinbackground#EscapeShArg(arg)
-  return escape(a:arg, ";()*<>| '\"\\`")
+  " zsh requires []
+  return escape(a:arg, ";()*<>| '\"\\`[]")
 endf
 
 " usage: vl#lib#system#system#System( ['echo', 'foo'], {'stdin-text' : 'will be ignored by echo', status : 0 })
