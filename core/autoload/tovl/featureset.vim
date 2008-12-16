@@ -195,7 +195,11 @@ fun! s:AddItem(i)
   if was > 0 | return | endif
   call s:Log(2,'adding feature item '.string(id))
   if has_key(s:featureTypes, a:i['featType'])
-    call library#Call(s:featureTypes[a:i['featType']]['AddItem'],[a:i])
+    try
+      call library#Call(s:featureTypes[a:i['featType']]['AddItem'],[a:i])
+    catch /.*/
+      call s:Log(0, "exception while running AddItem of feature ".string(a:i))
+    endtry
   else
     call s:Log(0, "Couldn't add feature of type ".a:i['featType']." because no handler was found! complete feature item you're missing: ".string(a:i))
   endif
@@ -210,7 +214,11 @@ fun! s:DelItem(i)
   if {v}[id] > 1 | return | endif
   call s:Log(2,'removing feature item '.string(id))
   if has_key(s:featureTypes, a:i['featType'])
-    call library#Call(s:featureTypes[a:i['featType']]['DelItem'],[a:i])
+    try
+      call library#Call(s:featureTypes[a:i['featType']]['DelItem'],[a:i])
+    catch /.*/
+      call s:Log(0, "exception while running DelItem of feature ".string(a:i))
+    endtry
   else
     call s:Log(0, "Couldn't remove feature of type ".a:i['featType']." because no handler was found! complete feature item you're missing: ".string(a:i))
   endif

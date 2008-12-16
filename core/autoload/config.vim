@@ -187,7 +187,7 @@ function! config#ConfigContents(file)
   try
     return config#ScanIfNewer(a:file,
           \ {'fileCache' : 0, 'asLines' : 1, 'scan_func' : function('config#EvalFirstLine'),
-          \  'useCached' : config#GetG(['config','dirty',a:file],0),
+          \  'useCached' : !config#GetG(['config','dirty',a:file],0),
           \  'default' : ["{}"]
           \ })
   catch /.*/
@@ -283,16 +283,17 @@ function! config#FlushConfig(configFile, assumeDirty)
   endif
 endfunction
 
+
 "|pl    " clear cache
 "|      command! ClearScanAndCacheFileCache :call ClearScanAndCacheFileCache()
 "|TODO add command to clear cache.. because it will grow and grow.
 
 " opts: scan_func: This function will be applied before returning contents
-"       fileCache: write the result to a file (default no)
+"       use_cache : write the result to a file (default no)
 "       asLines   : if set then read the file and feed file contents into
 "                   functions. If not set pass the filename (Maybe you want to
 "                   use and external application to process the file)
-"       useCached  : don't update file, use cache if already present
+"       useCached : don't update file, use cache if already present
 "       default: what to return if file doesn't exist
 function! config#ScanIfNewer(file, opts)
   let cache = get(a:opts, 'fileCache', 0)
@@ -305,7 +306,11 @@ function! config#ScanIfNewer(file, opts)
   let dict = config#GetG(path, {'set': 1, 'default' : {}})
 
   if cache
-    let cache_file = expand(s:cache_dir.'/'.(a:scan_func, a:file))
+    if (!exists('s:cache_dir'))
+      let s:cache_dir = library#Call(config#Get('plugins#tovl#config#PluginTOVL_Config#cache_dir'))
+    endif
+    let this_dir = s:cache_dir.'/scan-and-cache'
+    let cache_file = expand(this_dir.substitute(string([Func, a:file]),'[[\]{}:/\,''"# ]\+','_','g'))
     if !has_key(dict, a:file) " try getting from file cache
       if filereadable(cache_file)
         let dict[file] = eval(readfile(cache_file)[0])
@@ -314,8 +319,8 @@ function! config#ScanIfNewer(file, opts)
   endif
   if has_key(dict, a:file)
     " return cached value if up to date
-    if get(a:opts, 'useCached', 0)
-          \ || getftime(a:file) <= dict[a:file]['ftime']
+    if get(a:opts, 'useCached', 1)
+          \ && getftime(a:file) <= dict[a:file]['ftime']
       return dict[a:file]['scan_result']
     endif
   endif
@@ -335,24 +340,15 @@ function! config#ScanIfNewer(file, opts)
   endif
   let  dict[a:file] = {"ftime": getftime(a:file), "scan_result": scan_result }
   if cache
-    " call vl#lib#files#filefunctions#WriteFile([string(dict[a:file])], cache_file)
+    if !isdirectory(this_dir) | call mkdir(this_dir,'p',0700) | endif
+    call writefile([string(dict[a:file])], cache_file)
   endif
   return scan_result
 endfunction
 
-function! s:CacheFileName(scan_func, file)
-  " TODO tidy up this function, maybe remvoe it
-  let f=vl#lib#files#filefunctions#FileHashValue(string(a:scan_func).a:file)
-  let l = min([len(f), 100])
-  return strpart(f, len(f) - l, l)
-endfunction
-
 function! config#ClearScanAndCacheFileCache()
-  " TODO: tidy up
-  call vl#lib#files#filefunctions#RemoveDirectoryRecursively(s:cache_dir)
-  unlet g:scanned_files
+  throw "not implemented yet, remove ".s:cache_dir."/scan-and-cache manually"
 endfunction
-
 
 " =========== config user interface ==================================
 " There is one function handling serializing, and parsing of config values

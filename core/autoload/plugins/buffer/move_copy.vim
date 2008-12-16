@@ -6,7 +6,7 @@ function! plugins#buffer#move_copy#PluginMoveCopyFile(p)
   let p['defaults']['tags'] = ['file_handling']
 
   " FIXME: those mappings require the commands!
-  let p['feat_mappings'] = {
+  let p['feat_mapping'] = {
     \ 'copy' : {
       \ 'lhs' : '<leader>cp',
       \ 'rhs' : ':ContinueWorkOnCopy<space>'

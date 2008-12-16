@@ -39,5 +39,6 @@ function! plugins#filetype#vim#vl_repo#PluginVL_RepoStuff(p)
       \ 'pattern' : 'vim',
       \ 'cmd' : "command! -buffer -nargs=0 FixPrefixesOfAutoloadFunctions :call tovl#ft#vimscript#vimfile#FixPrefixesOfAutoloadFunctions()<cr>"
     \ }
+
   return p
 endfunction

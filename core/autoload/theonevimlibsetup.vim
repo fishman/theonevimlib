@@ -1,11 +1,11 @@
 function! theonevimlibsetup#Setup()
+
+  " only setup tovl once
+  if config#GetG('tovl#setup', 0) == 1 | return | endif
+
   " taken form the tlib  library (assign var if it doesn't exist).
   " Usage: TLet s:foo = "bar"
   command! -nargs=+ TLet if !exists(matchstr(<q-args>, '^[^=[:space:]]\+')) | exec 'let '. <q-args> | endif
-
-  " give the user the chance to setup this library somewhere else.
-  " only do it once
-  if config#GetG('tovl#setup', 0) == 1 | return | endif
 
   " set function which returns list of configuration files to be considered when
   " reading option - only if not yet set

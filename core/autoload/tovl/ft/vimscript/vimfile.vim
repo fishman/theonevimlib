@@ -57,6 +57,8 @@ let s:vl_regex['function']='^\s*fun\%(ction\)\=!\=\s\+'
 let s:vl_regex['fn_decl']=s:vl_regex['function'].'\zs'.s:vl_regex['fp'].s:vl_regex['uFn'].'\ze('
 let s:quick_match_expr = library#Function('tovl#ui#match#AdvancedCamelCaseMatching')
 
+let s:use_cache = 1
+
 "|func scan vim file (is used with ScanIfNewer()
 "|     returns (to be extended ?)
 "|     dictionary { 'declared functions' : list
@@ -285,7 +287,7 @@ function! tovl#ft#vimscript#vimfile#DoesAutoloadFunctionExist(files, function)
   let file = substitute(a:function,'#[^#]*$','','') " blah#foo value
   if exists("a:files['".file."']") 
     let file_content = config#ScanIfNewer(
-	  \ a:files[file], {'asLines' :1, 'scan_func' :s:ScanVimFile})
+	  \ a:files[file], {'asLines' :1, 'scan_func' :s:ScanVimFile, 'fileCache':s:use_cache })
     if exists("file_content['declared functions']['".a:function."']")
       return 1
     endif
@@ -294,7 +296,7 @@ function! tovl#ft#vimscript#vimfile#DoesAutoloadFunctionExist(files, function)
   let matches = []
   for f in keys(a:files)
     let file_content = config#ScanIfNewer(
-	  \ a:files[f], {'asLines' :1, 'scan_func' :s:ScanVimFile})
+	  \ a:files[f], {'asLines' :1, 'scan_func' :s:ScanVimFile, 'fileCache':s:use_cache})
     let function = substitute(a:function,'.*#','','')
     for f in keys(file_content['declared functions'])
       if f =~ '\<'.function.'$'
@@ -341,7 +343,7 @@ function! tovl#ft#vimscript#vimfile#CompleteFunction(findstart,base)
 	"return []
       "endif
       let file_content = config#ScanIfNewer(
-	  \ file, {'asLines' :1, 'scan_func' :s:ScanVimFile} )
+	  \ file, {'asLines' :1, 'scan_func' :s:ScanVimFile, 'fileCache':s:use_cache} )
       let g:f = file
       let functions = keys(file_content['declared autoload functions'])
       call filter(functions ,'v:val =~ '.string(regex))
@@ -366,7 +368,7 @@ function! tovl#ft#vimscript#vimfile#GetFuncLocation(addNonExisting)
   let keys = keys(autofile_list)
   for file in keys
     let functions = config#ScanIfNewer(
-	  \ autofile_list[file], {'asLines' :1, 'scan_func' :s:ScanVimFile})['declared functions']
+	  \ autofile_list[file], {'asLines' :1, 'scan_func' :s:ScanVimFile, 'fileCache':s:use_cache})['declared functions']
     if has_key(functions, func)
       let line = functions[func]
 	call add(results, [autofile_list[file], line])
