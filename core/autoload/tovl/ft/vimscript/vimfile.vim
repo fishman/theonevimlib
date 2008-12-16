@@ -325,11 +325,11 @@ function! tovl#ft#vimscript#vimfile#CompleteFunction(findstart,base)
     let g:q = quick_pattern
     let pattern = '^'.func
     let regex = substitute('\%('.pattern.'\)\|\%('.quick_pattern.'\)', '\^', '^'.substitute(s:vl_regex['fp'],'\\','\\\\','g'),'g')
-    let g:regex = regex
 
     " take functions from this file
     let curr_file = tovl#ft#vimscript#vimfile#ScanVimFile(getline(1,line('$')))
     let functions = keys(curr_file['declared functions'])
+    call filter(functions ,'v:val =~ '.string(regex))
     for f in functions
       call complete_add(f)
     endfor
