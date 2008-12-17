@@ -326,6 +326,11 @@ function! tovl#ft#vimscript#vimfile#CompleteFunction(findstart,base)
     let pattern = '^'.func
     let regex = substitute('\%('.pattern.'\)\|\%('.quick_pattern.'\)', '\^', '^'.substitute(s:vl_regex['fp'],'\\','\\\\','g'),'g')
 
+    " builtin functions
+    let builtins = filter(tovl#ft#vimscript#vimfile#BuiltinFunctions(),'v:val["word"] =~'.string(regex))
+    for b in builtins | call complete_add(b) | endfor
+    if complete_check() | return [] | endif
+
     " take functions from this file
     let curr_file = tovl#ft#vimscript#vimfile#ScanVimFile(getline(1,line('$')))
     let functions = keys(curr_file['declared functions'])
@@ -333,15 +338,11 @@ function! tovl#ft#vimscript#vimfile#CompleteFunction(findstart,base)
     for f in functions
       call complete_add(f)
     endfor
-    "if complete_check()
-      "return []
-    "endif
+    if complete_check() | return [] | endif
     " take functions from autoload directories
     let autoload_functions = tovl#ft#vimscript#vimfile#ListOfAutoloadFiles()
     for file  in values(autoload_functions)
-      "if complete_check()
-	"return []
-      "endif
+      if complete_check() | return [] | endif
       let file_content = config#ScanIfNewer(
 	  \ file, {'asLines' :1, 'scan_func' :s:ScanVimFile, 'fileCache':s:use_cache} )
       let g:f = file
@@ -387,3 +388,26 @@ function! tovl#ft#vimscript#vimfile#GetFuncLocation(addNonExisting)
   endif
   return results
 endfunction
+
+fun! tovl#ft#vimscript#vimfile#BuiltinFunctions()
+  if exists('s:builtin_functions')
+    return s:builtin_functions
+  endif
+  let evaltxt = readfile(expand('$VIMRUNTIME').'/doc/eval.txt')
+  let idx = index(evaltxt, '4. Builtin Functions					*functions*')
+  let end = index(evaltxt, '5. Defining functions					*user-functions*')
+  if idx < 0 || end < 0
+    throw "couldn't extract block containing function list"
+  endif
+  let res = []
+  while idx < end
+    let r = matchlist(evaltxt[idx], '\(\a[^(]*\)(\s*\([^)]*\)\s*)\s*\(.*\)')
+    if !empty(r)
+      let description = r[3] == '' ? matchstr(evaltxt[idx+1], '\s*\zs') : r[3]
+      call add(res, {'word' : r[1], 'menu' : r[2].' '.description}) 
+    endif
+    let idx = idx +1
+  endwhile
+  let s:builtin_functions = res
+  return res
+endfun

@@ -32,13 +32,15 @@ function! tovl#scratch_buffer#ScratchBuffer(opts)
   exec get(a:opts, 'sp_cmd', 'e').' '.escape(a:opts['name'],' ')
   let b:settings = a:opts
   setlocal buftype=acwrite
-  command! -buffer -nargs=0 GetContents call tovl#scratch_buffer#GetContents()
   command! -buffer -nargs=0 Help call tovl#scratch_buffer#Help()
 
   " setup write notification
   au TOVLWrite BufWriteCmd <buffer> call tovl#scratch_buffer#Write()
 
-  GetContents
+  if has_key(a:opts,'getContent')
+    command! -buffer -nargs=0 GetContents call tovl#scratch_buffer#GetContents()
+    GetContents
+  endif
   "let u=&undolevels
   "setlocal undolevels=-1
   "exec 'setlocal undolevels='.u
@@ -50,7 +52,7 @@ function! tovl#scratch_buffer#ScratchBuffer(opts)
   for cmd in get(a:opts,'cmds',[])
     exec cmd
   endfor
-  echo "type :Help for help"
+  silent echo get(a:opts,'echo_help', "type :Help for help")
 endfunction
 
 " =========== utility functions ======================================
@@ -64,12 +66,8 @@ function! tovl#scratch_buffer#Write()
 endfunction
 
 function! tovl#scratch_buffer#GetContents()
-  if has_key(b:settings, 'getContent')
-    normal ggdG
-    call append(0, library#Call(b:settings['getContent']))
-  else
-    echo "don't know how to refresh buffer contents"
-  endif
+  normal ggdG
+  call append(0, library#Call(b:settings['getContent']))
 endfunction
 
 function! tovl#scratch_buffer#Help()
