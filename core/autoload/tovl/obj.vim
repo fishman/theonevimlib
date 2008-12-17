@@ -62,5 +62,17 @@ fun! tovl#obj#NewObject(name)
     return self
   endf
 
+  " call a method and if there is an error try to print a more meaningfull
+  " trace replacing function numbers of this object by method names
+  fun! d.DebugCall(name, args)
+    try
+      return call(self[a:name], a:args, self)
+    catch /.*/
+      echo v:exception
+      echo v:throwpoint
+      call plugins#tovl#debug_trace#FindAndPrintPieces(matchstr(v:throwpoint,'.*\zs\S\+\.\.\S\+\ze'),{'self':self})
+    endtry
+  endfun
+
   return d
 endf
