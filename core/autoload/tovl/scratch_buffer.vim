@@ -23,6 +23,8 @@ endfunction
 "  help  : callback returning additional information lines
 "  getContent : callback returning lines
 "  cmds    : extra commands to be run (optional)
+"            (maybe you prefer adding them the default way afer the
+"            ScratchBuffer call 
 "  sp_cmd  : the command to use to create the new buffer. Defaults to :e
 "  buftype : ...
 function! tovl#scratch_buffer#ScratchBuffer(opts)
