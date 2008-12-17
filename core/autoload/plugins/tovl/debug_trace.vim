@@ -3,7 +3,7 @@
 "     function theonevimlibsetup#Setup..tovl#plugin_management#UpdatePlugins..library#Call..13..12..47, line 4
 "
 " But which damn function is 13, 12 and 47?
-" This plugin tries to find and identifyt them as methods of plugins
+" This plugin tries to find and identify them as methods of plugins
 
 " the implementation can be found in
 function! plugins#tovl#debug_trace#PluginDebugTrace(p)
@@ -20,14 +20,19 @@ function! plugins#tovl#debug_trace#PluginDebugTrace(p)
       \ }
     \ }
   fun p.IdentifyNumberedFunctions(s)
-    call plugins#tovl#debug_trace#FindAndPrintPieces(split(a:s, '\.\.\| \|,'))
+    call plugins#tovl#debug_trace#FindAndPrintPieces(a:s),{})
   endfun
   return p
 endfunction
 
-fun! plugins#tovl#debug_trace#FindAndPrintPieces(ps)
-  for p in a:ps
-    let list = plugins#tovl#debug_trace#FindPiece(p)
+" objects: dict {"name", obj}. obj is searched for the numbered function as
+" well
+" ps: one of foo..23..bar or [ "foo", "23", "bar"] (this is what v:throwpoint
+" contains
+fun! plugins#tovl#debug_trace#FindAndPrintPieces(ps, objects)
+    let ps = type(a:ps) == 3 ? a:ps :  split(a:ps, '\.\.\| \|,')
+  for p in ps
+    let list = plugins#tovl#debug_trace#FindPiece(p, a:objects)
     if len(list) > 0
       echo p.":(found: ".len(list)."):"
       for i in list[:2]
@@ -43,7 +48,7 @@ fun! plugins#tovl#debug_trace#FindAndPrintPieces(ps)
   endfor
 endf
 
-fun! plugins#tovl#debug_trace#FindPiece(p)
+fun! plugins#tovl#debug_trace#FindPiece(p, objects)
   let locations = []
   if matchstr(a:p, '^\d\+$')
     " anonymous function, find it 
@@ -57,5 +62,15 @@ fun! plugins#tovl#debug_trace#FindPiece(p)
       endfor
     endfor
   endif
+
+  for [k,o] in items(a:objects)
+    for [km,M] in items(o)
+      if type(M) == 2 && string(M) == 'function('''.a:p.''')'
+	call add(locations, "obj ".k.",  method: ".km)
+      endif
+      unlet km M
+    endfor
+    unlet k o
+  endfor
   return locations
 endf
