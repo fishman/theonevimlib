@@ -32,7 +32,9 @@ function! plugins#navigation#glob_open#PluginGlobOpen(p)
 	      \ 'selectByIdOrFilter' : 1,
 	      \ 'Continuation' : library#Function('exec "e ".ARGS[0]'),
 	      \ 'items' : files,
+	      \ 'cmds' : ['wincmd J']
 	      \ })
+	wincmd J
       endif
     endif
   endfunction

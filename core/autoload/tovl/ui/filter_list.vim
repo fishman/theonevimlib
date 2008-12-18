@@ -50,6 +50,7 @@ endfun
 "                        the item even faster
 "                     auto: only do this if all items fit on screen
 "                     (recommend)
+" cmds: extra cmds to be run
 "
 " If you don't like the default view you can override UpdateDisplay
 "
@@ -73,6 +74,8 @@ fun! tovl#ui#filter_list#ListView(opts)
   let d.selectByIdOrFilter = get(a:opts, 'selectByIdOrFilter', 0)
   let d.linesToItems = {}
   let d.number = get(a:opts, 'number', 1)
+  let d.cmds = get(a:opts, 'cmds', [])
+  let d.syn_cmds = get(a:opts, 'syn_cmds', [])
 
   if has_key(a:opts,'keys') | let d.keys = a:opts.keys | endif
   if has_key(a:opts,'Continuation') | let d.Continuation = a:opts.Continuation | endif
@@ -117,7 +120,9 @@ fun! tovl#ui#filter_list#ListView(opts)
     endfor
     call tovl#scratch_buffer#ScratchBuffer({
 	  \ 'help' : library#Function(self.HelpText,{ 'self' : self }),
-	  \ 'sp_cmd' : self.sp_cmd })
+	  \ 'sp_cmd' : self.sp_cmd,
+	  \ 'cmds' : self.cmds
+	  \ })
     let b:filtered_view = self
     command! -buffer -nargs=0 ToggleAlignment call b:filtered_view.ToggleAlignment()
     command! -buffer -nargs=0 ShowAppliedFilters call b:filtered_view.ShowAppliedFilters()
@@ -210,9 +215,9 @@ fun! tovl#ui#filter_list#ListView(opts)
   fun d.UpdateDisplay()
 
     if empty(self.filter)
-      let text = 'no filter applied, :Help for help'
+      let self.statusline= 'no filter applied, :Help for help'
     else
-      let text = len(self.filter).' '.string(self.filter[-1])
+      let self.statusline = len(self.filter).' '.string(self.filter[-1])
     endif
 
     let self.linesToItems = {}
@@ -268,10 +273,11 @@ fun! tovl#ui#filter_list#ListView(opts)
       endfor
     endfor
     " update stauts line to show last applied filter
-    exec 'setlocal statusline='.escape(text,' ')
+    setlocal statusline=%!b:filtered_view.statusline
 
     " syntax
     syn clear
+    for s in self.syn_cmds | exec s | endfor
     let id = 0
     let syn_ids = [ 'Underlined', 'Todo', 'Error', 'Type', 'Statement' ]
     for f in self.filter
@@ -349,7 +355,7 @@ fun! tovl#ui#filter_list#ListView(opts)
 	    else
 	      let idx .= c
 	    endif
-	    if idx < len(items) && idx.'0' > len(items)
+	    if idx < len(items) && idx.'0' > len(items) || idx == 0 && len(items) < 10
 	      " only match
 	      return self.DoContinue(self.MapToOriginal(items[idx]))
 	    endif

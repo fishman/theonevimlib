@@ -388,7 +388,7 @@ fun! tovl#plugin_management#NewPlugin()
   endfun
 
   fun! d.AddFeatureDefaultsDefaultFunc(d,i,n,path)
-    call config#SetByPath(a:d, a:path.'#'.a:n, a:i)
+    call config#GetByPath(a:d, a:path.'#'.a:n, {'set' : 1, 'default' : a:i})
   endf
 
   fun! d.AddDefaultConfigOptions(d)

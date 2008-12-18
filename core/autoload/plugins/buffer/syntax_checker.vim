@@ -59,7 +59,6 @@ function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
 
   let child = {}
   fun! child.Load()
-    call self.Parent_Load()
     let g:HighlightCurrentLine=0
     for k in keys(self.cfg.filetypes)
       let v = self.cfg.filetypes[k]
