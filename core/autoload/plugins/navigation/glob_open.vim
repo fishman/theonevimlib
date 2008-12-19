@@ -34,7 +34,6 @@ function! plugins#navigation#glob_open#PluginGlobOpen(p)
 	      \ 'items' : files,
 	      \ 'cmds' : ['wincmd J']
 	      \ })
-	wincmd J
       endif
     endif
   endfunction
