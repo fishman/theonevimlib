@@ -148,15 +148,15 @@ GLOBAL CONFIG                                   *tovl-global-config*
 
 TOVL SHELL ESC HACK				*tovl-shell-esc-hack*
   Most shells don't support <m-*> mappings because the Meta key is sent as
-  Esc. By using <m-a> will be replaced by <esc>a and <m-s-a> by <esc>A 
+  Esc. By activating |PluginMapEscHack| instead of |PluginMap|
+   <m-a> will be replaced by <esc>a and <m-s-a> by <esc>A. The additional
+   commands Nnoremap Noremap Inoremap Vnoreamp will be defined.
   which is what the terminal vim is most likely to receive. However don't
   blame me if strange things start happening because multiple key combinations
-  will be mapped to the same codes.. I'm happy with this setup. >
-  if !has('gui_running')
-    call config#SetG('config#lhsMap', 
-      \ library#Function(""))
-  endif
-<
+  will be mapped to the same codes.. I'm happy with this setup.
+  Using something like this for x in [all characters] >
+  set <m-x>=^[x
+< could do this as well ?
 
 STRUCTURE                                       *tovl-config-bar* {{{2
 
