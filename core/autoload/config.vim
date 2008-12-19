@@ -704,6 +704,7 @@ fun! config#TOVLConfigWriteCmd()
   let file = matchstr(expand('%'), 'tovl_config://\zs.*')
   call config#EditConfigWrite(file)
   echo ">> config written, now use :e! to refresh contents"
+  set nomodified
 endf
 
 fun! config#Fold(lnum)
