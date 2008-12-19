@@ -37,11 +37,26 @@ function! plugins#feature_types#map#PluginMapEscHack(p)
         \ . " over PluginMap if you want to use <m-*> mappings when running console vim."
   " only this function differs from PluginMap
   fun! p.Subst(s)
-    if has('gui_running')
-      return a:s
-    else
-      return substitute(substitute(a:s,'<m-\(.\)>','<esc>\1','g'),'<m-s-\(.\)>','<esc><s-\1>','g')
-    endif
+    return plugins#feature_types#map#Subst(a:s)
   endf
-  return p
+  let child = {}
+  fun! child.Load()
+    " this loop defines the Nnoremap Noremap Inoremap Vnoreamp commands as
+    " replacement for the default commands. This commands will do the <m-a> to
+    " <esc>a conversion for you as well
+    for c in [["Nn","nn"],["In","in"],["Vn","vn"],["N","n"]]
+      exec "command! -nargs=* ".c[0]."oremap exec '".c[1]."oremap '.substitute(<q-args>,'^\\%(<buffer>\\s\\+\\)\\=\\(\\S*\\)','\\=plugins#feature_types#map#Subst(submatch(0))','')"
+    endfor
+    call self.Parent_Load()
+  endf
+
+  return p.createChildClass(child)
 endfunction
+
+function! plugins#feature_types#map#Subst(s)
+  if has('gui_running')
+    return a:s
+  else
+    return substitute(substitute(a:s,'<m-\(.\)>','<esc>\1','g'),'<m-s-\(.\)>','<esc><s-\1>','g')
+  endif
+endf
