@@ -310,7 +310,7 @@ function! config#ScanIfNewer(file, opts)
       let s:cache_dir = library#Call(config#Get('plugins#tovl#config#PluginTOVL_Config#cache_dir'))
     endif
     let this_dir = s:cache_dir.'/scan-and-cache'
-    let cache_file = expand(this_dir.substitute(string([Func, a:file]),'[[\]{}:/\,''"# ]\+','_','g'))
+    let cache_file = expand(this_dir.'/'.substitute(string([Func, a:file]),'[[\]{}:/\,''"# ]\+','_','g'))
     if !has_key(dict, a:file) " try getting from file cache
       if filereadable(cache_file)
         let dict[file] = eval(readfile(cache_file)[0])

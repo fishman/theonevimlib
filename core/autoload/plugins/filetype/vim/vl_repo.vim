@@ -27,7 +27,7 @@ function! plugins#filetype#vim#vl_repo#PluginVL_RepoStuff(p)
     \ 'f' : library#Function('tovl#ft#vimscript#vimfile#GetFuncLocation', {'args' : [1]})}}
 
   " completion
-  let p['feat_completefunc'] = {
+  let p['feat_completion_func'] = {
     \ 'register_completion_func' : {
       \ 'description' : 'vim funtion completion based on ScanAndCache scanned .vim files found in &runtimepath',
       \ 'completion_func' : library#Function('tovl#ft#vimscript#vimfile#CompleteFunction')}
