@@ -38,7 +38,8 @@ fun! tovl#log#NewLogObj()
   let o.level = 1
   let o.keep = 1000
   let o.max = 1500
-  let o.maxLineLen = 600
+  " maxLineLen is that long to ensure that the trace is added as well (-> debug_trace.vim)
+  let o.maxLineLen = 1500
   let o.lines = []
   let o.lineCount = 0
   let o.whiteFilter = "self.level >= a:level"
@@ -71,5 +72,6 @@ call tovl#log#SetLogger(tovl#log#NewLogObj())
 
 " use this in your own error messages..
 fun! tovl#log#FormatException()
-  return "\n".v:exception."\n".v:throwpoint
+  return "\n".v:exception."\n".v:throwpoint."\n".
+        \ join(plugins#tovl#debug_trace#FindPieces(matchstr(v:throwpoint,'.*\zs\S\+\.\.\S\+\ze'),{}),"\n")
 endf

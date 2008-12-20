@@ -52,6 +52,8 @@ continues with a small tutorial.
 10.  TOVL FUNCTION REFERENCE (TODO)
       list of TOVL functions you should know about.
 
+11.  Does tovl has some support for language or filetype X ?|tovl-lang-support|
+
 100. wish-list
 
 ==============================================================================
@@ -314,13 +316,16 @@ TOVL LOGGING					*tovl-log* *tovl-logging* {{{2
     TOVL provides a minimal logging facility. The code has been optimized for
     speed (by keeping a list of log items which is cut only once in a while).
     Yet you can replace the code by your own if you have to.
-    See |tovl#log#Log()| and the plugin |PluginLog|to view the log
-    to log every log level (error=0,info=1,debug=2) use
+    Use |tovl#log#Log()|to create log lines and use the command |TOVLLog|
+    (plugin |PluginLog|) or >
+      call plugins#tovl#log#ShowTOVLLog()
+<   to view the log.
+    To log every log level (error=0,info=1,debug=2) use
     *tovl-log-config*  >
       call tovl#log#GetLogger().SetLevel(999)
 <   (You can also use the PluginTOVL_Config now)
 
-    I recommend logging this way in your scripts: >
+    I recommend logging in your scripts this way: >
     fun! s:Log(level, msg)
       call tovl#log#Log("your_file",a:level, a:msg)
     endf
@@ -500,6 +505,11 @@ TOVL ....
 ==============================================================================
 10.  TOVL FUNCTION REFERENCE (TODO)
       list of TOVL functions you should know about.
+
+==============================================================================
+11.  Does tovl has some support for language or filetype X ? *tovl-lang-support*
+  haskell: |lang_haskell.txt|
+
 
 ==============================================================================
 100. wish-list             *tovl-wish-list*

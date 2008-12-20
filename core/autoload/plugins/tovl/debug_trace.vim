@@ -20,7 +20,7 @@ function! plugins#tovl#debug_trace#PluginDebugTrace(p)
       \ }
     \ }
   fun p.IdentifyNumberedFunctions(s)
-    call plugins#tovl#debug_trace#FindAndPrintPieces(a:s),{})
+    for l in plugins#tovl#debug_trace#FindPieces(a:s),{})| echo l | endfor
   endfun
   return p
 endfunction
@@ -29,23 +29,25 @@ endfunction
 " well
 " ps: one of foo..23..bar or [ "foo", "23", "bar"] (this is what v:throwpoint
 " contains
-fun! plugins#tovl#debug_trace#FindAndPrintPieces(ps, objects)
-    let ps = type(a:ps) == 3 ? a:ps :  split(a:ps, '\.\.\| \|,')
+fun! plugins#tovl#debug_trace#FindPieces(ps, objects)
+  let ps = type(a:ps) == 3 ? a:ps :  split(a:ps, '\.\.\| \|,')
+  let lines = []
   for p in ps
     let list = plugins#tovl#debug_trace#FindPiece(p, a:objects)
     if len(list) > 0
-      echo p.":(found: ".len(list)."):"
+      call add(lines, p.":(found: ".len(list)."):")
       for i in list[:2]
-        echo "   ".i
+        call add(lines,  "   ".i)
       endfor
       if len(list) > 3
-        echo "   some more"
+        cal add(lines,  "   some more")
       endif
     else
-      echo p
-      echo " "
+      cal add(lines,  p)
+      cal add(lines,  " ")
     endif
   endfor
+  return lines
 endf
 
 fun! plugins#tovl#debug_trace#FindPiece(p, objects)

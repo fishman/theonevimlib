@@ -436,7 +436,7 @@ fun! tovl#ui#filter_list#ListView(opts)
     catch /.*/
       echo v:exception
       echo v:throwpoint
-      call plugins#tovl#debug_trace#FindAndPrintPieces(matchstr(v:throwpoint,'.*\zs\S\+\.\.\S\+\ze'),{'view_list':d})
+      for l in  plugins#tovl#debug_trace#FindPieces(matchstr(v:throwpoint,'.*\zs\S\+\.\.\S\+\ze'),{'view_list':d})| echo i | endfor
     endtry
   endif
 endfun

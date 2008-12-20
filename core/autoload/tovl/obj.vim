@@ -70,7 +70,7 @@ fun! tovl#obj#NewObject(name)
     catch /.*/
       echo v:exception
       echo v:throwpoint
-      call plugins#tovl#debug_trace#FindAndPrintPieces(matchstr(v:throwpoint,'.*\zs\S\+\.\.\S\+\ze'),{'self':self})
+      for l in  plugins#tovl#debug_trace#FindPieces(matchstr(v:throwpoint,'.*\zs\S\+\.\.\S\+\ze'),{'self':self})| echo l | endfor
     endtry
   endfun
 
