@@ -42,7 +42,11 @@ fun! tovl#runtaskinbackground#NewProcess(p)
       call s:Log(0, "exception while running OnFinish handler")
     endtry
     for i in get(self,'onFinishCallbacks',[])
-      call library#Call(i,[self])
+      if type(i) == 1
+        exec i
+      else
+        call library#Call(i,[self])
+      endif
     endfor
     call self.DelTemp()
     call remove(s:status,self['id'])
