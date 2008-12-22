@@ -20,7 +20,7 @@ function! plugins#tovl#debug_trace#PluginDebugTrace(p)
       \ }
     \ }
   fun p.IdentifyNumberedFunctions(s)
-    for l in plugins#tovl#debug_trace#FindPieces(a:s),{})| echo l | endfor
+    for l in plugins#tovl#debug_trace#FindPieces(a:s,{})| echo l | endfor
   endfun
   return p
 endfunction

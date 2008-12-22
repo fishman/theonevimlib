@@ -1,4 +1,5 @@
 " interface for haskell
+" also see PluginCabal
 function! plugins#language_support#haskell#PluginGhcSupport(p)
   let p = a:p
   let p['Tags'] = ['haskell','ghc','cabal']
