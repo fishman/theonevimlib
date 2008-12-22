@@ -19,6 +19,11 @@ fun! s:Log(...)
   call library#Call(library#Function('tovl#log#Log'), ["runtaskinbackground"] + a:000)
 endf
 
+fun! tovl#runtaskinbackground#Run(opts)
+  let p = tovl#runtaskinbackground#NewProcess(a:opts)
+  call p.Run()
+endf
+
 " usage:
 " let p = tovl#runtaskinbackground#NewProcess(
 "   \ {'name' : 'compilation', 'cmd': ["/bin/sh","-c",'sleep 10; echo done']})
