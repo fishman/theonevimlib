@@ -123,6 +123,8 @@ fun! tovl#ui#filter_list#ListView(opts)
 	  \ 'sp_cmd' : self.sp_cmd,
 	  \ 'cmds' : self.cmds
 	  \ })
+    " I assume we have some kind of formatting anyway. Thus breaking lines is bad!
+    set nowrap
     let b:filtered_view = self
     command! -buffer -nargs=0 ToggleAlignment call b:filtered_view.ToggleAlignment()
     command! -buffer -nargs=0 ShowAppliedFilters call b:filtered_view.ShowAppliedFilters()
