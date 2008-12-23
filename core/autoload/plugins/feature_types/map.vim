@@ -45,7 +45,7 @@ function! plugins#feature_types#map#PluginMapEscHack(p)
     " replacement for the default commands. This commands will do the <m-a> to
     " <esc>a conversion for you as well
     for c in [["Nn","nn"],["In","in"],["Vn","vn"],["N","n"]]
-      exec "command! -nargs=* ".c[0]."oremap exec '".c[1]."oremap '.substitute(<q-args>,'^\\%(<buffer>\\s\\+\\)\\=\\(\\S*\\)','\\=plugins#feature_types#map#Subst(submatch(0))','')"
+      exec "command! -nargs=* ".c[0]."oremap exec '".c[1]."oremap 'plugins#feature_types#map#SubstMapPart(<q-args>)"
     endfor
     call self.Parent_Load()
   endf
@@ -53,10 +53,22 @@ function! plugins#feature_types#map#PluginMapEscHack(p)
   return p.createChildClass(child)
 endfunction
 
+fun! plugins#feature_types#map#SubstMapPart(s)
+  let lhsrhs = matchlist(a:s,'^\(\%(<buffer>\s\+\)\=\)\(\S*\)\s\+\(.*\)')
+  echom lhsrhs[1].' '.plugins#feature_types#map#Subst(lhsrhs[2]).' '.lhsrhs[3]
+  return lhsrhs[1].' '.plugins#feature_types#map#Subst(lhsrhs[2]).' '.lhsrhs[3]
+endf
+
 function! plugins#feature_types#map#Subst(s)
   if has('gui_running')
     return a:s
   else
-    return substitute(substitute(a:s,'<m-\(.\)>','<esc>\1','g'),'<m-s-\(.\)>','<esc><s-\1>','g')
+    " <s-F10>
+    let r = substitute(a:s,'<s-\cf\(\d\+\)>','\="<esc>[".(submatch(1)+22)."~"','g')
+    " <c-F10>
+    let r = substitute(r,'<c-\cf\(\d\+\)>','\="<esc>[".(submatch(1)+10)."^"','g')
+    " <m-x> and <m-s-x>
+    let r = substitute(substitute(r,'<m-\(.\)>','<esc>\1','g'),'<m-s-\(.\)>','<esc><s-\1>','g')
+    return r
   endif
 endf

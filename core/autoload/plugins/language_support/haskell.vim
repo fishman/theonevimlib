@@ -40,7 +40,7 @@ function! plugins#language_support#haskell#PluginGhcSupport(p)
       " assuming there is a ./setup executable.. I'm not using runhaskell
       call self.RegI({
          \ 'lhs' : self.cfg.lhs_compile,
-         \ 'rhs' : '<esc>:call '. self.s .'.NewSetupProcess().Run()<cr>',
+         \ 'rhs' : '<esc>:wa<bar>call '. self.s .'.NewSetupProcess().Run()<cr>',
          \ 'featType' : 'feat_mapping'
          \ })
     else

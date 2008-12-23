@@ -112,10 +112,12 @@ fun! tovl#ui#filter_list#ListView(opts)
 	let self.items[idx] = {'string_line' : self.items[idx]}
       endif
       let new = {}
+      echo self.items[idx]
       for [k,v] in items(self.items[idx])
 	let lines = split(v,"\n")
 	let self.items[idx][k] = { 'text' : v, 'rows' : len(lines), 'cols' : max(map(copy(lines),'len(v:val)')), 'lines' : lines }
 	let self.allKeys[k] = 1
+        unlet k v
       endfor
     endfor
     call tovl#scratch_buffer#ScratchBuffer({
@@ -438,7 +440,7 @@ fun! tovl#ui#filter_list#ListView(opts)
     catch /.*/
       echo v:exception
       echo v:throwpoint
-      for l in  plugins#tovl#debug_trace#FindPieces(matchstr(v:throwpoint,'.*\zs\S\+\.\.\S\+\ze'),{'view_list':d})| echo i | endfor
+      for l in  plugins#tovl#debug_trace#FindPieces(matchstr(v:throwpoint,'.*\zs\S\+\.\.\S\+\ze'),{'view_list':d})| echo l | endfor
     endtry
   endif
 endfun

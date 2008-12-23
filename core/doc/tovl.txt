@@ -45,6 +45,7 @@ continues with a small tutorial.
       TOVL ERROR FORMATS
       TOVL RUN TASK MAYBE IN BACKGROUND
       TOVL FUNCTION REFERENCES
+      TOVL ACTION
       TOVL ...
 
 8.   Writing TOVL plugins ................................. |tovl-plugins|
@@ -448,6 +449,32 @@ TOVL FUNCTION REFERENCES 		 *tovl-function-reference* {{{2
         \ 'template2' : readfile('foo2')
         \ })
 >
+TOVL ACTION		 				*tovl-action* {{{2
+
+    IDE like features: Very often you work on project and you need some commands such
+    as "compile target", "run target". Because there may be different ways to
+    compile a project or to run the result a plugin providing those run or
+    compile actions shouldn't map them directly. It should provide an
+    feat_action feature. How does this work?
+
+    Enable the plugin |PluginAction|. Make sure you've still enabled the
+    |PluginExample|. Then refresh the TOVLConfig view. The |PluginExample|
+    configuration section should now have: >
+          feat_action:dictionary=
+            print_hello_world_example_action:dictionary=
+            [...]
+<   Write the configuration. You should now have a mapping <s-F2> (<s-F3> ..).  and see
+    something like this: >
+    [0-9]* : select by index| <esc>: escape getchar() loop, any char: start filtering
+       0)  example_hw  prints hello world after you've mapped this action to a key
+<   Select the example_hw  action by pressing 0. You have mapped this action
+    to F2 now for this vim session.
+
+    You can assign these actions automatically by using  >
+    MapActionKey <F2> example_hw
+<   (TODO: make sure this works).. However be aware that some actions may want
+    to start a small dialog..
+
 TOVL ....
 
   TODO

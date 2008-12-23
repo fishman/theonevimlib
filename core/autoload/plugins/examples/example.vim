@@ -44,6 +44,14 @@ function! plugins#examples#example#PluginExample(p)
       \ }
     \ }
 
+  " For this to work you must have enabled the feat_action feature
+  let p['feat_action'] = {
+        \ 'print_hello_world_example_action' : {
+        \   'key': 'example_hw',
+        \   'description': "prints hello world after you've mapped this action to a key",
+        \   'action' : 'echo "hello world"'
+        \ }}
+
   " when activating this plugin add global feature tag example
   let p['defaults']['tags'] = ['example']
   " automatically add tag "example" to buffers having either filetype help or vim
