@@ -55,7 +55,6 @@ endfunction
 
 fun! plugins#feature_types#map#SubstMapPart(s)
   let lhsrhs = matchlist(a:s,'^\(\%(<buffer>\s\+\)\=\)\(\S*\)\s\+\(.*\)')
-  echom lhsrhs[1].' '.plugins#feature_types#map#Subst(lhsrhs[2]).' '.lhsrhs[3]
   return lhsrhs[1].' '.plugins#feature_types#map#Subst(lhsrhs[2]).' '.lhsrhs[3]
 endf
 
