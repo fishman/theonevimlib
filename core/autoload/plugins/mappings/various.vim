@@ -87,24 +87,6 @@ function! plugins#mappings#various#SetWindowSize(orientation)
   endif
 endfunction
 
-fun! plugins#mappings#various#PluginUsefulQuickfixMappings(p)
-  let p = a:p
-  let p['defaults']['tags'] = ['useful_quickfix_mappings']
-  let p['defaults']['tags_buftype'] = {'qf' : ['useful_quickfix_mappings']}
-  let p['feat_mapping'] = {
-      \ 'cprevious' : {'lhs' : '<m-.>', 'rhs' : ":cnext <cr>" },
-      \ 'cnext' : {'lhs' : '<m-,>', 'rhs' : ":cprevious <cr>" },
-      \
-      \ 'keep_qf_items_by_file_regex' : {'lhs' : '<m-k><m-l>',
-	\ 'buffer' : 1,
-        \ 'rhs' : ":exec 'call tovl#quickfix#FilterQFListByRegex('.string(input('qf: filename keep re: ')).', {''drop'' : 0, ''key'' : ''filename''})'<cr>" },
-      \ 'drop_qf_items_by_file_regex' : {'lhs' : '<m-d><m-l>',
-	\ 'buffer' : 1,
-        \ 'rhs' : ":exec 'call tovl#quickfix#FilterQFListByRegex('.string(input('qf: filename keep re: ')).', {''drop'' : 1, ''key'' : ''filename''})'<cr>" },
-      \ }
-  return p
-endf
-
 function! plugins#mappings#various#PluginUsefulVariousMappings(p)
   let p = a:p
   let p['Tags'] = ['feat_mapping','various','speed']

@@ -38,6 +38,9 @@ function! theonevimlibsetup#Setup()
 
     au BufReadCmd tovl_config_default call config#TOVLConfigDefaultReadCmd()
     au BufRead,BufNewFile tovl_config_default setlocal ft=tovl_config
+    " don't ask me why I have to do this to trigger the buftype autocommand
+    " for the quickfix window??
+    au BufNewfile,BufRead * if &buftype=='quickfix' | setlocal filetype=quickfix | endif
   augroup END
 
 endfunction
