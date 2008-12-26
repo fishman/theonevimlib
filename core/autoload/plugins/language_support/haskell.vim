@@ -28,7 +28,7 @@ function! plugins#language_support#haskell#PluginGhcSupport(p)
         \ 'ghc_compile_this_file' : {
         \   'key': 'ghc_compile_this_file',
         \   'description': "removes the file extension to get the executable name and executes it",
-        \   'action' : library#Function("return ".string('call '. p.s .'.CompileFileWithGhc(').'.string(expand("%:p")).'.string(', '. p.s .'.ChooseGhc(),0)'))
+        \   'action' : library#Function('return '. p.s. '.CompileAction()')
         \ },
         \ 'ghc_run_this_as_executable' : {
         \   'key': 'ghc_run_this_as_executable',
@@ -37,10 +37,14 @@ function! plugins#language_support#haskell#PluginGhcSupport(p)
         \   'action' : library#Function('return "!".expand("%:p:r")')
         \ }}
 
+  fun! p.CompileAction()
+    return 'call '. self.s .'.CompileFileWithGhc('.string(expand('%:p')).', '.string(self.ChooseGhc()).',0)'
+  endf
+
   fun! p.CompileFileWithGhc(file, ghc, profiling)
     " first write all buffers
     wa
-    let cmd = [a:ghc]
+    let cmd = [a:ghc,'--make']
     let regex = '^--\s\+packages\s\+:\s*\zs.\{-}\s*$'
     let lines = filter(readfile(a:file), 'v:val =~ '.string(regex))
     if !empty(lines)
