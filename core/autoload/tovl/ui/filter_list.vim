@@ -112,7 +112,6 @@ fun! tovl#ui#filter_list#ListView(opts)
 	let self.items[idx] = {'string_line' : self.items[idx]}
       endif
       let new = {}
-      echo self.items[idx]
       for [k,v] in items(self.items[idx])
 	let lines = split(v,"\n")
 	let self.items[idx][k] = { 'text' : v, 'rows' : len(lines), 'cols' : max(map(copy(lines),'len(v:val)')), 'lines' : lines }
