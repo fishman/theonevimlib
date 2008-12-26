@@ -157,6 +157,10 @@ function! library#Call(...)
               \ || Fun[:len('echo ')-1] == 'echo '
               \ || Fun[:len('exec ')-1] == 'exec '
               \ || Fun[:len('debug ')-1] == 'debug ')
+      " it doesn't make sense to list all vim commands here
+      " So if you want to execute another action consider using 
+      " library#Function('exec  '.string('aw')) or such
+
       " function is a String, call exec
       let ARGS = args[1]
       let SELF = args[2]
