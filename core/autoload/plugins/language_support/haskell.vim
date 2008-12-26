@@ -19,6 +19,53 @@ function! plugins#language_support#haskell#PluginGhcSupport(p)
   let p['defaults']['tags_filetype'] = {'haskell' : 'haskell'}
   let p['defaults']['known_ghcs'] = ["ghc"]
 
+  fun! p.RunPHPActionString()
+    return 'wa <bar>'
+          \ . 'call tovl#runtaskinbackground#Run('.string({'cmd': [self.cfg.php_executable, expand('%')],
+                                                          \ 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php', 'onFinishCallbacks' : ['cope']}).')'
+  endf
+  let p['feat_action'] = {
+        \ 'ghc_compile_this_file' : {
+        \   'key': 'ghc_compile_this_file',
+        \   'description': "removes the file extension to get the executable name and executes it",
+        \   'action' : library#Function("return ".string('call '. p.s .'.CompileFileWithGhc(').'.string(expand("%:p")).'.string(', '. p.s .'.ChooseGhc(),0)'))
+        \ },
+        \ 'ghc_run_this_as_executable' : {
+        \   'key': 'ghc_run_this_as_executable',
+        \   'description': "Compiles this file using ghc. If more than one ghc are known you'll have to specify one.\n".
+                         \ "If the file contains a -- packages:base,filepath  list this the known packages will be limited to this one",
+        \   'action' : library#Function('return "!".expand("%:p:r")')
+        \ }}
+
+  fun! p.CompileFileWithGhc(file, ghc, profiling)
+    " first write all buffers
+    wa
+    let cmd = [a:ghc]
+    let regex = '^--\s\+packages\s\+:\s*\zs.\{-}\s*$'
+    let lines = filter(readfile(a:file), 'v:val =~ '.string(regex))
+    if !empty(lines)
+      call extend(cmd, ['--hide-all-packages']
+        \ + tovl#list#Concat(map( split(matchstr(regex, lines[0]),'\s*,\s*')
+                                \ '["--package", v:val]')))
+    endif
+    if a:profiling
+      call extend(cmd, ['-prof','-auto-all'])
+    endif
+    call extend(cmd, ['-o', fnamemodify(a:file, ':r')])
+    call add(cmd, a:file)
+    " cope to also show warnings and all output..
+    call tovl#runtaskinbackground#Run({'cmd': cmd, 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#ghc', 'onFinishCallbacks' : ['cope']})
+  endf
+
+  fun! p.ChooseGhc()
+    let ghcs = self.cfg.known_ghcs
+    if empty(ghcs)
+      throw "no ghc known? Please set ". p.pluginName ."#known_ghcs (list of known ghc paths) in TOVLConfig"
+    else
+      return tovl#ui#choice#LetUserSelectIfThereIsAChoice('ghc: ', ghcs)
+    endif
+  endf
+
   let child = {}
   fun! child.Load()
     if self.cfg.autosetup
@@ -73,7 +120,7 @@ function! plugins#language_support#haskell#PluginGhcSupport(p)
     if self.cabal_file != ''
       let cabalBuildDirs = map(
              \ split(glob("*/setup-config"),"\n"),
-             \ 'fnamemodify(v:val, ":h")')
+             \ 'fnamemodify(v:val, ":r")')
       if len(cabalBuildDirs) > 0
         let self.cabalBuildDir = tovl#ui#choice#LetUserSelectIfThereIsAChoice(
               \ "Which cabal setup to use ?", cabalBuildDirs)
