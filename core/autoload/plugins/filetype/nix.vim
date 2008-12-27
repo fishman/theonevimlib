@@ -7,11 +7,7 @@ function! plugins#filetype#nix#PluginNixSupport(p)
   let p['defaults']['tags_buftype'] = {'nix' : ['nix_support']}
   let p['feat_GotoThingAtCursor'] = {
       \ 'jump_to_path' : {
-        \ 'f' : library#Function("return [ expand(expand('%:h').'/'.matchstr(expand('<cWORD>'),'[^;()[\\]]*')).'/default.nix'" .
-          \ ", expand(expand('%:h').'/'.matchstr(expand('<cWORD>'),'[^;()[\\]]*'))" .
-          \ ", expand('%:h').'/'.matchstr(getline('.'), 'import\\s*\\zs[^;) \\t]\\+\\ze')" .
-          \ ", expand('%:h').'/'.matchstr(getline('.'), 'import\\s*\\zs[^;) \\t]\\+\\ze').'/default.nix' ]")
-      \ }}
+        \ 'f' : library#Function("return ". p.s .".LocationList()")}}
   " mappings to evaluate contents of current buffer using nix-instantiate
   let p['feat_mapping'] = {
       \ 'eval' : {
@@ -22,6 +18,18 @@ function! plugins#filetype#nix#PluginNixSupport(p)
         \ 'buffer' : 1,
         \ 'lhs' : '<F3>',
         \ 'rhs' : ':call '.p.s.'.Run(1)<cr>' }}
+  fun! p.LocationList()
+    let res = [ expand(expand('%:h').'/'.matchstr(expand('<cWORD>'),'[^;()[\]]*')).'/default.nix'
+           \ , expand(expand('%:h').'/'.matchstr(expand('<cWORD>'),'[^;()[\]]*'))
+           \ , expand('%:h').'/'.matchstr(getline('.'), 'import\s*\zs[^;) \t]\+\ze')
+           \ , expand('%:h').'/'.matchstr(getline('.'), 'import\s*\zs[^;) \t]\+\ze').'/default.nix' 
+           \ ]
+    let list = matchlist(getline('.'), '.*selectVersion\s\+\(\S*\)\s\+"\([^"]\+\)"')
+    if (!empty(list))
+      call add(res, expand('%:h').'/'.list[1].'/'.list[2].'.nix')
+    endif
+    return res
+  endf
   fun! p.Run(xml)
     update
     let cmd = tovl#runtaskinbackground#NewProcess({ 'name' : 'nix-instantiate',
