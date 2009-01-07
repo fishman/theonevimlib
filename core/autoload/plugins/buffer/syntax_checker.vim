@@ -30,37 +30,46 @@ function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
         \  'pattern' : '*.js',
         \  'run_in_background' : 0,
         \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#js_spidermonkey',
-        \  'cmd' :['js', '-C', library#Function("return expand('%')")]
+        \  'cmd' :['js', '-C', library#Function("return expand('%')")],
+        \  'active' : 1
         \ }
   let ft['xml'] = {
         \  'pattern' : '*.xml',
         \  'run_in_background' : 0,
         \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#xmllint',
-        \  'cmd' :['xmllint' ,'--valid','--loaddtd', '--noout', '--load-trace', library#Function("return expand('%')")]
+        \  'cmd' :['xmllint' ,'--valid','--loaddtd', '--noout', '--load-trace', library#Function("return expand('%')")],
+        \  'active' : 1
         \ }
   let ft['rb'] = {
         \  'pattern' : '*.rb',
         \  'run_in_background' : 0,
         \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php',
-        \  'cmd' :['ruby','-c', library#Function("return expand('%')")]
+        \  'cmd' :['ruby','-c', library#Function("return expand('%')")],
+        \  'active' : 1
         \ }
   let ft['php'] = {
         \  'pattern' : '*.php',
         \  'run_in_background' : 0,
         \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php',
-        \  'cmd' :['php','-l', library#Function("return expand('%')")]
+        \  'cmd' :['php','-l', library#Function("return expand('%')")],
+        \  'active' : 1
         \ }
   let ft['perl'] = {
         \  'pattern' : '*.pl',
         \  'run_in_background' : 0,
         \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#perl',
-        \  'cmd' :['perl','-c', library#Function("return expand('%')")]
+        \  'cmd' :['perl','-c', library#Function("return expand('%')")],
+        \  'active' : 1
         \ }
 
   let child = {}
   fun! child.Load()
     let g:HighlightCurrentLine=0
     for k in keys(self.cfg.filetypes)
+      if !get(self.cfg.filetypes[k],'active',0)
+        call self.Log(0, 'not active'.k)
+        continue
+      endif
       let v = self.cfg.filetypes[k]
       try
         call self.Au({'events': 'bufwritepost', 'pattern': v.pattern,
