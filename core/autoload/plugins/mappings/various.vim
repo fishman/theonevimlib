@@ -98,3 +98,27 @@ function! plugins#mappings#various#PluginUsefulVariousMappings(p)
     \ }
   return p
 endfunction
+
+
+fun! plugins#mappings#various#PluginVSearch(p)
+  let p = a:p
+  let p['Tags'] = ['search']
+  let p['Info'] = "find the selected text again. This properly escapes \ etc "
+  let p['defaults']['tags'] = ['useful_various_mappings']
+  let p['feat_mapping'] = {
+    \ 'find_selection_forward' : { 'm':'v', 'lhs' : '*', 'rhs' : ':<C-u>call plugins#mappings#various#VSetSearch()<CR>/<CR>' },
+    \ 'find_selection_backward' : { 'm':'v', 'lhs' : '#', 'rhs' : ':<C-u>call plugins#mappings#various#VSetSearch()<CR>?<CR>' }
+   \ }
+  return p
+endf
+
+  " Visual mode search vsearch.vim (by godlygeek)
+  function! plugins#mappings#various#VSetSearch()
+    let temp = @@
+    norm! gvy
+    let @/ = '\V' . substitute(escape(@@, '\'), '\n', '\\n', 'g')
+    " Use this line instead of the above to match matches spanning across lines
+    "let @/ = '\V' . substitute(escape(@@, '\'), '\_s\+', '\\_s\\+', 'g')
+    call histadd('/', substitute(@/, '[?/]', '\="\\%d".char2nr(submatch(0))', 'g'))
+    let @@ = temp
+  endfunction
