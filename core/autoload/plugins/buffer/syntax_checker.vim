@@ -67,7 +67,6 @@ function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
     let g:HighlightCurrentLine=0
     for k in keys(self.cfg.filetypes)
       if !get(self.cfg.filetypes[k],'active',0)
-        call self.Log(0, 'not active'.k)
         continue
       endif
       let v = self.cfg.filetypes[k]

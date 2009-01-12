@@ -5,5 +5,5 @@
 " memomic: Insert L eading T railing text as well
 fun! tovl#map#InsertLT(before, text, after)
   let [b,a] = tovl#buffer#SplitCurrentLineAtCursor()
-  return (a =~ a:before.'$' ? '' : a:before ).a:text.(b =~ '^'.a:after ? '' : a:after )
+  return (b =~ a:before.'$' ? '' : a:before ).a:text.(a =~ '^'.a:after ? '' : a:after )
 endf

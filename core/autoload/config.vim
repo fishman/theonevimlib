@@ -36,6 +36,19 @@ fun! s:Log(level, msg)
   call tovl#log#Log("tovl#config",a:level, a:msg)
 endf
 
+" this must be defined on request to break dependency loop
+" the cache dir is used to store data which can be removed without loosing
+" stuff. Eg parsed file conent can be cached or plugin cache settings (most
+" recent used files and such)
+" See also 
+"    config#SetCache()
+"    config#GetCache()
+fun! s:DefineCacheDir()
+  if (!exists('s:cache_dir'))
+    let s:cache_dir = library#Call(config#Get('plugins#tovl#config#PluginTOVL_Config#cache_dir'))
+  endif
+endf
+
 " which is your .vim directory where you keep your custom stuff?
 " Eg this is used to define some mappings opening ftplugin files
 fun! config#DotVim()
@@ -306,9 +319,7 @@ function! config#ScanIfNewer(file, opts)
   let dict = config#GetG(path, {'set': 1, 'default' : {}})
 
   if cache
-    if (!exists('s:cache_dir'))
-      let s:cache_dir = library#Call(config#Get('plugins#tovl#config#PluginTOVL_Config#cache_dir'))
-    endif
+    call s:DefineCacheDir()
     let this_dir = s:cache_dir.'/scan-and-cache'
     let cache_file = expand(this_dir.'/'.substitute(string([Func, a:file]),'[[\]{}:/\,''"# ]\+','_','g'))
     if !has_key(dict, a:file) " try getting from file cache
@@ -717,4 +728,18 @@ fun! config#Fold(lnum)
       return curr +1
     endif
     return curr
+endf
+
+
+" if you don't want to start an extra file use "default"
+" rel_file, path, value
+fun! config#SetC(rel_file, path, value)
+  call s:DefineCacheDir()
+  call call("config#Set", [a:path, a:value, s:cache_dir.'/'.a:rel_file])
+endf
+
+" rel_file, path, defaults etc (see GetByPath)
+fun! config#GetC(rel_file, ...)
+  call s:DefineCacheDir()
+  return call("config#GetByPath", [config#ConfigContents(s:cache_dir.'/'.a:rel_file)] + a:000)
 endf

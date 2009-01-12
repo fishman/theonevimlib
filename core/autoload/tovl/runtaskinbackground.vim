@@ -252,11 +252,11 @@ fun! tovl#runtaskinbackground#System(items, ... )
   endif
 
   let result = system(cmd)
-  if exists('f') | call delete(f) | endif
+  "if exists('f') | call delete(f) | endif
   let g:systemResult = result
 
   let s = get(opts,'status',0)
-  if v:shell_error != s && ( s != '*')
+  if v:shell_error != s && ( type(s) != type('') || s != '*'  )
     let g:systemResult = result
     throw "command ".cmd."failed with exit code ".v:shell_error
      \ . " but ".s." expected. Have a look at the program output with :echo g:systemResult".repeat(' ',400)

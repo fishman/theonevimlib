@@ -276,7 +276,8 @@ fun! tovl#ui#filter_list#ListView(opts)
       endfor
     endfor
     " update stauts line to show last applied filter
-    setlocal statusline=%!b:filtered_view.statusline
+    " disabled cause it causes trouble on :wincmd w
+    " setlocal statusline=%!b:filtered_view.statusline
 
     " syntax
     syn clear

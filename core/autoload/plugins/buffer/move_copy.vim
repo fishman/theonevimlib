@@ -28,7 +28,7 @@ function! plugins#buffer#move_copy#PluginMoveCopyFile(p)
         \ 'cmd' : ':call plugins#buffer#move_copy#ContinueWorkOnCopy(<f-args>)<<cr>'
       \ },
       \ 'rename_file' : {
-        \ 'name' : 'ContinueWorkOnCopy',
+        \ 'name' : 'RenameFilerkOnCopy',
         \ 'attrs' : '-nargs=1 -complete=file',
         \ 'cmd' : ':call plugins#buffer#move_copy#RenameFile(<f-args>)<<cr>'
       \ }

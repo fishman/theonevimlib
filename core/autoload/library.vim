@@ -200,3 +200,16 @@ function! library#Call(...)
     return args[0]
   endif
 endfunction
+
+" s = string
+" poor man hash function.
+" used to check wether local .vimrc files have been changed etc..
+" you can override this function to use a more secure one
+" of course this one is easy to hackèmd
+fun! library#Hash(s)
+  let sum = 3452
+  for i in range(0,len(a:s)-1)
+    let sum = ((sum + char2nr(a:s[i]) * i) - i) / 2
+  endfor
+  return sum
+endf
