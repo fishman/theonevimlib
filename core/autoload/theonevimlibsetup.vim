@@ -1,3 +1,4 @@
+let s:this_dir = expand('<sfile>:h')
 function! theonevimlibsetup#Setup()
 
   " only setup tovl once
@@ -17,9 +18,9 @@ function! theonevimlibsetup#Setup()
   call config#GetG('config#tovlPlugin', {'set' : 1, 'default' : tovl#plugin_management#NewPlugin()})
 
   " add runtime paths of contrib
-  for dir in split(glob(expand('<sfile>:h').'/contrib/*'),"\n")
+  for dir in split(glob(s:this_dir.'/../../contrib/*'),"\n")
     if isdirectory(dir)
-      "set runtimepath+=dir
+      exec 'set runtimepath+='.dir
     endif
   endfor
 
