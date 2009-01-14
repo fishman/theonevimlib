@@ -182,7 +182,7 @@ fun! tovl#runtaskinbackground#RunHandlerSh(process)
     let tellResult = s:CallVimUsingSh(vim,
           \ S('call config#GetG(''tovl#running_background_processes'')['.a:process.id.']').'".Finished("$?")"')
 
-    if type(self.cmd) == 3
+    if type(a:process.cmd) == 3
       let cmd = join(map(copy(a:process.realCmd),
      \ "tovl#runtaskinbackground#EscapeShArg(v:val)"),' ')
     else
