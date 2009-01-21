@@ -50,13 +50,17 @@ function! tovl#ui#choice#Inputlist(list)
     echo join(a:list,"\n")
     echo "choose a number :"
     let answer = ''
-    for i in range(1,len(string(len(a:list))))
+    while len(answer) < len(string(len(a:list)))
       let c = getchar()
-      if c == 13 
+      " != '' is necessary because in console there is line buffering. So
+      " ignore <cr> as first character
+      if index([10,13], c) >= 0 && answer != ''
 	break
       endif
-      let answer .= nr2char(c)
-    endfor
+      if index([10,13], c) < 0
+        let answer .= nr2char(c)
+      endif
+    endwhile
     let g:answer = answer
     if len(matchstr(answer, '\D')) > 0
       return 0
