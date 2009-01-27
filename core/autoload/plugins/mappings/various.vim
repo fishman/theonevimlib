@@ -37,7 +37,7 @@ function! plugins#mappings#various#PluginUsefulBufferMappings(p)
   \ 'insert_mode_write' : {'m':'i', 'lhs' : '<m-s-r>', 'rhs' : '<esc>:w<cr>' },
   \ 'quit' : {'lhs' : '<m-s-q>', 'rhs' : ':q<cr>' },
   \ 'bdelete' : {'lhs' : '<m-s-b><m-s-d>', 
-  \ 'rhs' : ':if<space>!&modified<bar><bar>input("not<space>saved,<space>really<space>bd!?<space>[y]")=="y"<bar>bd!<bar>endif<cr>' },
+        \ 'rhs' : ':if<space>!&modified<bar><bar>input("not<space>saved,<space>really<space>bd!?<space>[y]")=="y"<bar>bd!<bar>endif<cr>' },
   \ 'edit' : {'lhs' : '<m-e>', 'rhs' : ':e<space>' },
   \ 
   \ 'open_custom_filetype' : {'lhs' : '<m-s-f><m-s-t><m-s-p>',
