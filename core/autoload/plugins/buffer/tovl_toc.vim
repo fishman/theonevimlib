@@ -22,6 +22,7 @@ function! plugins#buffer#tovl_toc#PluginTOVL_ToC(p)
   let ft['php'] = '^\(\%(static\|public\|abstract\|protected\|private\)\s\+\)*\%(function\|class\)'
   let ft['ant'] = '^\s*<target'
   let ft['sql'] = '^\s*\c\%(\SELECT\|CREATE\|UPDATE\|DESCRIBE\|DROP\|ALTER\|INSERT\).*'
+  let ft['haskell'] = '^\s*\%(\%(\zs\%(where\)\@!\%(\l\w*\)\ze\%(\s\+\%(\S\+\)\)*\s*=\)\|\%(\%(\S\+\)\s*`\zs\%(where\)\@!\%(\l\w*\)\ze`\s*\%(\S\+\)\s*=\)\)'
 
   let p['feat_mapping'] = {
     \ 'toc_by_regex' : {
