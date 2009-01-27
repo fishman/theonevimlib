@@ -7,6 +7,7 @@ function! plugins#tovl#runtaskinbackground#PluginRunTaskInBackground(p)
 
   " You can do fancy things here such as setting different colorschemes etc
   let p['defaults']['process_obj_decorator_fun'] = library#Function('tovl#runtaskinbackground#DefaultDecorator')
+  let p['defaults']['color_scheme_when_a_bg_process_is_running'] = ''
 
   let p['defaults']['tags'] = ['run_task_in_background']
 

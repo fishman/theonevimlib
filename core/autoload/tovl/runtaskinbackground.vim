@@ -11,6 +11,15 @@
 "
 " [1]:
 " OPTS is the dict containing all information:
+" You can set call plugins#tovl#runtaskinbackground#PluginRunTaskInBackground#process_obj_decorator_fun
+" using the PluginRunTaskInBackground plugin
+" to automatically create a subclass, example: DefaultDecorator fun below
+"
+" You can make vim switch the colorscheme automatically. This way you won't
+" miss wether at least one background process is still running.
+" Ensure that g:colors_name has value. You can do so by
+"   colorscheme defaut
+" in your .vimrc
 
 let s:next_process_id = 0
 let s:status = config#GetG('tovl#running_background_processes', {'set' :1, 'default' : {}})
@@ -39,8 +48,10 @@ fun! tovl#runtaskinbackground#NewProcess(p)
     echo "starting process ".self.id
   endf
   " override OnFinish instead
+  " exitCode = -1 when starting has failed
   fun! process.Finished(exitCode)
     let self.exitCode = a:exitCode
+    call remove(s:status,self['id'])
     try
       call self.OnFinish()
     catch /.*/
@@ -54,7 +65,6 @@ fun! tovl#runtaskinbackground#NewProcess(p)
       endif
     endfor
     call self.DelTemp()
-    call remove(s:status,self['id'])
   endf
   fun! process.DelTemp()
     silent! delete(self.tempfile)
@@ -83,20 +93,25 @@ fun! tovl#runtaskinbackground#NewProcess(p)
       let self.realCmd = library#Call(self.cmd)
     endif
     try
+      call s:Log(1, "trying to run command ".string(self.realCmd))
+      let s:status[self['id']] = self
       try
         call self.OnStart()
       catch /.*/
         call s:Log(0, "exception while running OnStart handler")
       endtry
-      call s:Log(1, "trying to run command ".string(self.realCmd))
-      let s:status[self['id']] = self
       try
         let handlers = config#Get('plugins#tovl#runtaskinbackground#PluginRunTaskInBackground#run_handlers')
         call library#Try(handlers, self)
       catch /.*/
         " try again, without bakground this time
         let self['fg'] = 1
-        call library#Try(handlers, self)
+        try
+          call library#Try(handlers, self)
+        catch /.*/
+          e:exception
+          call self.Finished(-1)
+        endtry
       endtry
     catch /.*/
       call s:Log(0,"exception while running command")
@@ -113,21 +128,34 @@ fun! tovl#runtaskinbackground#NewProcess(p)
   return library#Call(Dec, [process])
 endf
 
+let s:old_colors_name = ''
 
 fun! tovl#runtaskinbackground#DefaultDecorator(p)
-  return a:p
-  " this could look like this:
   let child = {}
   fun! child.OnStart()
-    colorscheme foo
+    call self.UpdateColorScheme()
     return self.Parent_OnStart()
   endf
   fun! child.OnFinish()
-    colorscheme bar
-    cope
+    call self.UpdateColorScheme()
+    " cope
     return self.Parent_OnFinish()
   endf
-  return p.createChildClass(child)
+  fun! child.UpdateColorScheme()
+    if len(s:status) == 0
+      if s:old_colors_name != ''
+        exec 'colorscheme '.s:old_colors_name
+      endif
+    else
+      let new = config#Get('plugins#tovl#runtaskinbackground#PluginRunTaskInBackground#color_scheme_when_a_bg_process_is_running',
+        \ {'default' : ''})
+      if new != '' && exists('g:colors_name') && g:colors_name != ''
+        let s:old_colors_name = g:colors_name
+        exec 'colorscheme '.new
+      endif
+    endif
+  endf
+  return a:p.createChildClass(child)
 endf
 
 
