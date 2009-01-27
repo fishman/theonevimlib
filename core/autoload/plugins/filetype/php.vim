@@ -9,7 +9,7 @@ function! plugins#filetype#php#PluginPHPSupport(p)
   " mappings to evaluate contents of current buffer using php-instantiate
 
   fun! p.RunPHPActionString()
-    return 'wa <bar>'
+    return 'silent! wa <bar>'
           \ . 'call tovl#runtaskinbackground#Run('.string({'cmd': [self.cfg.php_executable, expand('%')],
                                                           \ 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php', 'onFinishCallbacks' : ['cope']}).')'
   endf
