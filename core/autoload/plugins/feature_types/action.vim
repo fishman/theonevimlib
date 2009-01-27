@@ -38,8 +38,8 @@ function! plugins#feature_types#action#PluginAction(p)
   let p['feat_command'] = {
         \ 'map_action_id' : {
           \ 'name' : 'MapActionKey',
-          \ 'attrs' : '-nargs=2',
-          \ 'cmd' : p.s.'.Map(<f-args>)',
+          \ 'attrs' : '-nargs=*',
+          \ 'cmd' : 'call '.p.s.'.Map(<f-args>)',
         \ }}
   " you can use this function in your local vimrc files or such to add
   " mappings automatically. But you should prefer the command MapActionKey
