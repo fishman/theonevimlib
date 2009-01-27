@@ -24,9 +24,19 @@ function! plugins#filetype#nix#PluginNixSupport(p)
            \ , expand('%:h').'/'.matchstr(getline('.'), 'import\s*\zs[^;) \t]\+\ze')
            \ , expand('%:h').'/'.matchstr(getline('.'), 'import\s*\zs[^;) \t]\+\ze').'/default.nix' 
            \ ]
+
     let list = matchlist(getline('.'), '.*selectVersion\s\+\(\S*\)\s\+"\([^"]\+\)"')
     if (!empty(list))
+      " something like this has been matched selectVersion ../applications/version-management/codeville "0.8.0"
       call add(res, expand('%:h').'/'.list[1].'/'.list[2].'.nix')
+    else
+      " something with var instead of "0.8.x" has been matched
+      let list = matchlist(getline('.'), '.*selectVersion\s\+\(\S*\)\s\+\(\S\+\)')
+      if (!empty(list))
+        call extend(res, split(glob(expand('%:h').'/'.list[1].'/*.nix'), "\n"))
+        " also add subdirectory files (there won't be that many)
+        call extend(res, filter(split(glob(expand('%:h').'/'.list[1].'/*/*.nix'), "\n"),'1'))
+      endif
     endif
     return res
   endf
