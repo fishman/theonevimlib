@@ -19,7 +19,7 @@ function! plugins#buffer#tovl_toc#PluginTOVL_ToC(p)
   " there
   let ft['js'] = '\%(\<function\>\|\<Class\>\|^var\>\|^\S\+\s\)'
   let ft['vim'] = '^\s*\%(fun\|com\|au\S*\)'
-  let ft['php'] = '^\s*\%(\%(abstract\|protected\|public\|protected\|private\)\s\+)*\<function\>\|\<class\>\|\<require_\|\<include_\)'
+  let ft['php'] = '^\(\%(static\|public\|abstract\|protected\|private\)\s\+\)*\%(function\|class\)'
   let ft['ant'] = '^\s*<target'
   let ft['sql'] = '^\s*\c\%(\SELECT\|CREATE\|UPDATE\|DESCRIBE\|DROP\|ALTER\|INSERT\).*'
 
