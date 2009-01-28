@@ -1,0 +1,13 @@
+PluginNixSupport,
+  requires:
+
+  PluginGotoThingAtCursor (gf jump to imported files)
+
+  PluginRunTaskInBackground, PluginErrorFormats, 
+  PluginSyntaxChecker (F2 F3 run .nix files and do syntax checking)
+
+recommended:
+PluginCreateDirOnBufWrite
+
+optional (maybe useful)
+PluginGlobOpen  and maybe PluginTOVLToC
