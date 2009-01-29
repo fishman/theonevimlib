@@ -1,0 +1,1 @@
+Get git://github.com/MarcWeber/tovl_haskell.git and put it into the contrib/haskell
