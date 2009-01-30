@@ -52,3 +52,13 @@ fun! tovl#list#Remove(l, i)
     call remove(a:l, i)
   endif
 endf
+
+" combination of map and filter
+function! tovl#list#MapIf(list, pred, expr)
+  let result = []
+  for Val in a:list
+    exec 'let p = ('.a:pred.')'
+    exec 'if p | call add(result, '.a:expr.')|endif'
+  endfor
+  return result
+endfunction

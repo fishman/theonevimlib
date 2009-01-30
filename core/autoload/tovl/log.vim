@@ -39,7 +39,7 @@ fun! tovl#log#NewLogObj()
   let o.keep = 1000
   let o.max = 1500
   " maxLineLen is that long to ensure that the trace is added as well (-> debug_trace.vim)
-  let o.maxLineLen = 1500
+  let o.maxLineLen = 4000
   let o.lines = []
   let o.lineCount = 0
   let o.whiteFilter = "self.level >= a:level"
