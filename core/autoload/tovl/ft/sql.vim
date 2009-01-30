@@ -13,6 +13,18 @@
 "|H1__  Documentation
 "|
 "|+     Also have a look at dbext on vim.org which has much more features
+"
+"
+" " usage : setlocal completefunc=tovl#ft#sql#Complete
+" ==========================================================
+" per project:
+" augroup SQL
+"   autocmd BufRead,BufNewFile *.sql call tovl#ft#sql#Connect('mysql',{'database':'airk', 'user':'root', 'password' : 'mysqlpage'})
+" augroup end
+" " this will add some the F2 mapping which will run the command below the
+" " cursor either separated by ; or by empty lines
+" call tovl#ft#sql#UI()
+"
 
 " retuns the text
 " a command is separated from other commands either
