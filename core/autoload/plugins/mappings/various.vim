@@ -76,6 +76,73 @@ function! plugins#mappings#various#PluginUsefulBufferMappings(p)
   return p
 endfunction
 
+fun! plugins#mappings#various#PluginSurround(p)
+  " probably there is a better script. This one did work for me.
+  " If you want to replace it contact me 
+  "
+  " implementation can be found in autoload/tovl/plugins/mappings/various_surround.vim
+  "
+  " probably this should be exposed as feature type.. I'm too lazy now (TODO)
+  let p = a:p
+  let p['Tags'] = ['surround','brackets']
+  let p['Info'] = "define some useful feat_mapping for faster navigation"
+  let p['defaults']['tags'] = ['surround_by']
+
+  " This "ask for pair to surround text with" has to be tsted again, I don't need it
+  " right now.
+
+  "let p['feat_mapping'] = {
+  "  \ 'surround_text_ask_for_pair' : { 'lhs' : '<m-h>', 'rhs' : ':h ' }
+  "  \ }
+
+  " v = visual mode mapping
+  " n = normal mode mapping (surround current word only)
+  " broken : i = insert mode mapping (surround word before cursor)
+  let p['defaults']['modes'] = 'vn'
+  let p['defaults']['pairs'] = 
+            \ [
+            \ string({'pair' : ['"', '"'], 'mapping' : '<m-">'})
+            \ ,string({'pair' : ['''', ''''], 'mapping' : "<m-'>"})
+	    \ ,string({'pair' : ['(', ')'], 'mapping':'<m-(>'})
+	    \ ,string({'pair' : ['[', ']'], 'mapping':'<m-[>', 'gui_running_only' : 1})
+            \ ]
+
+            "\ string({'pair' : ['`', '`']}), 
+	    "\ string({'pair' : ['[', ']']}), 
+	    "\ string({'pair' : ['{', '}']}), 
+	    "\ string({'pair' : ['${', '}']}), 
+	    "\ string({'pair' : ['&', '&']}), 
+	    "\ string({'pair' : ['__(', ')']}), 
+	    "\ string({'pair' : ['{#', '#}']}), 
+	    "\ string({'pair' : ['/*', '*/']}), 
+	    "\ string({'pair' : ['<', '>'])
+
+  let child = {}
+  fun! child.Load()
+    for dict in map(copy(self.cfg.pairs),'eval(v:val)')
+      if has_key(dict,'mapping')
+        if get(dict, 'gui_running_only', 0) && !has('gui_running')
+          continue
+        endif
+        let pair = dict['pair']
+        " v mode mapping
+        for mode in split(substitute(self.cfg.modes,'\(.\)','\1.','g'),'\.')[:-1]
+          call self.RegI({
+              \ 'featType' : "feat_mapping",
+              \ 'tags' : ['surround_by'],
+              \ 'm' : mode,
+              \ 'lhs' : dict['mapping'],
+              \ 'rhs' : (mode == 'i' ? '<esc>' : '')
+                    \ .':call tovl#plugins#mappings#various_surround#SurroundText('.string(pair[0]).','.string(pair[1]).','.string(mode).')<cr>'
+              \ })
+        endfor
+      endif
+    endfor
+    call self.Parent_Load()
+  endf
+  return p.createChildClass(child)
+endf
+
 " set window height/width in 1/10th steps of total height/width
 " parameter: 'h' or 'w' ( set height/width)
 function! plugins#mappings#various#SetWindowSize(orientation)
