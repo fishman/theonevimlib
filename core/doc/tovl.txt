@@ -527,6 +527,8 @@ TOVL ....
 
     100 : default
 
+    200 : PluginLocalVimrc
+
   its not perfect but is fastest and most simple.
 
 ==============================================================================
