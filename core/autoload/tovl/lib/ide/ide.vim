@@ -35,7 +35,8 @@ function! tovl#lib#ide#ide#AddProjectVimfileStart()
 
   exec 'command! ProjectVimfileEdit :e '.s:project_filename
   ".' <bar>  echo "after writing this file it will be automatically sourced and trusted by autocommand" <bar> exec "u BufWritePost ".expand('%')." call vl#lib#ide#ide#SourceAndTrustProjectFile()"'
-  silent! let project_files = vl#lib#files#filefunctions#WalkUpAndFind(getcwd(), "glob(path.'/".s:project_filename."')",1)
+  silent! let project_files = tovl#lib#filefunctions#WalkUpAndFind(getcwd(), "glob(path.'/".s:project_filename."')",1)
+  
   for full_path in project_files
     " check and source
     let known_project_files = config#GetC('project_vim_files','project_vim_files', {'default': {}})
