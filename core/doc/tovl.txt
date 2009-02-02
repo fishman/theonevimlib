@@ -378,7 +378,7 @@ TOVL RUN TASK MAYBE IN BACKGROUND		 *tovl-run-in-background* {{{2
     call process.Run()
 <
     or as one line (for copy paste and testing) >
-    call tovl#runtaskinbackground#NewProcess( { 'cmd': ["/bin/sh","-c",'sleep 10; echo done'], 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php' }).Run()
+    call tovl#runtaskinbackground#NewProcess( { 'cmd': ["/bin/sh","-c",'sleep 3; echo done'], 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php' }).Run()
  
 <
     You can add the key 'fg' : 1 to force running in foreground only (TODO
@@ -399,7 +399,7 @@ TOVL RUN TASK MAYBE IN BACKGROUND		 *tovl-run-in-background* {{{2
 
     [1] It seems that vim doesn't set the server name by default. That's why
     I'v put this into my .bashrc / .zshrc file: >
-        v(){ vim --servername vim$(echo $RANDOM) "$@"; }
+        vim(){ /usr/bin/vim --servername vim$(echo $RANDOM) "$@"; }
 <
 
 TOVL FUNCTION REFERENCES 		 *tovl-function-reference* {{{2
