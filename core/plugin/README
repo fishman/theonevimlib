@@ -1,3 +1,8 @@
-everything put theonevimlib.vim and this README file will be deleted.
+everything but theonevimlib.vim and this README file will be deleted
+(by my personally when seeing that someone addsd a file to this git repostiory
+directory without good reason)
+
 Why? The user of theonevimlib must be sure that only code of plugins gets executed he trusts.
+So the way to enable tovl plugins is not by putting them in here but by modifying the TOVLConfig.
+
 Please setup your features using a plugin load function (see autoload/plugins/example.vim)
