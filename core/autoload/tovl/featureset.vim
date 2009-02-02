@@ -157,7 +157,7 @@ fun! tovl#featureset#Apply()
   " update s:items
   for t in keys(s:pd_del)
     for i in s:pd_del[t]
-      call tovl#list#Del(s:items[t], i)
+      call remove(s:items[t], i)
     endfor
   endfor
   for t in keys(s:pd_add)
