@@ -53,6 +53,9 @@ function! plugins#tovl#mru#PluginMRU(p)
   endfun
 
   fun! p.Remember(event)
+    if expand('%:p') == ''
+      return
+    endif
     " get current file conents 
     let c = config#GetC('/mru','mru_files', [])
     call add(c, [a:event, expand('%:p')])
