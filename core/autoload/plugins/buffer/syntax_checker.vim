@@ -23,7 +23,7 @@ function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
         \  'pattern' : '*.nix',
         \  'run_in_background' : 0,
         \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#nix',
-        \  'cmd' :['nix-instantiate','--parse-only', library#Function("return expand('%')")],
+        \  'cmd' : ['nix-instantiate','--parse-only', library#Function("return expand('%')")],
         \  'active' : 1
         \ }
   " spidermonkey doesn't catch {"a" : 2,}. IE fails with that
