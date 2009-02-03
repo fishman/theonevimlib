@@ -51,3 +51,61 @@ function! plugins#filetype#nix#PluginNixSupport(p)
   endf
   return p
 endfunction
+
+
+" Fix imports
+
+"let g:cache=split(glob('**'),"\n")
+
+"let g:vim_fix_nix_dict = {}
+
+"[> build up dict containing list (we allow multiple directroies ending the same
+"[> way)
+"for i in g:cache
+"  let lastPathComponent = fnamemodify(i, ":t")
+"  let g:vim_fix_nix_dict[lastPathComponent] = get(g:vim_fix_nix_dict, lastPathComponent, [])
+"  call add(g:vim_fix_nix_dict[lastPathComponent], i)
+"endfor
+
+"fun! FixNext()
+"  set cul
+"  [> assuming paths don't contain spaces..
+"  call search('import\s\+"\?','e')
+"  normal lvE
+
+"  [> check wether last char is either " or )
+"  [> this won't work for unicode chars.. I don't mind here
+"  let char = getline(line('.'))[col('.')-1]
+"  if char == ')' || char == '"'
+"    normal h
+"  endif
+"  [> copy selection
+"  normal y
+"  let path = @[>
+
+"  let abs_path = getcwd().'/'.expand('%:h').'/'.path
+"  if (!isdirectory(abs_path) && !filereadable(abs_path))
+"    let last = fnamemodify(abs_path, ":t")
+"    let found = get(g:vim_fix_nix_dict, last, [])
+"    if empty(found)
+"      echo "no matches found"
+"    else
+"      let x = tovl#ui#choice#LetUserSelectIfThereIsAChoice('select match for '.path, found)
+"      let relative =  substitute(tlib#file#Relative(x, expand('%:h')),'/$','','')
+"      [> prepend ./
+"      let relative = substitute(relative,'^\([^.]\)','./\1','')
+"      normal jjjzbkkk
+"      redraw
+"      echo 'replace '.path.' by '.relative.' ? [y]'
+"      if nr2char(getchar()) == 'y'
+"        exec 'silent! normal gvs'.relative
+"      endif
+"    endif
+"  else
+"    [> does exist, search next
+"    call FixNext()
+"  endif
+"endf
+
+"command! FixNext call FixNext()
+"noremap <F6> :FixNext<cr>
