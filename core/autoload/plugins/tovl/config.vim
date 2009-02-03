@@ -5,7 +5,7 @@ function! plugins#tovl#config#PluginTOVL_Config(p)
         \ ." configuration settings. Also see core/doc/tovl.txt -> tovl-global-config"
   let p['loadingOrder'] = 10
 
-  let p['defaults']['log_level'] = 0
+  let p['defaults']['log_level'] = 3
   " these options may be cached.. So you'll have to restart vim to make
   " changes take effect.. eg do this by
   " let s:cache_dir = library#Call(config#Get('plugins#tovl#config#PluginTOVL_Config#cache_dir'))
