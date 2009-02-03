@@ -12,8 +12,9 @@ function! plugins#tovl#mru#PluginMRU(p)
   let p['Info'] = "remembers all files you've opened recently and shows them in a list so that you can open it"
 
   let p['events'] = ['BufNewFile','BufRead','BufWrite']
+  let defaults = {'BufNewFile' : 0, 'BufRead' : 1, 'BufWrite' : 1}
   for event in p['events']
-    let p['defaults']['remember_on_'.event] = 1
+    let p['defaults']['remember_on_'.event] = defaults[event]
   endfor
   let p['defaults']['count'] = 400
 
