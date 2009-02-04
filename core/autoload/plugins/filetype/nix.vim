@@ -18,6 +18,15 @@ function! plugins#filetype#nix#PluginNixSupport(p)
         \ 'buffer' : 1,
         \ 'lhs' : '<F3>',
         \ 'rhs' : ':call '.p.s.'.Run(1)<cr>' }}
+
+  let p['feat_command'] = {
+    \ 'load_errors_from_buffer_into_quickfix' : {
+      \ 'name' : 'NixErrorsFromBufferToQuickfix',
+      \ 'cmd' : 'call tovl#errorformat#SetErrorFormat("plugins#tovl#errorformats#PluginErrorFormats#nix") | cbuffer',
+      \ 'attrs' : '-nargs=0',
+      \ }
+    \ }
+
   fun! p.LocationList()
     let res = [ expand(expand('%:h').'/'.matchstr(expand('<cWORD>'),'[^;()[\]]*')).'/default.nix'
            \ , expand(expand('%:h').'/'.matchstr(expand('<cWORD>'),'[^;()[\]]*'))
