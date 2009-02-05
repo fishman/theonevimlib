@@ -59,7 +59,7 @@ function! plugins#tovl#mru#PluginMRU(p)
     endif
     " get current file conents 
     let c = config#GetC('/mru','mru_files', [])
-    call add(c, [a:event, expand('%:p')])
+    let c = [[a:event, expand('%:p')]] + c
     let c = c[0: self.cfg.count ]
     " force writing to disk:
     call config#SetC('/mru', 'mru_files', c)
