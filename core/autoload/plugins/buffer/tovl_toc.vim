@@ -63,7 +63,8 @@ function! plugins#buffer#tovl_toc#PluginTOVL_ToC(p)
 	  \ 'Continuation' : library#Function('exec ARGS[0]["nr"]'),
 	  \ 'items' : lines,
 	  \ 'syn_cmds' : ['runtime! syntax/'.&filetype.'.vim'],
-          \ 'cmds' : ['normal zR']
+          \ 'cmds' : ['normal zR'],
+          \ 'cursorAt' : line('.') -1
 	  \ })
   endfun
   return p

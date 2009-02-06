@@ -51,6 +51,7 @@ endfun
 "                     auto: only do this if all items fit on screen
 "                     (recommend)
 " cmds: extra cmds to be run
+" cursorAt : at which item to put the cursor?
 "
 " If you don't like the default view you can override UpdateDisplay
 "
@@ -61,6 +62,7 @@ endfun
 fun! tovl#ui#filter_list#ListView(opts)
   let d = tovl#obj#NewObject("filter_list")
   let d.items = a:opts.items
+  let d.cursorAt = get(a:opts, 'cursorAt', 0)
   let d.aligned = get(a:opts, 'aligned', 0)
   let d.sep = '  '
   let d.filter = get(a:opts, 'filter', [])
@@ -81,7 +83,8 @@ fun! tovl#ui#filter_list#ListView(opts)
   if has_key(a:opts,'Continuation') | let d.Continuation = a:opts.Continuation | endif
 
   " cache already filtered items in case we want to view really long results
-  " contains [ { filter : { regex: .. , keep : .. } , items : }, { regex : items } ]
+  " contains [ { filter : { regex: .. , keep : .. } , items : .. , cursorAt :}, 
+  "            { filter : { ... } , items: .. , cursorAt : }
   let d.cached = []
   " id of buffer
   let d.buffer = -1
@@ -126,6 +129,7 @@ fun! tovl#ui#filter_list#ListView(opts)
 	  \ })
     " I assume we have some kind of formatting anyway. Thus breaking lines is bad!
     set nowrap
+    setlocal cursorline
     let b:filtered_view = self
     command! -buffer -nargs=0 ToggleAlignment call b:filtered_view.ToggleAlignment()
     command! -buffer -nargs=0 ShowAppliedFilters call b:filtered_view.ShowAppliedFilters()
@@ -139,7 +143,7 @@ fun! tovl#ui#filter_list#ListView(opts)
     "noremap <buffer> k
     "noremap <buffer> K
 
-    let items = self.FilteredItems()
+    let [items, cursorAt] = self.FilteredItems()
     " len(items) is an approximation because one item can have multiple
     " lines.. However adding the lines first to check takes too much time
     if self.selectByIdOrFilter == 1 || (self.selectByIdOrFilter == 'auto' && winheight('%') > len(items) )
@@ -188,7 +192,7 @@ fun! tovl#ui#filter_list#ListView(opts)
     let idx=line('.')-len(self.headerLines)
     while idx >= 0
       if has_key(self.linesToItems, idx)
-	return self.MapToOriginal(self.FilteredItems()[self.linesToItems[idx]])
+	return self.MapToOriginal(self.FilteredItems()[0][self.linesToItems[idx]])
       else
 	let idx = idx -1
       endif
@@ -200,17 +204,18 @@ fun! tovl#ui#filter_list#ListView(opts)
   fun d.FilteredItems()
     " update cache
     let idx = 0
-    let items = self.items
+    let [items, cursorAt] = [self.items, self.cursorAt]
     for idx in range(0, len(self.filter)-1)
       if idx +1 > len(self.cached) || self.cached[idx]['filter'] != self.filter[idx]
 	let self.cached = self.cached[:idx-1]
-	let items = self.FilterItem(copy(items), self.filter[idx])
-	call add(self.cached, { 'items' : items, 'filter' : self.filter[idx]})
+	let [items, cursorAt] = self.FilterItem(copy(items), self.filter[idx], cursorAt)
+	call add(self.cached, { 'cursorAt' : cursorAt, 'items' : items, 'filter' : self.filter[idx]})
       else
-	let items = self.cached[idx]['items']
+        let ci = self.cached[idx]
+	let [items, cursorAt] = [ci['items'], ci['cursorAt']]
       endif
     endfor
-    return items
+    return [items, cursorAt]
   endfun
 
   " calling this will return a set of lines which are expected to be the new
@@ -224,7 +229,7 @@ fun! tovl#ui#filter_list#ListView(opts)
     endif
 
     let self.linesToItems = {}
-    let items = self.FilteredItems()
+    let [items, cursorAt] = self.FilteredItems()
     "let num_width = printf('%.0f', trunc(log10(len(items))+1))
     let num_width = 4
     if self.aligned
@@ -274,6 +279,9 @@ fun! tovl#ui#filter_list#ListView(opts)
 	call add(lines, call('printf', fmt_args))
 	let lines_count += 1
       endfor
+      if idx == cursorAt
+        let cursorAtLine = lines_count
+      endif
     endfor
     " update stauts line to show last applied filter
     " disabled cause it causes trouble on :wincmd w
@@ -283,6 +291,7 @@ fun! tovl#ui#filter_list#ListView(opts)
     syn clear
     for s in self.syn_cmds | exec s | endfor
     let id = 0
+    " highlight filter regex in buffer as well
     let syn_ids = [ 'Underlined', 'Todo', 'Error', 'Type', 'Statement' ]
     for f in self.filter
       if !f.keep || !has_key(f, 'regex') | continue | endif
@@ -296,6 +305,10 @@ fun! tovl#ui#filter_list#ListView(opts)
     endif
     normal ggdG
     call append(0, lines)
+    " place cursor
+    exec (cursorAtLine+1)
+    " move cursor into the middle of the window
+    normal zz
   endf
 
   " filter = keys :
@@ -303,10 +316,13 @@ fun! tovl#ui#filter_list#ListView(opts)
   "  keep = 1  keep on match 
   "       = 0  drop on match
   "  key (optional)
+  "  cursorAt: at which item to put the cursor
+  "            if that item is deleted it will be placed at the item above
   " optional: key of dict if dict
-  fun d.FilterItem(items, filter)
+  fun d.FilterItem(items, filter, cursorAt)
     let filter = 'Val =~ '.string(a:filter.regex)
     let keep = a:filter.keep
+    let cursorAt = a:cursorAt
 
     for idx in reverse(range(0, len(a:items)-1))
       let i = a:items[idx]
@@ -330,9 +346,12 @@ fun! tovl#ui#filter_list#ListView(opts)
       endif
       if any != keep
 	call remove(a:items, idx)
+        if idx < cursorAt
+          let cursorAt = cursorAt -1
+        endif
       endif
     endfor
-    return a:items
+    return [a:items, cursorAt]
   endfun
 
   " if the user enters a number select by index else start filtering..
