@@ -255,6 +255,7 @@ fun! tovl#ui#filter_list#ListView(opts)
     else
       let fmt_startA = '' | let fmt_startB = ''
     endif
+    let cursorAtLine = 1 " sane default
     for idx in range(0,len(items)-1)
       let self.linesToItems[lines_count + 1] = idx
       let i = items[idx]
@@ -346,7 +347,7 @@ fun! tovl#ui#filter_list#ListView(opts)
       endif
       if any != keep
 	call remove(a:items, idx)
-        if idx < cursorAt
+        if idx <= cursorAt
           let cursorAt = cursorAt -1
         endif
       endif
@@ -357,7 +358,7 @@ fun! tovl#ui#filter_list#ListView(opts)
   " if the user enters a number select by index else start filtering..
   fun d.SelectByIdOrFilter()
     let idx=''
-    let items = self.FilteredItems()
+    let items = self.FilteredItems()[0]
     try
       let self.modeText = '[0-9]* : select by index| <esc>: escape getchar() loop, any char: start filtering'
       call self.UpdateDisplay() | redraw
