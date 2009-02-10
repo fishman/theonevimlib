@@ -3,6 +3,10 @@
 " TODO : think about adding context etc? the list view does support this all
 "  unfortunately this implementation should not be used on buffers having more
 "  than 2.000 lines :-( It gets too slow
+"
+"  idea taken from my earlier script, vimtlib (Tom Link) and the outline view
+"  which can be found in Eclipse (c-o mapping). You should also try the TToC
+"  command found in vimtlib and use the one which you like more :)
 
 function! plugins#buffer#tovl_toc#PluginTOVL_ToC(p)
   let p = a:p
@@ -22,6 +26,8 @@ function! plugins#buffer#tovl_toc#PluginTOVL_ToC(p)
   let ft['php'] = '^\(\%(static\|public\|abstract\|protected\|private\)\s\+\)*\%(function\|class\)'
   let ft['ant'] = '^\s*<target'
   let ft['sql'] = '^\s*\c\%(\SELECT\|CREATE\|UPDATE\|DESCRIBE\|DROP\|ALTER\|INSERT\).*'
+  let ft['perl'] = '^\s*sub' " this is a stub
+  let ft['python'] = '^\s*\%(def\|class\)' " this is a stub
   let ft['haskell'] = '^\s*\%(\%(\zs\%(where\)\@!\%(\l\w*\)\ze\%(\s\+\%(\S\+\)\)*\s*=\)\|\%(\%(\S\+\)\s*`\zs\%(where\)\@!\%(\l\w*\)\ze`\s*\%(\S\+\)\s*=\)\)'
   let ft['make'] = '^[^: ]\+\s*:.*\|include'
 

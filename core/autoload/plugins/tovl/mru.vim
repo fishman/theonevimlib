@@ -16,7 +16,7 @@ function! plugins#tovl#mru#PluginMRU(p)
   for event in p['events']
     let p['defaults']['remember_on_'.event] = defaults[event]
   endfor
-  let p['defaults']['count'] = 400
+  let p['defaults']['count'] = 1000
 
   let p['defaults']['tags'] = ['mru']
   let p['feat_command'] = {
