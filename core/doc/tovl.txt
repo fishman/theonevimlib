@@ -105,7 +105,12 @@ continues with a small tutorial.
 < Then run :helptags Path_TO_DEST/core/doc
 
   basic setup (mandatory!):
-  1) Run command >
+  1) Starting Vim
+     You will need to start your vim session with >
+       vim --servername VIM
+<    if you do not use gvim or the likes.
+
+  2) Run command >
      TOVLConfig
 <    You'll be asked wether you want to activate a bunch of recommended
      plugins. Say y here. If you want to use <m-*> or <m-s-*> mappings
