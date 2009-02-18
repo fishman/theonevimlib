@@ -20,7 +20,7 @@ function! plugins#background_processes#grep#PluginBackgroundGrep(p)
     if word == '' | echo "aborted" | return | endif
 
    call tovl#runtaskinbackground#NewProcess(
-         \ { 'name' : 'bg_grep', 'cmd': ["grep","-R",'-n',word,'.'], 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#grep' }).Run()
+         \ { 'name' : 'bg_grep', 'cmd': ["grep","-R",'-n',word,getcwd()], 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#grep' }).Run()
   endf
   fun! child.Load()
     call self.LogExec(1, 'command: ','command -nargs=0 BGGrepR call '.self.s.'.Dialog()')
