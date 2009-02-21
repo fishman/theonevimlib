@@ -10,7 +10,7 @@ function! plugins#language_support#c#PluginC(p)
   let p['Info'] = "jump to header locations"
   let p['defaults']['tags'] = ['c']
   let p['defaults']['tags_buftype'] = {'c' : ['c'], 'cpp' : ['cpp']}
-  let p['defaults']['header_locations'] = ['/usr/include']
+  let p['defaults']['header_locations'] = [['/usr/include']]
   fun! p.HeaderFromLine()
     return matchstr(getline('.'), '#include\s\+"\zs[^"]*\ze"\|#include <\zs[^>]*\ze>')
   endf
@@ -19,7 +19,8 @@ function! plugins#language_support#c#PluginC(p)
     if header == ""
       return []
     else
-      return map(copy(self.cfg.header_locations + config#GetG('config#header_locations', [])),
+      return map(tovl#list#Concat(
+                \ map(copy(self.cfg.header_locations + config#GetG('config#header_locations', [])), 'library#Call(v:val)')),
             \ 'v:val."/".'.string(header))
     endif
   endf
