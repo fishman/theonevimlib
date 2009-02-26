@@ -41,6 +41,9 @@ function! plugins#background_processes#grep#PluginGNUIdUtils(p)
 
   let p['defaults']['tags'] = ['id_utilities']
 
+  " you may want to pass your own mapping file or such.. 
+  let p['defaults']['mkid_command'] = library#Function('return ["mkid"]')
+
   let p['feat_mapping'] = {
     \ 'gun_id_utilities_lid_dialog' : {
       \ 'lhs' : '<m-l><m-i><m-d>',
@@ -55,13 +58,13 @@ function! plugins#background_processes#grep#PluginGNUIdUtils(p)
 
   fun! child.RecreateDB()
     call tovl#runtaskinbackground#NewProcess(
-         \ { 'name' : 'bg_mid', 'cmd': ["mkid"]}).Run()
+         \ { 'name' : 'bg_mid', 'cmd': library#Call(self.cfg.mkid_command)}).Run()
   endf
   fun! child.Dialog()
-    let word = input('lid word to find (lid -R grep word) :')
+    let word = input('lid word to find (lid -R grep -r word, -r = regex, ^foo$ matches "\<foo\>") :')
     if word == '' | echo "aborted" | return | endif
     call tovl#runtaskinbackground#NewProcess(
-         \ { 'name' : 'bg_lid', 'cmd': ["lid","-R","grep",word], 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#grep' }).Run()
+         \ { 'name' : 'bg_lid', 'cmd': ["lid","-R","grep","-r",word], 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#grep' }).Run()
   endf
   fun! child.Load()
     " TODO use real command feature here 
