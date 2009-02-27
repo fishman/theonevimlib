@@ -2,12 +2,14 @@
 "|p     Example:
 "|code  call tovl#ui#open_thing_at_cursor#AddOnThingHandler("[substitute(expand('<cWORD>'),'\\.','/','g').'\.lhs']")
 function! tovl#ui#goto_thing_at_cursor#AddOnThingHandler(handler)
+  let b = get(a:handler,'buffer',0)
   call tovl#list#AddUnique(
-    \ config#GetB('on_thing_handler', {'set' :1, 'default' : []}), a:handler)
+    \ config#Get{b ? 'B' : 'G'}('on_thing_handler', {'set' :1, 'default' : []}), a:handler)
 endfunction
 
 function! tovl#ui#goto_thing_at_cursor#RemoveOnThingHandler(handler)
-  call tovl#list#Remove(config#GetB('on_thing_handler'), a:handler)
+  let b = get(a:handler,'buffer',0)
+    call tovl#list#Remove(config#Get{b ? 'B' : 'G'}('on_thing_handler'), a:handler)
 endfunction
 
 function! s:DoesFileExist(value)
@@ -59,7 +61,7 @@ endfunction
 function! tovl#ui#goto_thing_at_cursor#HandleOnThing()
   let pos = getpos('.')
   let possibleFiles = []
-  for h in config#GetB('on_thing_handler', [])
+  for h in config#GetB('on_thing_handler', []) + config#GetG('on_thing_handler', {'set' :1, 'default' : []})
     call setpos('.',pos)
     call extend(possibleFiles, library#Call(h))
   endfor
