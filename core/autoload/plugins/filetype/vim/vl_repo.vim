@@ -24,7 +24,8 @@ function! plugins#filetype#vim#vl_repo#PluginVL_RepoStuff(p)
   " a new file.
   let p['feat_GotoThingAtCursor'] = 
     \ { 'goto_thing_handler' : {
-    \ 'f' : library#Function('tovl#ft#vimscript#vimfile#GetFuncLocation', {'args' : [1]})}}
+    \ 'buffer' : 1
+    \ ,'f' : library#Function('tovl#ft#vimscript#vimfile#GetFuncLocation', {'args' : [1]})}}
 
   " completion
   let p['feat_completion_func'] = {

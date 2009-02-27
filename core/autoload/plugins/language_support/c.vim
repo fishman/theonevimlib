@@ -28,7 +28,8 @@ function! plugins#language_support#c#PluginC(p)
 
   let p['feat_GotoThingAtCursor'] = {
       \ 'jump_to_path' : {
-        \ 'f' : library#Function('return '. p.s .'.HeaderLocations()')
+        \ 'buffer' : 1
+        \ ,'f' : library#Function('return '. p.s .'.HeaderLocations()')
       \ }}
   return p
 endfunction

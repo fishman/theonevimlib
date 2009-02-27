@@ -19,8 +19,7 @@ function! plugins#feature_types#goto_to_thing_at_cursor#PluginGotoThingAtCursor(
   let p['featureTypes'] = {
       \ 'feat_GotoThingAtCursor' : {
         \ 'AddItem' : library#Function('plugins#feature_types#goto_to_thing_at_cursor#AddOnThingHandler'),
-        \ 'DelItem' : library#Function('plugins#feature_types#goto_to_thing_at_cursor#DelOnThingHandler'),
-        \ 'FromConfigApply' : library#Function('let ARGS[0]["buffer"] = 1')
+        \ 'DelItem' : library#Function('plugins#feature_types#goto_to_thing_at_cursor#DelOnThingHandler')
       \ }}
   return p
 endfunction

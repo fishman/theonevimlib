@@ -7,7 +7,8 @@ function! plugins#filetype#nix#PluginNixSupport(p)
   let p['defaults']['tags_buftype'] = {'nix' : ['nix_support']}
   let p['feat_GotoThingAtCursor'] = {
       \ 'jump_to_path' : {
-        \ 'f' : library#Function("return ". p.s .".LocationList()")}}
+        \ 'buffer' : 1
+        \ ,'f' : library#Function("return ". p.s .".LocationList()")}}
   " mappings to evaluate contents of current buffer using nix-instantiate
   let p['feat_mapping'] = {
       \ 'eval' : {
