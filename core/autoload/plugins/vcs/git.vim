@@ -8,20 +8,26 @@ function! plugins#vcs#git#PluginGit(p)
   let p['feat_GotoThingAtCursor'] = {
       \ 'show_git_commit_by_hash' : {
         \ 'buffer' : 0
-        \ ,'f' : library#Function("return ". p.s .".GitShowCommit()")}}
+        \ ,'f' : library#Function("return ". p.s .".GitGotoLocations()")}}
 
   " all buffer related commands start by 'B' when it does make sense to run
   " the command for whole rep or a the current buffer
   " putting Git last so that you'll have to type less (tab completion)
+  " BAddGitPatch Git is not last so that you'll get the first using tab
+  " completion
   let p['feat_command'] = {
     \ 'git_blame' : {
       \ 'name' : 'BBlameGit',
       \ 'attrs' : '-nargs=0',
       \ 'cmd' : 'exec "e tovl_exec://git?blame?".expand("%")' },
+    \ 'git_diff' : {
+      \ 'name' : 'DiffGit',
+      \ 'attrs' : '-nargs=0',
+      \ 'cmd' : 'e tovl_exec://git?diff?' },
     \ 'git_diff_current_buffer' : {
       \ 'name' : 'DiffCurrentBufferGit',
       \ 'attrs' : '-nargs=0',
-      \ 'cmd' : 'call '. p.s .'.GitCurrentBuffer(<f-args>)' },
+      \ 'cmd' : 'call '. p.s .'.GitDiffCurrentBuffer(<f-args>)' },
     \ 'git_diff_cached' : {
       \ 'name' : 'DiffCachedGit',
       \ 'attrs' : '-nargs=0',
@@ -35,7 +41,7 @@ function! plugins#vcs#git#PluginGit(p)
       \ 'attrs' : '-nargs=0',
       \ 'cmd' : 'update|!git add %'},
     \ 'buffer_git_add_patch' : {
-      \ 'name' : 'BAddPatchGit',
+      \ 'name' : 'BAddGitPatch',
       \ 'attrs' : '-nargs=0',
       \ 'cmd' : 'update|!git add --patch %'},
     \ 'git_init' : {
@@ -99,8 +105,10 @@ function! plugins#vcs#git#PluginGit(p)
       \ 'name' : "comitting to git repository"
       \ ,'onWrite' : library#Function(self.CommitOnBufWrite, {'self' : self})
       \ ,'help' : ["commit current staged changes to git. It's always save to just bd!"]
-      \ ,'getContent' : library#Function('return ["", '. self.s .'.Sep("GIT COMMIT"), "Put your commit message above this separator, you see git status output below" ]'
-                                       \ .'+ split(tovl#runtaskinbackground#System(["git","status"]),'.string("\n").')')
+      \ ,'getContent' : library#Function('return ["", '. self.s .'.Sep("GIT COMMIT"), "Put your commit message above this separator","","==== git status ==="]'
+                                       \ .'+ map(split(tovl#runtaskinbackground#System(["git","status"]),'.string("\n").'), "\"  \".v:val")'
+                                       \ .'+ ["","==== git diff --cached ==="]'
+                                       \ .'+ map(split(tovl#runtaskinbackground#System(["git","diff","--cached"]),'.string("\n").'), "\"  \".v:val")')
       \ ,'cmds' : ['set filetype=gitcommit','normal gg','startinsert']
       \ })
   endf
@@ -145,17 +153,27 @@ function! plugins#vcs#git#PluginGit(p)
     " TODO: if you close the diff window call diffoff 
   endf
 
-  fun! p.GitShowCommit()
+  fun! p.GitGotoLocations()
     " only add commit location if the commit exists
-    try
-      let hash = substitute(expand('<cword>'),'[<>]','','g')
-      call tovl#runtaskinbackground#System(["git","rev-list","-1",hash])
-      " no failure 
-      let list = [ 'tovl_exec://git?show?'.hash ]
-    catch /.*/
-      let list = []
-    endtry
-    return list
+    let thing = expand('<cword>')
+    if thing =~ '^[ab]/'
+      " diff file a/foo/bar ? strip a
+      if filereadable(thing[2:])
+        return [thing[2:]]
+      endif
+      return []
+    else
+      " hash ?
+      try
+        let hash = substitute(thing,'[<>]','','g')
+        call tovl#runtaskinbackground#System(["git","rev-list","-1",hash])
+        " no failure 
+        let list = [ 'tovl_exec://git?show?'.hash ]
+      catch /.*/
+        let list = []
+      endtry
+      return list
+    endif
   endf
   return p
 endfunction
