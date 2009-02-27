@@ -24,6 +24,10 @@ function! plugins#vcs#git#PluginGit(p)
       \ 'name' : 'DiffGit',
       \ 'attrs' : '-nargs=0',
       \ 'cmd' : 'e tovl_exec://git?diff?' },
+    \ 'git_checkout_buffer' : {
+      \ 'name' : 'BCheckoutGit',
+      \ 'attrs' : '-nargs=*',
+      \ 'cmd' : 'call '. p.s .'.BCheckout(<f-args>)' },
     \ 'git_diff_current_buffer' : {
       \ 'name' : 'DiffCurrentBufferGit',
       \ 'attrs' : '-nargs=0',
@@ -61,6 +65,11 @@ function! plugins#vcs#git#PluginGit(p)
       \ 'attrs' : '-nargs=0',
       \ 'cmd' : 'cal '. p.s .'.Commit()'}
     \ }
+  fun! p.BCheckout()
+    exec '!git checkout '.expand('%')." ".join(a:000," ")
+    " reload contents:
+    e!
+  endf
   fun! p.BCommit()
     " ensure nothing else is staged
     try
@@ -106,9 +115,9 @@ function! plugins#vcs#git#PluginGit(p)
       \ ,'onWrite' : library#Function(self.CommitOnBufWrite, {'self' : self})
       \ ,'help' : ["commit current staged changes to git. It's always save to just bd!"]
       \ ,'getContent' : library#Function('return ["", '. self.s .'.Sep("GIT COMMIT"), "Put your commit message above this separator","","==== git status ==="]'
-                                       \ .'+ map(split(tovl#runtaskinbackground#System(["git","status"]),'.string("\n").'), "\"  \".v:val")'
+                                       \ .'+ split(tovl#runtaskinbackground#System(["git","status"]),'.string("\n").')'
                                        \ .'+ ["","==== git diff --cached ==="]'
-                                       \ .'+ map(split(tovl#runtaskinbackground#System(["git","diff","--cached"]),'.string("\n").'), "\"  \".v:val")')
+                                       \ .'+ split(tovl#runtaskinbackground#System(["git","diff","--cached"]),'.string("\n").')')
       \ ,'cmds' : ['set filetype=gitcommit','normal gg','startinsert']
       \ })
   endf
@@ -155,7 +164,8 @@ function! plugins#vcs#git#PluginGit(p)
 
   fun! p.GitGotoLocations()
     " only add commit location if the commit exists
-    let thing = expand('<cword>')
+    let thing = expand('<cWORD>')
+    echom thing
     if thing =~ '^[ab]/'
       " diff file a/foo/bar ? strip a
       if filereadable(thing[2:])
