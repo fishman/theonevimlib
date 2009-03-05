@@ -81,6 +81,8 @@ function! plugins#tovl#errorformats#PluginErrorFormats(p)
               \    "%E%f:%l: %m\n"
               \  . "%-C:%l: %s\n"
               \  . "%Z%s:%p^\n"
+  " dummy, shows all lines. Hopefully no line ever contains that pattern..
+  let ef['none'] = "dummy_dummy_dummy_line_1034985"
   " remember to use grep -n !
   let ef['grep'] = "%f:%l:%m"
   return p
