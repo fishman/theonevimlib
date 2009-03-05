@@ -5,6 +5,8 @@ function! plugins#vcs#git#PluginGit(p)
 
   let p['defaults']['tags'] = ['git']
 
+  let p['defaults']['tags_buftype'] = {'git_status_view' : ['git_status_view']}
+
   let p['feat_GotoThingAtCursor'] = {
       \ 'show_git_commit_by_hash' : {
         \ 'buffer' : 0
@@ -28,10 +30,14 @@ function! plugins#vcs#git#PluginGit(p)
       \ 'name' : 'BCheckoutGit',
       \ 'attrs' : '-nargs=*',
       \ 'cmd' : 'call '. p.s .'.BCheckout(<f-args>)' },
-    \ 'git_diff_current_buffer' : {
-      \ 'name' : 'DiffCurrentBufferGit',
+    \ 'buffer_diff_current_buffer' : {
+      \ 'name' : 'BDiff',
       \ 'attrs' : '-nargs=0',
-      \ 'cmd' : 'call '. p.s .'.GitDiffCurrentBuffer(<f-args>)' },
+      \ 'cmd' : 'update|exec "e tovl_exec://git?diff?".expand("%")'},
+    \ 'git_diff_current_buffer_split' : {
+      \ 'name' : 'BDiffSplitGit',
+      \ 'attrs' : '-nargs=0',
+      \ 'cmd' : 'call '. p.s .'.BDiffGitSplit(<f-args>)' },
     \ 'git_diff_cached' : {
       \ 'name' : 'DiffCachedGit',
       \ 'attrs' : '-nargs=0',
@@ -63,8 +69,23 @@ function! plugins#vcs#git#PluginGit(p)
     \ 'git_commit' : {
       \ 'name' : 'CommitGit',
       \ 'attrs' : '-nargs=0',
-      \ 'cmd' : 'cal '. p.s .'.Commit()'}
+      \ 'cmd' : 'call '. p.s .'.Commit()'},
+    \ 'git_status_with_actions' : {
+      \ 'name' : 'StatusGit',
+      \ 'attrs' : '-nargs=0',
+      \ 'cmd' : 'call '. p.s .'.StatusAndActions()'}
     \ }
+
+  let p['feat_mapping'] = {}
+  let names = {'a' : 'add', 'p' : 'add_patch', 'u' : 'unstage', 'r' : 'rm', 'd' : 'diff', 'D': 'diff_split'}
+  for i in keys(names)
+    let p['feat_mapping']['git_status_view_'.names[i]] = {
+        \ 'lhs' : i,
+        \ 'buffer' : 1,
+        \ 'rhs' : ':call '.p.s.'.StatusViewAction('.string(i).')<cr>',
+        \ 'tags' : ['git_status_view'] }
+  endfor
+
   fun! p.BCheckout()
     exec '!git checkout '.expand('%')." ".join(a:000," ")
     " reload contents:
@@ -153,7 +174,7 @@ function! plugins#vcs#git#PluginGit(p)
     exec 'vsplit tovl_exec://git'.args
   endf
 
-  fun! p.GitDiffCurrentBuffer()
+  fun! p.BDiffGit()
     let proposal = "show HEAD:".expand('%')
     let args = join(map(split(input("git : ", proposal),'\s\+'),'"?".v:val'),'')
     diffthis
@@ -185,5 +206,51 @@ function! plugins#vcs#git#PluginGit(p)
       return list
     endif
   endf
+
+  fun! p.StatusAndActions()
+    let help = [
+      \ '===  file actions ==='
+      \ ,'p = add patched'
+      \ ,'a = stage (git add)'
+      \ ,'u = unstage (git rm --cached)'
+      \ ,'r = rm (git rm)'
+      \ ,'d = !git diff on file'
+      \ ]
+    " call search to place the cursor to a more sensible location..
+    let cmds = [ 
+        \ 'set filetype=git_status_view'
+        \ ,'setlocal syntax=gitcommit'
+        \ ,'setlocal nomodifiable'
+        \ ,"call search('# Changed but not updated:','e')"
+        \ ]
+    call tovl#scratch_buffer#ScratchBuffer({
+          \ 'name' : 'git_status'
+          \ ,'help' : help
+          \ ,'getContent' : library#Function('return ["see :Help to read about r u a p mappings"] '
+                                                  \ .'+ filter(split(tovl#runtaskinbackground#System(["git", "status"], {"status":"*"}),"\n"), "v:val !~ ''^#\\s*\\%((.*\\)\\?$''")')
+          \ ,'cmds' : cmds
+          \ ,'buftype' : 'nowrite'
+          \ })
+  endf
+
+  fun! p.StatusViewAction(action)
+    let list = matchlist(getline('.'), '^#\s*\%(\(\S*\):\)\?\s*\(\S*\)')
+    let status = list[1]
+    let file = list[2]
+    if a:action == 'a'
+      exec '!git add '.file
+    elseif a:action  == 'u'
+      exec '!git rm --cached '.file
+    elseif a:action  == 'p'
+      exec '!git add --patch '.file
+    elseif a:action  == 'r'
+      exec '!git rm '.file
+    elseif a:action  == 'd'
+      exec 'e tovl_exec://git?diff?'.file
+    elseif a:action  == 'D'
+      exec 'sp tovl_exec://git?diff?'.file
+    endif
+  endf
+
   return p
 endfunction
