@@ -20,10 +20,28 @@ function! plugins#navigation#exec_url#PluginExecUrl(p)
   endf
   fun! child.ExecRead()
     let g:g=9
+    " FIXME, doesn't work yet!
     " TODO allow escaping of ?
     let cmd = split(matchstr(expand('%'),'tovl_exec://\zs.*'), '?')
     try
-      call append(0, split(tovl#runtaskinbackground#System(cmd),"\n"))
+      let lines = split(tovl#runtaskinbackground#System(cmd),"\n")
+      " check wether we do have ff=dos !
+      if !empty(lines)
+        let copy = []
+        for l in copy
+          if l[-1] == '\r'
+            call add(copy, l[:-1])
+          else
+            break
+          endif
+        endfor
+        " all have \r ?
+        if len(copy) == len(lines)
+          let lines = copy
+          set ff=dos
+        endif
+      endif
+      call append(0, lines)
     catch /.*/
       call append(0, split(v:exception,"\n"))
     endtry
