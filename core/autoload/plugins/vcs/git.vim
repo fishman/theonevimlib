@@ -77,7 +77,7 @@ function! plugins#vcs#git#PluginGit(p)
     \ }
 
   let p['feat_mapping'] = {}
-  let names = {'a' : 'add', 'p' : 'add_patch', 'u' : 'unstage', 'r' : 'rm', 'd' : 'diff', 'D': 'diff_split'}
+  let names = {'a' : 'add', 'p' : 'add_patch', 'u' : 'unstage', 'r' : 'rm', 'd' : 'diff', 'D': 'diff_split', 'c' : 'commit' }
   for i in keys(names)
     let p['feat_mapping']['git_status_view_'.names[i]] = {
         \ 'lhs' : i,
@@ -215,6 +215,7 @@ function! plugins#vcs#git#PluginGit(p)
       \ ,'u = unstage (git rm --cached)'
       \ ,'r = rm (git rm)'
       \ ,'d = !git diff on file'
+      \ ,'c = :CommitGit'
       \ ]
     " call search to place the cursor to a more sensible location..
     let cmds = [ 
@@ -248,6 +249,8 @@ function! plugins#vcs#git#PluginGit(p)
       exec 'e tovl_exec://git?diff?'.file
     elseif a:action  == 'D'
       exec 'sp tovl_exec://git?diff?'.file
+    elseif a:action  == 'c'
+      CommitGit
     endif
   endf
 
