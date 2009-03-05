@@ -220,7 +220,6 @@ function! plugins#vcs#git#PluginGit(p)
     let cmds = [ 
         \ 'set filetype=git_status_view'
         \ ,'setlocal syntax=gitcommit'
-        \ ,'setlocal nomodifiable'
         \ ,"call search('# Changed but not updated:','e')"
         \ ]
     call tovl#scratch_buffer#ScratchBuffer({
