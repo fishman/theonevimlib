@@ -58,7 +58,7 @@ function! plugins#background_processes#grep#PluginGNUIdUtils(p)
 
   fun! child.RecreateDB()
     call tovl#runtaskinbackground#NewProcess(
-         \ { 'name' : 'bg_mid', 'cmd': library#Call(self.cfg.mkid_command)}).Run()
+         \ { 'name' : 'bg_mid', 'cmd': library#Call(self.cfg.mkid_command), 'ef' : "plugins#tovl#errorformats#PluginErrorFormats#none"}).Run()
   endf
   fun! child.Dialog()
     let word = input('lid word to find (lid -R grep -r word, -r = regex, ^foo$ matches "\<foo\>") :')
