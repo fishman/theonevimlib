@@ -174,7 +174,7 @@ function! plugins#vcs#git#PluginGit(p)
     exec 'vsplit tovl_exec://git'.args
   endf
 
-  fun! p.BDiffGit()
+  fun! p.BDiffSplitGit()
     let proposal = "show HEAD:".expand('%')
     let args = join(map(split(input("git : ", proposal),'\s\+'),'"?".v:val'),'')
     diffthis
