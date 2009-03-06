@@ -37,7 +37,7 @@ function! plugins#vcs#git#PluginGit(p)
     \ 'git_diff_current_buffer_split' : {
       \ 'name' : 'BDiffSplitGit',
       \ 'attrs' : '-nargs=0',
-      \ 'cmd' : 'call '. p.s .'.BDiffGitSplit(<f-args>)' },
+      \ 'cmd' : 'call '. p.s .'.BDiffSplitGit(<f-args>)' },
     \ 'git_diff_cached' : {
       \ 'name' : 'DiffCachedGit',
       \ 'attrs' : '-nargs=0',
@@ -175,7 +175,7 @@ function! plugins#vcs#git#PluginGit(p)
   endf
 
   fun! p.BDiffSplitGit()
-    let proposal = "show HEAD:".expand('%')
+    let proposal = "show HEAD:".expand('%:.')
     let args = join(map(split(input("git : ", proposal),'\s\+'),'"?".v:val'),'')
     diffthis
     exec 'vsplit tovl_exec://git'.args
