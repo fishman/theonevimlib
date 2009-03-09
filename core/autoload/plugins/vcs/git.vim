@@ -77,9 +77,16 @@ function! plugins#vcs#git#PluginGit(p)
     \ }
 
   let p['feat_mapping'] = {}
-  let names = {'a' : 'add', 'p' : 'add_patch', 'u' : 'unstage', 'r' : 'rm', 'd' : 'diff', 'D': 'diff_split', 'c' : 'commit' }
-  for i in keys(names)
-    let p['feat_mapping']['git_status_view_'.names[i]] = {
+  let p.names = {
+        \ 'a' : 'add'
+        \ ,'p' : 'add_patch'
+        \ ,'U' : 'unstage'
+        \ ,'r' : 'rm'
+        \ ,'D' : 'diff_split'
+        \ ,'c' : 'commit'
+        \ ,'C' : 'checkout (throw away local changes)' }
+  for i in keys(p.names)
+    let p['feat_mapping']['git_status_view_'. p.names[i]] = {
         \ 'lhs' : i,
         \ 'buffer' : 1,
         \ 'rhs' : ':call '.p.s.'.StatusViewAction('.string(i).')<cr>',
@@ -212,10 +219,11 @@ function! plugins#vcs#git#PluginGit(p)
       \ '===  file actions ==='
       \ ,'p = add patched'
       \ ,'a = stage (git add)'
-      \ ,'u = unstage (git rm --cached)'
+      \ ,'U = unstage (git rm --cached)'
       \ ,'r = rm (git rm)'
-      \ ,'d = !git diff on file'
-      \ ,'c = :CommitGit'
+      \ ,'D = !git diff on file'
+      \ ,'c = :tabnew | CommitGit'
+      \ ,'C = !git checkout file'
       \ ]
     " call search to place the cursor to a more sensible location..
     let cmds = [ 
@@ -226,7 +234,7 @@ function! plugins#vcs#git#PluginGit(p)
     call tovl#scratch_buffer#ScratchBuffer({
           \ 'name' : 'git_status'
           \ ,'help' : help
-          \ ,'getContent' : library#Function('return ["see :Help to read about r u a p mappings"] '
+          \ ,'getContent' : library#Function('return ["# >>--> see :Help to read about '.join(keys(self.names), ", ") .' mappings"] '
                                                   \ .'+ filter(split(tovl#runtaskinbackground#System(["git", "status"], {"status":"*"}),"\n"), "v:val !~ ''^#\\s*\\%((.*\\)\\?$''")')
           \ ,'cmds' : cmds
           \ ,'buftype' : 'nowrite'
@@ -239,18 +247,18 @@ function! plugins#vcs#git#PluginGit(p)
     let file = list[2]
     if a:action == 'a'
       exec '!git add '.file
-    elseif a:action  == 'u'
+    elseif a:action  == 'U'
       exec '!git rm --cached '.file
     elseif a:action  == 'p'
       exec '!git add --patch '.file
     elseif a:action  == 'r'
       exec '!git rm '.file
-    elseif a:action  == 'd'
-      exec 'e tovl_exec://git?diff?'.file
     elseif a:action  == 'D'
       exec 'sp tovl_exec://git?diff?'.file
     elseif a:action  == 'c'
-      CommitGit
+      tabnew | CommitGit
+    elseif a:action  == 'C'
+      exec '!git checkout '.file
     endif
   endf
 
