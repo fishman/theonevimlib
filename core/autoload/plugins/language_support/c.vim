@@ -12,7 +12,7 @@ function! plugins#language_support#c#PluginC(p)
   let p['defaults']['tags_buftype'] = {'c' : ['c'], 'cpp' : ['cpp']}
   let p['defaults']['header_locations'] = [['/usr/include']]
   fun! p.HeaderFromLine()
-    return matchstr(getline('.'), '#include\s\+"\zs[^"]*\ze"\|#include <\zs[^>]*\ze>')
+    return matchstr(getline('.'), '#\s*include\s\+"\zs[^"]*\ze"\|#\s*include <\zs[^>]*\ze>')
   endf
   fun! p.HeaderLocations()
     let header = self.HeaderFromLine()
