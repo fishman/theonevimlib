@@ -29,6 +29,7 @@ function! plugins#buffer#tovl_toc#PluginTOVL_ToC(p)
   let ft['perl'] = '^\s*sub' " this is a stub
   let ft['python'] = '^\s*\%(def\|class\)' " this is a stub
   let ft['haskell'] = '^\s*\%(\%(\zs\%(where\)\@!\%(\l\w*\)\ze\%(\s\+\%(\S\+\)\)*\s*=\)\|\%(\%(\S\+\)\s*`\zs\%(where\)\@!\%(\l\w*\)\ze`\s*\%(\S\+\)\s*=\)\)'
+  let ft['javascript'] = 'function'
   let ft['make'] = '^[^: ]\+\s*:.*\|include'
 
 
