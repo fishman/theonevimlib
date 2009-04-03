@@ -13,8 +13,10 @@ function! tovl#ui#goto_thing_at_cursor#RemoveOnThingHandler(handler)
 endfunction
 
 function! s:DoesFileExist(value)
-  if type(a:value) == 1
+  if type(a:value) == type("")
     let filename = a:value
+  elseif type(a:value) == type({})
+    let filename = a:value['filename']
   else
     let filename = a:value[0]
   endif
@@ -23,12 +25,15 @@ endif
 endfunction
 
 function! s:GotoLocation(value)
-  if type(a:value) == 1
+  if type(a:value) == type("")
     if a:value == ""
       return 
     endif
     let filename = a:value
     let line_nr = -1
+  elseif type(a:value) == type({})
+    let filename = a:value['filename']
+    let line_nr = get(a:value, 'line_nr', -1)
   else
     let filename = a:value[0]
     let line_nr = a:value[1]
@@ -49,8 +54,14 @@ function! s:ParseItemStr(value)
 endfunction
   
 function! s:ToItemStr(value)
-  if type(a:value) == 1
+  if type(a:value) == type("")
     return a:value
+  elseif type(a:value) == type({})
+    if has_key(a:value,'line_nr')
+      return a:value['filename'].', line '.a:value['line_nr']
+    else
+      return a:value['filename']
+    endif
   else
     return a:value[0].', line '.a:value[1]
   endif
@@ -68,6 +79,13 @@ function! tovl#ui#goto_thing_at_cursor#HandleOnThing()
   " always use default handler as well
   call extend(possibleFiles, s:DefaultHandler())
   let possibleFiles = tovl#list#Uniq(possibleFiles)
+
+
+  " one has break set?
+  let breaks = filter(copy(possibleFiles), 'type(v:val) == type({}) && get(v:val,"break") == 1')
+  if len(breaks) > 0
+    let possibleFiles = breaks
+  endif
 
   " if one file exists use that
   let existingFiles = filter(deepcopy(possibleFiles), 's:DoesFileExist(v:val)')

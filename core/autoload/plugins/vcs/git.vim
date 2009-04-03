@@ -197,7 +197,7 @@ function! plugins#vcs#git#PluginGit(p)
     if thing =~ '^[ab]/'
       " diff file a/foo/bar ? strip a
       if filereadable(thing[2:])
-        return [thing[2:]]
+        return [{ 'filename' : thing[2:], 'break' : 1 }]
       endif
       return []
     else
@@ -206,7 +206,7 @@ function! plugins#vcs#git#PluginGit(p)
         let hash = substitute(thing,'[<>]','','g')
         call tovl#runtaskinbackground#System(["git","rev-list","-1",hash])
         " no failure 
-        let list = [ 'tovl_exec://git?show?'.hash ]
+        let list = [ { 'filename' : 'tovl_exec://git?show?'.hash, 'break' : 1} ]
       catch /.*/
         let list = []
       endtry
