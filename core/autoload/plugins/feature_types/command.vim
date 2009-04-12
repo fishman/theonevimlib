@@ -7,6 +7,7 @@ function! plugins#feature_types#command#PluginCommand(p)
   fun! p.AddCommand(i)
     call self.LogExec(2, '+command',
        \ 'command! '.(get(a:i, 'buffer',0) ? '-buffer' : '').' '.
+       \ (get(a:i, 'complete',0) ? '-complete='. a:i.complete : '').' '.
        \ get(a:i,'attrs','').' '.
        \ a:i['name'].' '.
        \ a:i['cmd'])
