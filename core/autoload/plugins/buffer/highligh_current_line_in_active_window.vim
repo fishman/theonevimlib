@@ -24,12 +24,12 @@ function! plugins#buffer#highligh_current_line_in_active_window#PluginHighlightC
   let p['autocommands']['win_enter'] = {
     \ 'events' : 'WinEnter',
     \ 'pattern' : '*',
-    \ 'cmd' : "if g:HighlightCurrentLine | setlocal cul | endif"
+    \ 'cmd' : "if exists('g:HighlightCurrentLine') && g:HighlightCurrentLine | setlocal cul | endif"
     \  }
   let p['autocommands']['win_leave'] = {
     \ 'events' : 'WinLeave',
     \ 'pattern' : '*',
-    \ 'cmd' : "if g:HighlightCurrentLine | setlocal nocul | endif"
+    \ 'cmd' : "if exists('g:HighlightCurrentLine') && g:HighlightCurrentLine | setlocal nocul | endif"
     \  }
   let p['defaults']['highlight_on_load'] = 1
   let child = {}
