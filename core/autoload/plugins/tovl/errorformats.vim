@@ -8,6 +8,16 @@ function! plugins#tovl#errorformats#PluginErrorFormats(p)
   let p['Tags'] = ['errorformats','quickfix','backgrounding']
   let p['Info'] = "This scripts provides some errorformats"
 
+  let p['defaults']['tags'] = ['error_formats']
+
+  let p['feat_command'] = {
+      \ 'set_errorformat' : {
+        \ 'name' : 'SetErrorFormat',
+        \ 'attrs' : '-nargs=1 -complete=customlist,plugins#tovl#errorformats#CompleteEFM',
+        \ 'cmd' : ':call tovl#errorformat#SetErrorFormat("plugins#tovl#errorformats#PluginErrorFormats#".<f-args>)'
+      \ }
+    \ }
+
   let p['defaults'] = {}
   let ef = p['defaults']
   " the result of this list will be read by a fitting handler
@@ -23,6 +33,9 @@ function! plugins#tovl#errorformats#PluginErrorFormats(p)
   let ef['nix'] = "%m, at `%f':%l:%c\n"
               \ . "%m at `%f', line %l:\n"
               \ . "error: %m, in `%f'"
+
+
+
 " - Ignore the obvious.
 " - Don't include the 'a-okay' message.  let ef['perl'] = 
 " - Most errors...
@@ -81,9 +94,15 @@ function! plugins#tovl#errorformats#PluginErrorFormats(p)
               \    "%E%f:%l: %m\n"
               \  . "%-C:%l: %s\n"
               \  . "%Z%s:%p^\n"
+  let ef['mxmlc'] = "%f(%l): col: %c Error:%m"
   " dummy, shows all lines. Hopefully no line ever contains that pattern..
   let ef['none'] = "dummy_dummy_dummy_line_1034985"
   " remember to use grep -n !
   let ef['grep'] = "%f:%l:%m"
   return p
 endfunction
+
+fun! plugins#tovl#errorformats#CompleteEFM(A,L,P)
+    return filter(keys(config#Get('plugins#tovl#errorformats#PluginErrorFormats', { 'default' : {}}))
+      \ , 'v:val =~ '.string(a:A))
+endf

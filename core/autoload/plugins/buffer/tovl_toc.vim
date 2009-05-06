@@ -30,6 +30,8 @@ function! plugins#buffer#tovl_toc#PluginTOVL_ToC(p)
   let ft['python'] = '^\s*\%(def\|class\)' " this is a stub
   let ft['haskell'] = '^\s*\%(\%(\zs\%(where\)\@!\%(\l\w*\)\ze\%(\s\+\%(\S\+\)\)*\s*=\)\|\%(\%(\S\+\)\s*`\zs\%(where\)\@!\%(\l\w*\)\ze`\s*\%(\S\+\)\s*=\)\)'
   let ft['javascript'] = 'function'
+  " actionscript isn't prfect yet ..
+  let ft['actionscript'] = 'private\|public\|include\|class\|interface\|propert\%(y\|ies\)'
   let ft['make'] = '^[^: ]\+\s*:.*\|include'
 
 
