@@ -6,6 +6,7 @@ function! plugins#filetype#flex#PluginFlexSupport(p)
   let p['defaults']['tags'] = ['flex_support']
   let p['defaults']['tags_buftype'] = {'xml': [ 'flex_support' ], 'mxml' : ['flex_support']}
   let p['defaults']['mxmlc_executable'] = 'mxmlc'
+  let p['defaults']['run_swf_in_browser'] = string(['firefox', '-new-window', '$SWF'])
 
   " I don't use atlas. How to really fix this?
   let p['defaults']['overwrite_atlas_set_ft_to_actionscript'] = 1
@@ -42,12 +43,29 @@ function! plugins#filetype#flex#PluginFlexSupport(p)
                 \ {'cmd': [self.cfg.mxmlc_executable, "-incremental=true", expand('%')],
                  \ 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#mxmlc', 'onFinishCallbacks' : ['cope']}).')'
   endf
+
+  fun! p.RunSWFActionString()
+    if expand('%:e') != "mxml"
+      throw "current file beeing an .mxml expected"
+    endif
+    " keep it simple. Assume the current file is an .mxml file
+    let swf = expand('%:p:r').'.swf'
+    return 'call tovl#runtaskinbackground#Run('.string(
+                \ {'cmd': map(eval(self.cfg.run_swf_in_browser), 'substitute(v:val, "\\$SWF",'.string(swf).',"")'),
+                 \ 'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#mxmlc', 'onFinishCallbacks' : ['cope']}).')'
+  endf
   let p['feat_action'] = {
         \ 'run_mxmlc' : {
         \   'key': 'run_mxmlc',
         \   'description': "runs mxmlc <this file> and loads the result into the quickfix window",
         \   'action' : library#Function('return '. p.s .'.RunMXMLActionString()')
-        \ }}
+        \ },
+        \ 'run_result_in_browser' : {
+        \   'key': 'run_mxmlc_result_in_browser',
+        \   'description': "runs the .swf created by run_mxmlc in a browser",
+        \   'action' : library#Function('return '. p.s .'.RunSWFActionString()')
+        \ }
+      \ }
 
   let child = {}
   fun! child.Load()
