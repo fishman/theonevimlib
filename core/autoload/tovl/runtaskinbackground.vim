@@ -133,27 +133,26 @@ let s:old_colors_name = ''
 fun! tovl#runtaskinbackground#DefaultDecorator(p)
   let child = {}
   fun! child.OnStart()
-    call self.UpdateColorScheme()
+
+    " set colorscheme indicating a background process is running
+    let new = config#Get('plugins#tovl#runtaskinbackground#PluginRunTaskInBackground#color_scheme_when_a_bg_process_is_running',
+        \ {'default' : ''})
+    if new != '' && exists('g:colors_name') && g:colors_name != '' && len(s:status) == 1
+      let s:old_colors_name = g:colors_name
+      exec 'colorscheme '.new
+    endif
+
     return self.Parent_OnStart()
   endf
+
   fun! child.OnFinish()
-    call self.UpdateColorScheme()
     " cope
-    return self.Parent_OnFinish()
-  endf
-  fun! child.UpdateColorScheme()
-    if len(s:status) == 0
-      if s:old_colors_name != ''
+
+    " reset color scheme
+    if len(s:status) == 0 && s:old_colors_name != ''
         exec 'colorscheme '.s:old_colors_name
-      endif
-    else
-      let new = config#Get('plugins#tovl#runtaskinbackground#PluginRunTaskInBackground#color_scheme_when_a_bg_process_is_running',
-        \ {'default' : ''})
-      if new != '' && exists('g:colors_name') && g:colors_name != ''
-        let s:old_colors_name = g:colors_name
-        exec 'colorscheme '.new
-      endif
     endif
+    call self.Parent_OnFinish()
   endf
   return a:p.createChildClass(child)
 endf
