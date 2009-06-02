@@ -57,6 +57,15 @@ function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
         \  'active' : 1
         \ }
 
+  " from http://vim.wikia.com/wiki/Python_-_check_syntax_and_run_script
+  let ft['python'] = {
+        \  'pattern' : '*.py',
+        \  'run_in_background' : 0,
+        \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#python',
+        \  'cmd' :['python','-c', library#Function("return 'import py_compile,sys; sys.stderr=sys.stdout; py_compile.compile(\"'.expand('%').'\")'")],
+        \  'active' : 1
+        \ }
+
   let child = {}
   fun! child.Load()
     let g:HighlightCurrentLine=0

@@ -260,7 +260,7 @@ fun! tovl#runtaskinbackground#EscapeShArg(arg)
   return escape(a:arg, ";()*<>| '\"\\`[]&")
 endf
 
-" usage: vl#lib#system#system#System( ['echo', 'foo'], {'stdin-text' : 'will be ignored by echo', status : 0 })
+" usage: tovl#runtaskinbackground#System( ['echo', 'foo'], {'stdin-text' : 'will be ignored by echo', status : 0 })
 fun! tovl#runtaskinbackground#System(items, ... )
   let opts = a:0 > 0 ? a:1 : {}
   let cmd = ''

@@ -99,6 +99,13 @@ function! plugins#tovl#errorformats#PluginErrorFormats(p)
   let ef['none'] = "dummy_dummy_dummy_line_1034985"
   " remember to use grep -n !
   let ef['grep'] = "%f:%l:%m"
+
+  " taken from http://vim.wikia.com/wiki/Python_-_check_syntax_and_run_script
+  let ef['python'] =
+        \   '%C %.%#'."\n"
+        \ . '%A  File "%f"\'."\n"
+        \ . ' line %l%.%#'."\n"
+        \ . '%Z%[%^ ]%\@=%m'."\n"
   return p
 endfunction
 

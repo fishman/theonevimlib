@@ -8,9 +8,5 @@ fun! tovl#errorformat#SetErrorFormat(id)
 endf
 
 function! tovl#errorformat#EscapePattern(p)
-  return substitute(substitute(substitute(substitute(a:p
-     \ ,' ', '\\ ','g')
-     \ ,'"','\\"','g')
-     \ ,'|','\\|','g')
-     \ ,',', '\\\\\,','g')
+  return escape(a:p,' \,|"')
 endfunction
