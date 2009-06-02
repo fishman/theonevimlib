@@ -88,6 +88,7 @@ continues with a small tutorial.
   time on it..)
 
 ==============================================================================
+
 3. installation / updating TOVL / How to contribute / contact *tovl-update* {{{1
 
   TOVL development is tracked by git. git is a decentralised version control
@@ -118,7 +119,14 @@ continues with a small tutorial.
   4) Now write the buffer to make the changes permanent. >
      :w
 
-< Continue here: |tovl-config-tutorial|
+< Continue either with
+  a) |tovl-config-tutorial|
+  b)  some of the *.txt files found in this doc directory as well
+      Not everything is worth putting into a tovl plugin. However many
+      things are worth writing down. This can be extended to a nice
+      (maintained) tip collection..
+      |ft_xml.txt|
+  
   (if you don't read this within the vim help browser goto the end of
   core/doc/tovl-config-buffer.txt)
 
@@ -147,6 +155,8 @@ GLOBAL CONFIG                                   *tovl-global-config*
   (-> |tovl-wish-list|). 
   However you can set these options in your .vimrc
   * |config#filesFunc|
+  * |config#DotVim| Which is your default ~/.vim directory defaulting to
+                    split(&runtimepath,',')[0]
   * |tovl-log-config|
   * |tovl-shell-esc-hack|
   * |tovl-config-dont-add-defaults|

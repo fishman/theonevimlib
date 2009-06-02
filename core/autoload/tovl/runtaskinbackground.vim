@@ -31,6 +31,7 @@ endf
 fun! tovl#runtaskinbackground#Run(opts)
   let p = tovl#runtaskinbackground#NewProcess(a:opts)
   call p.Run()
+  return p
 endf
 
 " usage:

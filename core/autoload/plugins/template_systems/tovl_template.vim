@@ -17,6 +17,9 @@
 " to insert a current timestamp. However you should be aware that someone else
 " can run arbitrary vim expressions such as [% let var = system('rm -fr /') ].
 " So only enable this feature if only you have access to your templates!
+"
+"
+" !!! consider using scriptmate instead
 
 " the implementation can be found in
 function! plugins#template_systems#tovl_template#PluginTOVL_Template(p)
