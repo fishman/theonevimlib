@@ -38,7 +38,7 @@ function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
   let ft['rb'] = {
         \  'pattern' : '*.rb',
         \  'run_in_background' : 0,
-        \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php',
+        \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#ruby',
         \  'cmd' :['ruby','-c', library#Function("return expand('%')")],
         \  'active' : 1
         \ }

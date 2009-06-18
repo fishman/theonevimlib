@@ -100,12 +100,24 @@ function! plugins#tovl#errorformats#PluginErrorFormats(p)
   " remember to use grep -n !
   let ef['grep'] = "%f:%l:%m"
 
-  " taken from http://vim.wikia.com/wiki/Python_-_check_syntax_and_run_script
+  " partially taken from http://vim.wikia.com/wiki/Python_-_check_syntax_and_run_script
   let ef['python'] =
-        \   '%C %.%#'."\n"
+        \   '  File "%f", line %l,%m'."\n"
+        \ . '%C %.%#'."\n"
         \ . '%A  File "%f"\'."\n"
         \ . ' line %l%.%#'."\n"
         \ . '%Z%[%^ ]%\@=%m'."\n"
+
+  " taken form compiler
+  let ef['ruby'] = 
+        \   '%+E%f:%l: parse error'."\n"
+        \ . '%W%f:%l: warning: %m'."\n"
+        \ . '%E%f:%l:in %*[^:]: %m'."\n"
+        \ . '%E%f:%l: %m'."\n"
+        \ . '%-C%tfrom %f:%l:in %.%#'."\n"
+        \ . '%-Z%tfrom %f:%l'."\n"
+        \ . '%-Z%p^'."\n"
+        \ . '%-G%.%# '
   return p
 endfunction
 
