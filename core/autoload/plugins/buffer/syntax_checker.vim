@@ -1,14 +1,8 @@
 " author: Marc Weber
 "
-" use call
-" vl#lib#hl#vim7highlightCurrentLineInActiveWindow#ToggleHighlightCurrentLine() to toggle highlighting of the cursor
-" only in active window
-
-" example mapping:
-  " noremap <m-h><m-c> :call vl#lib#hl#vim7highlightCurrentLineInActiveWindow#ToggleHighlightCurrentLine()<cr>
-
-" TODO refactor its best to put this all into small items within the filetype
-" directory? Then you can only enable those pieces you want
+" TODO 
+" 08:59 < spiiph> You might even want to use BufWriteCmd, if you want the write to 
+"               fail if the syntax checker fails.
 
 function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
   let p = a:p
@@ -44,7 +38,7 @@ function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
   let ft['rb'] = {
         \  'pattern' : '*.rb',
         \  'run_in_background' : 0,
-        \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#php',
+        \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#ruby',
         \  'cmd' :['ruby','-c', library#Function("return expand('%')")],
         \  'active' : 1
         \ }
@@ -60,6 +54,15 @@ function! plugins#buffer#syntax_checker#PluginSyntaxChecker(p)
         \  'run_in_background' : 0,
         \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#perl',
         \  'cmd' :['perl','-c', library#Function("return expand('%')")],
+        \  'active' : 1
+        \ }
+
+  " from http://vim.wikia.com/wiki/Python_-_check_syntax_and_run_script
+  let ft['python'] = {
+        \  'pattern' : '*.py',
+        \  'run_in_background' : 0,
+        \  'ef' : 'plugins#tovl#errorformats#PluginErrorFormats#python',
+        \  'cmd' :['python','-c', library#Function("return 'import py_compile,sys; sys.stderr=sys.stdout; py_compile.compile(\"'.expand('%').'\")'")],
         \  'active' : 1
         \ }
 

@@ -32,6 +32,7 @@ function! theonevimlibsetup#Setup()
   command -nargs=* TOVLConfig call config#EditConfig(<f-args>)
 
   " additional setups see config#TOVLConfigReadCmd()
+  " FIXME: use buffer local autocommands for BufReadCmd, BufWriteCmd
   augroup TOVL
     au BufReadCmd tovl_config://* call config#TOVLConfigReadCmd()
     au BufWriteCmd tovl_config://* call config#TOVLConfigWriteCmd()

@@ -24,13 +24,15 @@ endfunction
 "  getContent : callback returning lines
 "  cmds    : extra commands to be run (optional)
 "            (maybe you prefer adding them the default way afer the
-"            ScratchBuffer call 
+"            ScratchBuffer call. They'll be rerun on GetContents
 "  sp_cmd  : the command to use to create the new buffer. Defaults to :e
 "  buftype : ...
+"  modifiable : 1 / 0 defaults to 1
 function! tovl#scratch_buffer#ScratchBuffer(opts)
   let a:opts['name'] = get(a:opts,'name', 'strach_buffer_without_name')
   exec get(a:opts, 'sp_cmd', 'e').' '.escape(a:opts['name'],' ')
   let b:settings = a:opts
+  let b:settings['modifiable'] = get(a:opts,'modifiable', 1)
   setlocal buftype=acwrite
   command! -buffer -nargs=0 Help call tovl#scratch_buffer#Help()
 
@@ -40,6 +42,9 @@ function! tovl#scratch_buffer#ScratchBuffer(opts)
   if has_key(a:opts,'getContent')
     command! -buffer -nargs=0 GetContents call tovl#scratch_buffer#GetContents()
     GetContents
+    if !b:settings['modifiable']
+      setlocal nomodifiable
+    endif
   endif
   "let u=&undolevels
   "setlocal undolevels=-1
@@ -47,6 +52,8 @@ function! tovl#scratch_buffer#ScratchBuffer(opts)
 
   " mark buffer as not modified
   setlocal nomodified
+
+  au BufReadCmd <buffer> GetContents
 
   " run addittional commands
   for cmd in get(a:opts,'cmds',[])
@@ -66,12 +73,20 @@ function! tovl#scratch_buffer#Write()
 endfunction
 
 function! tovl#scratch_buffer#GetContents()
-  normal ggdG
+  setlocal modifiable
+  " empty buffer
+  %g!//d
   call append(0, library#Call(b:settings['getContent']))
+  if !b:settings['modifiable']
+    setlocal nomodifiable
+  endif
+  for cmd in get(b:settings,'cmds',[])
+    exec cmd
+  endfor
 endfunction
 
 function! tovl#scratch_buffer#Help()
-  let help = ["use :GetContents to reload contents, ZZ or :w(q) to write and quit"
+  let help = ["use :e! to reload contents, ZZ or :w(q) to write and quit"
           \ ,""
           \ ,"Help for this scratch buffer:"
           \ ,"=======================================================","",""]

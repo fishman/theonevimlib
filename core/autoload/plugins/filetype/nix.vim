@@ -7,7 +7,8 @@ function! plugins#filetype#nix#PluginNixSupport(p)
   let p['defaults']['tags_buftype'] = {'nix' : ['nix_support']}
   let p['feat_GotoThingAtCursor'] = {
       \ 'jump_to_path' : {
-        \ 'f' : library#Function("return ". p.s .".LocationList()")}}
+        \ 'buffer' : 1
+        \ ,'f' : library#Function("return ". p.s .".LocationList()")}}
   " mappings to evaluate contents of current buffer using nix-instantiate
   let p['feat_mapping'] = {
       \ 'eval' : {
@@ -118,3 +119,33 @@ endfunction
 
 "command! FixNext call FixNext()
 "noremap <F6> :FixNext<cr>
+"
+"
+"fun! Test()
+"  let d = {}
+"  for i in getline(1,line('$'))
+"    let m = matchlist(i, '^  \s*\(\S*\)\s*=\s*import\s*../\(\S*\).*')
+"    if empty(m)
+"      continue
+"    endif
+"    let m2 = matchstr(m[2], '\zs.*/\ze.*$')
+"    if empty(m)
+"      echo m
+"      echo i
+"    else
+"      let l = get(d, m2, [])
+"      call add(l, m[1])
+"      let d[m2] = l
+"    endif
+"  endfor
+"  let final = []
+"  for [k,l] in items(d)
+"    call add(final, k)
+"    for lin in l
+"      call add(final, '   '.lin)
+"    endfor
+"  endfor
+"  put=final
+"endf
+"call Test()
+

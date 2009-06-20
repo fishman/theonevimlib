@@ -31,6 +31,7 @@ endf
 fun! tovl#runtaskinbackground#Run(opts)
   let p = tovl#runtaskinbackground#NewProcess(a:opts)
   call p.Run()
+  return p
 endf
 
 " usage:
@@ -133,27 +134,26 @@ let s:old_colors_name = ''
 fun! tovl#runtaskinbackground#DefaultDecorator(p)
   let child = {}
   fun! child.OnStart()
-    call self.UpdateColorScheme()
+
+    " set colorscheme indicating a background process is running
+    let new = config#Get('plugins#tovl#runtaskinbackground#PluginRunTaskInBackground#color_scheme_when_a_bg_process_is_running',
+        \ {'default' : ''})
+    if new != '' && exists('g:colors_name') && g:colors_name != '' && len(s:status) == 1
+      let s:old_colors_name = g:colors_name
+      exec 'colorscheme '.new
+    endif
+
     return self.Parent_OnStart()
   endf
+
   fun! child.OnFinish()
-    call self.UpdateColorScheme()
     " cope
-    return self.Parent_OnFinish()
-  endf
-  fun! child.UpdateColorScheme()
-    if len(s:status) == 0
-      if s:old_colors_name != ''
+
+    " reset color scheme
+    if len(s:status) == 0 && s:old_colors_name != ''
         exec 'colorscheme '.s:old_colors_name
-      endif
-    else
-      let new = config#Get('plugins#tovl#runtaskinbackground#PluginRunTaskInBackground#color_scheme_when_a_bg_process_is_running',
-        \ {'default' : ''})
-      if new != '' && exists('g:colors_name') && g:colors_name != ''
-        let s:old_colors_name = g:colors_name
-        exec 'colorscheme '.new
-      endif
     endif
+    call self.Parent_OnFinish()
   endf
   return a:p.createChildClass(child)
 endf
@@ -258,10 +258,10 @@ endfunction
 
 fun! tovl#runtaskinbackground#EscapeShArg(arg)
   " zsh requires []
-  return escape(a:arg, ";()*<>| '\"\\`[]")
+  return escape(a:arg, ";()*<>| '\"\\`[]&")
 endf
 
-" usage: vl#lib#system#system#System( ['echo', 'foo'], {'stdin-text' : 'will be ignored by echo', status : 0 })
+" usage: tovl#runtaskinbackground#System( ['echo', 'foo'], {'stdin-text' : 'will be ignored by echo', status : 0 })
 fun! tovl#runtaskinbackground#System(items, ... )
   let opts = a:0 > 0 ? a:1 : {}
   let cmd = ''

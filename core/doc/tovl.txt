@@ -55,6 +55,9 @@ continues with a small tutorial.
 
 11.  Does tovl has some support for language or filetype X ?|tovl-lang-support|
 
+20.  3rd party libraries, other code you should know about
+      vimtlib
+
 100. wish-list
 
 ==============================================================================
@@ -85,6 +88,7 @@ continues with a small tutorial.
   time on it..)
 
 ==============================================================================
+
 3. installation / updating TOVL / How to contribute / contact *tovl-update* {{{1
 
   TOVL development is tracked by git. git is a decentralised version control
@@ -120,7 +124,14 @@ continues with a small tutorial.
   4) Now write the buffer to make the changes permanent. >
      :w
 
-< Continue here: |tovl-config-tutorial|
+< Continue either with
+  a) |tovl-config-tutorial|
+  b)  some of the *.txt files found in this doc directory as well
+      Not everything is worth putting into a tovl plugin. However many
+      things are worth writing down. This can be extended to a nice
+      (maintained) tip collection..
+      |ft_xml.txt|
+  
   (if you don't read this within the vim help browser goto the end of
   core/doc/tovl-config-buffer.txt)
 
@@ -149,6 +160,8 @@ GLOBAL CONFIG                                   *tovl-global-config*
   (-> |tovl-wish-list|). 
   However you can set these options in your .vimrc
   * |config#filesFunc|
+  * |config#DotVim| Which is your default ~/.vim directory defaulting to
+                    split(&runtimepath,',')[0]
   * |tovl-log-config|
   * |tovl-shell-esc-hack|
   * |tovl-config-dont-add-defaults|
@@ -544,6 +557,17 @@ TOVL ....
 11.  Does tovl has some support for language or filetype X ? *tovl-lang-support*
   haskell: |lang_haskell.txt|
 
+==============================================================================
+20.  3rd party libraries, other code you should know about
+
+  You've seen the autoload/tlib directory.
+  I needed some functions of it and that's why I just copied them over.
+  You can find the most current version of the tlib library here :
+  http://github.com/tomtom/vimtlib.
+  vimtlib has been written by Tom Link. It contains a lot of nice features.
+  Eg the TToC command is smarter than the PluginTOVL_ToC in some aspects.
+
+  (TODO extend this list)
 
 ==============================================================================
 100. wish-list             *tovl-wish-list*
