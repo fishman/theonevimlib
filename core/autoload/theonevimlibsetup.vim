@@ -1,4 +1,4 @@
-let s:this_dir = expand('<sfile>:h')
+let s:this_dir = shellescape(expand('<sfile>:h'))
 function! theonevimlibsetup#Setup()
 
   " only setup tovl once
